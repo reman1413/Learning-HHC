@@ -234,10 +234,12 @@ const db = {
   },
   async addUser(u){
     if(SB){
-      const {error}=await SB.from('lms_users').insert(u);
+      const {data,error}=await SB.from('lms_users').insert(u).select().single();
       if(error)throw new Error('Save failed: '+error.message);
+      let a=ls('users');a.push(data);ls2('users',a);
+      return data;
     }
-    let a=ls('users');a.push(u);ls2('users',a);
+    u.id=uid();let a=ls('users');a.push(u);ls2('users',a);return u;
   },
   async updUser(id,d){
     if(SB){
@@ -263,10 +265,12 @@ const db = {
   },
   async addSection(s){
     if(SB){
-      const {error}=await SB.from('lms_sections').insert(s);
+      const {data,error}=await SB.from('lms_sections').insert(s).select().single();
       if(error)throw new Error('Save failed: '+error.message);
+      let a=ls('sections');a.push(data);ls2('sections',a);
+      return data;
     }
-    let a=ls('sections');a.push(s);ls2('sections',a);
+    s.id=uid();let a=ls('sections');a.push(s);ls2('sections',a);return s;
   },
   async updSection(id,d){
     if(SB){
@@ -303,10 +307,12 @@ const db = {
   },
   async addLecture(l){
     if(SB){
-      const {error}=await SB.from('lms_lectures').insert(l);
+      const {data,error}=await SB.from('lms_lectures').insert(l).select().single();
       if(error)throw new Error('Save failed: '+error.message);
+      let a=ls('lectures');a.push(data);ls2('lectures',a);
+      return data;
     }
-    let a=ls('lectures');a.push(l);ls2('lectures',a);
+    l.id=uid();let a=ls('lectures');a.push(l);ls2('lectures',a);return l;
   },
   async updLecture(id,d){
     if(SB){
@@ -336,10 +342,12 @@ const db = {
   },
   async addQuestion(q){
     if(SB){
-      const {error}=await SB.from('lms_questions').insert(q);
+      const {data,error}=await SB.from('lms_questions').insert(q).select().single();
       if(error)throw new Error('Save failed: '+error.message);
+      let a=ls('questions');a.push(data);ls2('questions',a);
+      return data;
     }
-    let a=ls('questions');a.push(q);ls2('questions',a);
+    q.id=uid();let a=ls('questions');a.push(q);ls2('questions',a);return q;
   },
   async updQuestion(id,d){
     if(SB){
@@ -365,8 +373,8 @@ const db = {
     return ls('completions');
   },
   async addCompletion(c){
-    if(SB){await SB.from('lms_completions').upsert(c,{onConflict:'user_id,lecture_id'});}
-    let a=ls('completions');if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){a.push(c);ls2('completions',a);}
+    if(SB){await SB.from('lms_completions').upsert({user_id:c.user_id,lecture_id:c.lecture_id,completed_at:c.completed_at},{onConflict:'user_id,lecture_id'});}
+    let a=ls('completions');if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){c.id=c.id||uid();a.push(c);ls2('completions',a);}
   },
   async isCompleted(uid,lid){
     if(SB){const{data}=await SB.from('lms_completions').select('id').eq('user_id',uid).eq('lecture_id',lid).single();return!!data}
@@ -382,8 +390,8 @@ const db = {
     return ls('attempts');
   },
   async addAttempt(a){
-    if(SB){await SB.from('lms_attempts').insert(a);}
-    let arr=ls('attempts');arr.push(a);ls2('attempts',arr);
+    if(SB){await SB.from('lms_attempts').insert({user_id:a.user_id,lecture_id:a.lecture_id,score:a.score,passed:a.passed,attempted_at:a.attempted_at});}
+    a.id=a.id||uid();let arr=ls('attempts');arr.push(a);ls2('attempts',arr);
   },
   async hasPassed(uid,lid){
     if(SB){const{data}=await SB.from('lms_attempts').select('id').eq('user_id',uid).eq('lecture_id',lid).eq('passed',true).single();return!!data}
@@ -403,8 +411,11 @@ const db = {
     return ls('certs').find(c=>c.id===id)||null;
   },
   async addCert(c){
-    if(SB){await SB.from('lms_certs').insert(c);}
-    let a=ls('certs');a.push(c);ls2('certs',a);
+    if(SB){
+      const {data,error}=await SB.from('lms_certs').insert(c).select().single();
+      if(!error&&data){let a=ls('certs');a.push(data);ls2('certs',a);return data;}
+    }
+    c.id=uid();let a=ls('certs');a.push(c);ls2('certs',a);return c;
   },
   // ── FILE UPLOAD to Supabase Storage ──
   async uploadFile(lid, file, progressCb){
@@ -627,7 +638,7 @@ async function issueCert(sid){
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);
   const code=sec.title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,4);
   const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
-  const cert={id:uid(),user_id:U.id,section_id:sid,ref_number:ref,issued_at:n()};
+  const cert={user_id:U.id,section_id:sid,ref_number:ref,issued_at:n()};
   await db.addCert(cert);toast('🏆 Certificate issued!','ok');
   go('cert',{id:cert.id},{page:'section',par:{id:sid},label:'Back to Section'});
 }
@@ -927,7 +938,7 @@ async function issueAdminCert(userId,sid){
   const users=await db.users(),u=users.find(x=>x.id===userId);
   const code=sec.title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,4);
   const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
-  const cert={id:uid(),user_id:userId,section_id:sid,ref_number:ref,issued_at:n()};
+  const cert={user_id:userId,section_id:sid,ref_number:ref,issued_at:n()};
   await db.addCert(cert);
   toast('🏆 Certificate issued for '+u.name,'ok');
   await pageAdminCerts();
@@ -1010,7 +1021,7 @@ async function saveSec(){
   try{
     const secs=await db.sections();
     if(_esid)await db.updSection(_esid,{title:t,description:d});
-    else await db.addSection({id:uid(),title:t,description:d,order_num:secs.length+1,created_at:n()});
+    else await db.addSection({title:t,description:d,order_num:secs.length+1,created_at:n()});
     toast(_esid?'Updated! ✅':'Section added! ✅','ok');cmo();pageAdminSections();
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
@@ -1128,7 +1139,7 @@ async function saveLec(){
   try{
     const lecs=await db.lectures(_elsid);
     if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq});
-    else await db.addLecture({id:uid(),section_id:_elsid,title:t,type,url,has_quiz:hq,order_num:lecs.length+1,created_at:n()});
+    else await db.addLecture({section_id:_elsid,title:t,type,url,has_quiz:hq,order_num:lecs.length+1,created_at:n()});
     toast(_elid?'Updated! ✅':'Lecture added! ✅','ok');cmo();pageAdminLectures(_elsid);
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
@@ -1184,7 +1195,7 @@ async function saveQ(){
   const data={question_text:t,option_a:a,option_b:b,option_c:c,option_d:d,correct_answer:ca};
   try{
     if(_eqid)await db.updQuestion(_eqid,data);
-    else await db.addQuestion({id:uid(),lecture_id:_eqlid,...data,created_at:n()});
+    else await db.addQuestion({lecture_id:_eqlid,...data,created_at:n()});
     toast(_eqid?'Updated! ✅':'Question added! ✅','ok');cmo();pageAdminQuestions(_eqlid);
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
@@ -1253,7 +1264,7 @@ async function saveEmp(){
     }else{
       const existing=await db.userByBadge(bd);
       if(existing){toast('Employee number already exists','er');return}
-      await db.addUser({id:uid(),...data,created_at:n()});toast('Employee added! ✅','ok');
+      await db.addUser({...data,created_at:n()});toast('Employee added! ✅','ok');
     }
     cmo();await pageAdminStaff();
   }catch(e){
