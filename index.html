@@ -838,8 +838,16 @@ function initYT(vid,lid,hasQ){
     }
   },10000);
 }
+async function markWatchedYT(lid){
+  try{
+    vidDone=true;
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    toast('✅ Watched — quiz unlocked!','ok');
+    await pageLecture(lid);
+  }catch(e){toast('❌ '+e.message,'er');console.error(e);}
+}
 async function markDone(lid){
-  await db.addCompletion({id:uid(),user_id:U.id,lecture_id:lid,completed_at:n()});
+  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
   toast('✅ Marked complete!','ok');
   const lec=await db.lecture(lid);go('section',{id:lec.section_id});
 }
@@ -852,18 +860,21 @@ async function pageQuiz(lid){
   const lec=await db.lecture(lid);if(!lec){go('home');return}
   const all=await db.questions(lid);
   if(!all.length){toast('No questions available yet','er');return}
-  // Pick random 10
-  const picked=all.sort(()=>Math.random()-.5).slice(0,Math.min(10,all.length));
-  // Shuffle options for each question
+  // Always pick 10 random questions from bank (max 40), shuffle every time
+  const quizCount=Math.min(lec.quiz_count||10, all.length);
+  // True random shuffle using timestamp seed for uniqueness each attempt
+  const seed=Date.now();
+  const shuffleArr=arr=>[...arr].map(v=>({v,s:Math.sin(seed*Math.random())})).sort((a,b)=>a.s-b.s).map(x=>x.v);
+  const picked=shuffleArr(all).slice(0,quizCount);
+  // Shuffle options for each question differently each time
   const qs=picked.map(q=>{
-    const opts=[
+    const opts=shuffleArr([
       {key:'a',text:q.option_a,correct:q.correct_answer==='a'},
       {key:'b',text:q.option_b,correct:q.correct_answer==='b'},
       {key:'c',text:q.option_c,correct:q.correct_answer==='c'},
       {key:'d',text:q.option_d,correct:q.correct_answer==='d'}
-    ].sort(()=>Math.random()-.5);
-    const newCorrect=opts.find(o=>o.correct).key; // after shuffle, which letter is correct?
-    return{...q,shuffled:opts,correct_shuffled:newCorrect};
+    ]);
+    return{...q,shuffled:opts};
   });
   QS={lid,qs,cur:0,ans:{},time:20*60,ti:null,done:false};renderQ();
   QS.ti=setInterval(()=>{
@@ -1223,8 +1234,15 @@ function openLecModal(sid,id){
       </div>
     </div>
     <div class="fg" style="display:flex;align-items:center;gap:10px;margin-top:12px">
-      <input type="checkbox" id="lhq" ${l&&l.has_quiz?'checked':''} style="width:20px;height:20px;accent-color:var(--pu)">
+      <input type="checkbox" id="lhq" ${l&&l.has_quiz?'checked':''} style="width:20px;height:20px;accent-color:var(--pu)" onchange="toggleQuizCount()">
       <label for="lhq" style="margin:0;cursor:pointer">Include quiz for this lecture</label>
+    </div>
+    <div id="quiz-count-field" class="fg" style="${l&&l.has_quiz?'':'display:none'}">
+      <label>Number of questions per attempt <span style="font-weight:400;color:var(--muted)">(random from your question bank)</span></label>
+      <select id="lqc">
+        ${[5,10,15,20].map(n=>`<option value="${n}" ${(l&&l.quiz_count||10)===n?'selected':''}>${n} questions per attempt</option>`).join('')}
+      </select>
+      <div style="font-size:12px;color:var(--muted);margin-top:5px">Upload up to 40 questions — system picks randomly each time</div>
     </div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
       <button class="btn bg2" onclick="cmo()">Cancel</button>
@@ -1233,16 +1251,19 @@ function openLecModal(sid,id){
   </div></div>`
 }
 function toggleLType(){const t=document.getElementById('ltype').value;document.getElementById('url-f').style.display=t==='pptx'?'none':'';document.getElementById('pptx-note').style.display=t==='pptx'?'':'none';}
+function toggleQuizCount(){const hq=document.getElementById('lhq').checked;const f=document.getElementById('quiz-count-field');if(f)f.style.display=hq?'':'none';}
 async function saveLec(){
   const t=document.getElementById('lt').value.trim();
   const type=document.getElementById('ltype').value;
   const url=type==='youtube'?(document.getElementById('lurl').value.trim()):'';
   const hq=document.getElementById('lhq').checked;
+  const qcEl=document.getElementById('lqc');
+  const qc=qcEl?parseInt(qcEl.value):10;
   if(!t){toast('Enter a title','er');return}
   try{
     const lecs=await db.lectures(_elsid);
-    if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq});
-    else await db.addLecture({section_id:_elsid,title:t,type,url,has_quiz:hq,order_num:lecs.length+1,created_at:n()});
+    if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq,quiz_count:qc});
+    else await db.addLecture({section_id:_elsid,title:t,type,url,has_quiz:hq,quiz_count:qc,order_num:lecs.length+1,created_at:n()});
     toast(_elid?'Updated! ✅':'Lecture added! ✅','ok');cmo();pageAdminLectures(_elsid);
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
