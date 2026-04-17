@@ -689,12 +689,14 @@ async function pageLecture(lid){
 }
 
 function buildYT(videoId,lid){
-  const thumb='https://img.youtube.com/vi/'+videoId+'/maxresdefault.jpg';
   const url='https://www.youtube.com/watch?v='+videoId;
+  // Try multiple thumbnail qualities
+  const thumb='https://img.youtube.com/vi/'+videoId+'/hqdefault.jpg';
   return`<div style="border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh);background:#0f0720">
     <a href="${url}" target="_blank" style="display:block;position:relative;cursor:pointer;text-decoration:none">
-      <img src="${thumb}" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'"
-        style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;opacity:.85">
+      <img src="${thumb}"
+        onerror="this.src='https://img.youtube.com/vi/${videoId}/mqdefault.jpg'"
+        style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;opacity:.9">
       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
         <div style="width:72px;height:72px;background:rgba(255,0,0,.92);border-radius:50%;display:flex;align-items:center;justify-content:center">
           <div style="width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:28px solid #fff;margin-left:6px"></div>
