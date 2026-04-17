@@ -690,25 +690,26 @@ async function pageLecture(lid){
 
 function buildYT(videoId,lid){
   const url='https://www.youtube.com/watch?v='+videoId;
-  // Try multiple thumbnail qualities
-  const thumb='https://img.youtube.com/vi/'+videoId+'/hqdefault.jpg';
-  return`<div style="border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh);background:#0f0720">
-    <a href="${url}" target="_blank" style="display:block;position:relative;cursor:pointer;text-decoration:none">
-      <img src="${thumb}"
-        onerror="this.src='https://img.youtube.com/vi/${videoId}/mqdefault.jpg'"
-        style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;opacity:.9">
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
-        <div style="width:72px;height:72px;background:rgba(255,0,0,.92);border-radius:50%;display:flex;align-items:center;justify-content:center">
-          <div style="width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:28px solid #fff;margin-left:6px"></div>
+  return`<div style="border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh)">
+    <a href="${url}" target="_blank" style="display:block;text-decoration:none">
+      <div style="background:linear-gradient(135deg,#1a0f2e 0%,#2d1b4e 50%,#1a0f2e 100%);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;overflow:hidden">
+        <!-- Background pattern -->
+        <div style="position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(45deg,var(--pu) 0,var(--pu) 1px,transparent 0,transparent 50%) 0/20px 20px"></div>
+        <!-- YouTube logo style button -->
+        <div style="position:relative;z-index:1;text-align:center">
+          <div style="width:88px;height:62px;background:#FF0000;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 32px rgba(255,0,0,.4)">
+            <div style="width:0;height:0;border-top:16px solid transparent;border-bottom:16px solid transparent;border-left:26px solid #fff;margin-left:5px"></div>
+          </div>
+          <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:6px">Watch on YouTube</div>
+          <div style="color:rgba(255,255,255,.5);font-size:13px">Click to open in a new tab</div>
         </div>
-      </div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:20px 24px;color:#fff;font-size:14px;font-weight:600">
-        ▶ Click to watch on YouTube (opens in new tab)
+        <!-- YouTube ID badge -->
+        <div style="position:absolute;bottom:14px;right:16px;background:rgba(0,0,0,.5);color:rgba(255,255,255,.4);font-size:11px;padding:3px 8px;border-radius:6px;font-family:monospace">${videoId}</div>
       </div>
     </a>
-    <div style="padding:14px 20px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <span style="color:rgba(255,255,255,.55);font-size:13px">Watch the full video then click the button below</span>
-      <a href="${url}" target="_blank" class="btn bp bsm">▶ Open Video on YouTube</a>
+    <div style="background:var(--pu-d);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <span style="color:rgba(255,255,255,.7);font-size:13px;font-weight:500">👁️ Watch the full video, then unlock the quiz below</span>
+      <a href="${url}" target="_blank" class="btn" style="background:#FF0000;color:#fff;box-shadow:0 4px 14px rgba(255,0,0,.3)">▶ Open on YouTube</a>
     </div>
   </div>`;
 }
@@ -754,9 +755,11 @@ function buildFileViewer(lid,lec){
         ✅ I have reviewed all slides — Unlock Quiz
       </button>`;
 
+  const dlBtn=isPdf?`<a href="${src}" download="${fd.name}" class="btn bo bsm" style="color:#fff;border-color:rgba(255,255,255,.3)">⬇️ Download PDF</a>`:'';
   return`<div class="file-viewer">
     <div class="fv-header">
       <h4>📄 ${fd.name} ${sizeLabel?`<span style="font-size:11px;opacity:.4;font-weight:500">${sizeLabel}</span>`:''}</h4>
+      ${dlBtn}
     </div>
     ${viewerHtml}
     <div class="fv-footer">
