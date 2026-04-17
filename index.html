@@ -178,7 +178,6 @@ textarea{resize:vertical;min-height:80px}
 <body>
 <div id="app"></div>
 <div id="toast"></div>
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // ════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG
@@ -735,29 +734,53 @@ function downloadFile(lid){
   setTimeout(()=>markPptxViewed(lid),600);
 }
 function onYouTubeIframeAPIReady(){}
+
 function initYT(vid,lid,hasQ){
-  if(typeof YT==='undefined'||!YT.Player){setTimeout(()=>initYT(vid,lid,hasQ),600);return}
-  let last=0;
-  ytP=new YT.Player('ytp',{videoId:vid,playerVars:{rel:0,modestbranding:1,fs:1},
-    events:{onStateChange:async e=>{
-      if(e.data===YT.PlayerState.ENDED){
+  // Use direct iframe - faster and more reliable
+  const wrap=document.getElementById('ytp');
+  if(!wrap)return;
+  wrap.style.position='absolute';wrap.style.top='0';wrap.style.left='0';wrap.style.width='100%';wrap.style.height='100%';
+  const iframe=document.createElement('iframe');
+  iframe.id='yt-iframe';
+  iframe.src='https://www.youtube.com/embed/'+vid+'?rel=0&modestbranding=1&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+  iframe.style.cssText='width:100%;height:100%;border:none;';
+  iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture';
+  iframe.allowFullscreen=true;
+  wrap.appendChild(iframe);
+  // Listen via postMessage for video end
+  let watching=false;
+  window.onmessage=async function(e){
+    if(!e.data||typeof e.data!=='string')return;
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event==='onStateChange'){
+        if(d.info===1)watching=true; // playing
+        if(d.info===0&&watching){ // ended
+          vidDone=true;
+          await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+          const qb=document.getElementById('qbtn'),db2=document.getElementById('dbtn');
+          if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
+          if(db2){db2.disabled=false;db2.innerHTML='✅ Mark Complete';}
+          toast('✅ Video complete!','ok');
+        }
+      }
+    }catch(err){}
+  };
+  // Also add manual "mark watched" button after 10 seconds as fallback
+  setTimeout(()=>{
+    if(!vidDone){
+      const sw=document.getElementById('swarn');
+      if(sw){sw.style.display='block';sw.style.background='rgba(91,31,140,0.9)';sw.textContent='📺 Finished watching? Click to unlock quiz';}
+      sw&&sw.addEventListener('click',async function(){
         vidDone=true;
-        await db.addCompletion({id:uid(),user_id:U.id,lecture_id:lid,completed_at:n()});
-        const qb=document.getElementById('qbtn'),db2=document.getElementById('dbtn');
+        await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+        const qb=document.getElementById('qbtn');
         if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
-        if(db2){db2.disabled=false;db2.innerHTML='✅ Mark Complete';}
-        toast('✅ Video complete!','ok');
-      }
-      if(e.data===YT.PlayerState.PLAYING){
-        vidInterval=setInterval(()=>{if(!ytP)return;
-          const cur=ytP.getCurrentTime(),dur=ytP.getDuration();
-          if(cur-last>8&&dur-last>10){ytP.seekTo(last,true);const w=document.getElementById('swarn');if(w){w.style.display='block';setTimeout(()=>w.style.display='none',3000);}}
-          else{last=cur;}
-        },1000);
-      }
-      if(e.data===YT.PlayerState.PAUSED||e.data===YT.PlayerState.ENDED){clearInterval(vidInterval);if(ytP)last=ytP.getCurrentTime();}
-    }}
-  });
+        this.style.display='none';
+        toast('✅ Marked as watched!','ok');
+      },{once:true});
+    }
+  },10000);
 }
 async function markDone(lid){
   await db.addCompletion({id:uid(),user_id:U.id,lecture_id:lid,completed_at:n()});
@@ -1092,11 +1115,35 @@ function handleAdminUpload(lid,input){
 }
 async function finishUpload(lid){
   if(!_pendingFile){toast('No file','er');return}
-  const ok=saveFile(lid,_pendingFile);
-  // Also update lecture record with file metadata
-  await db.updLecture(lid,{file_name:_pendingFile.name,file_type:_pendingFile.type});
-  if(ok){toast('✅ File uploaded!','ok');_pendingFile=null;cmo();pageAdminLectures(PAR.id);}
-  else{toast('❌ Storage full — try a smaller file','er');}
+  const btn=document.getElementById('save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Uploading...';}
+  try{
+    if(SB){
+      // Upload to Supabase Storage
+      const path='lectures/'+lid+'/'+_pendingFile.name;
+      const byteStr=atob(_pendingFile.data.split(',')[1]);
+      const ab=new ArrayBuffer(byteStr.length);
+      const ia=new Uint8Array(ab);
+      for(let i=0;i<byteStr.length;i++)ia[i]=byteStr.charCodeAt(i);
+      const blob=new Blob([ab],{type:_pendingFile.type});
+      const {error}=await SB.storage.from('lms-files').upload(path,blob,{upsert:true,contentType:_pendingFile.type});
+      if(error)throw new Error(error.message);
+      const {data}=SB.storage.from('lms-files').getPublicUrl(path);
+      await db.updLecture(lid,{file_name:_pendingFile.name,file_type:_pendingFile.type,file_path:data.publicUrl});
+      // Also cache locally
+      saveFile(lid,{..._pendingFile,url:data.publicUrl});
+      toast('✅ File uploaded to cloud!','ok');
+    } else {
+      const ok=saveFile(lid,_pendingFile);
+      if(!ok)throw new Error('Browser storage full. Connect Supabase to upload larger files.');
+      await db.updLecture(lid,{file_name:_pendingFile.name,file_type:_pendingFile.type});
+      toast('✅ File uploaded!','ok');
+    }
+    _pendingFile=null;cmo();pageAdminLectures(PAR.id);
+  }catch(e){
+    toast('❌ '+e.message,'er');
+    if(btn){btn.disabled=false;btn.textContent='💾 Save to Lectures';}
+  }
 }
 let _elid='',_elsid='';
 function openLecModal(sid,id){
