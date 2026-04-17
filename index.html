@@ -663,14 +663,14 @@ async function pageLecture(lid){
   document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec&&sec.id||''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
     <div class="ph"><div><h2>${lec.title}</h2></div></div>
-    ${!vidDone?`<div class="al al-w" style="margin-bottom:16px">⚠️ You must view the complete content before taking the quiz.</div>`:''}
+    ${!vidDone&&lec.type!=='youtube'?`<div class="al al-w" style="margin-bottom:16px">⚠️ You must view the complete content before taking the quiz.</div>`:''}
     ${content}
     <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:center">
-      ${qBtn}${dBtn}
+      ${watchedBtn||''}${qBtn}${dBtn}
       ${vidDone&&lec.has_quiz&&passed?`<div class="al al-ok" style="margin:0;flex:1">✅ Quiz passed!</div>`:''}
     </div>
   </div>`;
-  if(lec.type==='youtube')initYT(lec.url,lid,lec.has_quiz);
+  // YouTube opens in new tab - no embed needed
 }
 
 function buildFileViewer(lid,lec){
