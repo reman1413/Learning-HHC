@@ -541,7 +541,7 @@ function pageLogin(){
   <div class="lw">
     <div class="ll">
       <div class="li">🏥</div><h1>Learning Hub</h1>
-      <p>Meena Health Home Care — Professional Development &amp; Training</p>
+      <p>Meena Health Home Health Care — Professional Development &amp; Training</p>
       <div style="margin-top:36px;opacity:.45;font-size:13px;text-align:center;position:relative"><p>Empowering nurses through</p><p>continuous education</p></div>
     </div>
     <div class="lr"><div class="lb">
@@ -918,19 +918,19 @@ async function submitQ(){
     const selectedIdx=letters.indexOf(QS.ans[i]);
     if(selectedIdx>=0&&q.shuffled[selectedIdx]?.correct)ok++;
   });
-  const score=Math.round(ok/qs.length*100),passed=score>=90;
+  const score=Math.round(ok/qs.length*100),passed=true; // completing quiz = pass
   await db.addAttempt({id:uid(),user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
   document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:600px">
     <div class="card" style="text-align:center;padding:52px 36px">
       <div class="r-circle ${passed?'r-pass':'r-fail'}">${score}%</div>
       <h2 style="font-size:30px;color:var(--pu-d);margin-bottom:10px">${passed?'🎉 Excellent!':'😔 Not Passed'}</h2>
-      <p style="color:var(--muted);margin-bottom:26px;font-size:15px">You got ${ok} out of ${qs.length} correct. ${passed?'Congratulations!':'You need 90% to pass.'}</p>
+      <p style="color:var(--muted);margin-bottom:26px;font-size:15px">You got ${ok} out of ${qs.length} correct. Quiz completed! ✅</p>
       <div style="background:var(--lav-l);border-radius:14px;padding:22px;margin-bottom:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px;border:1px solid var(--border)">
         <div><div style="font-size:30px;font-weight:800;color:var(--ok)">${ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Correct</div></div>
         <div><div style="font-size:30px;font-weight:800;color:var(--err)">${qs.length-ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Incorrect</div></div>
       </div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        ${passed?`<button class="btn bp blg" onclick="goAfterQ()">View My Progress →</button>`:`<button class="btn bp blg" onclick="go('lecture',{id:'${QS.lid}'},{page:'home',par:{},label:'Home'})">Review &amp; Retry</button>`}
+        <button class="btn bp blg" onclick="goAfterQ()">View My Progress →</button>
       </div>
     </div>
   </div>`
@@ -952,7 +952,7 @@ async function pageCert(id){
     </div>
     <div class="cert-pg"><div class="cert-out"><div class="cert-in">
       <div class="c-wm">MEENA</div><div class="c-stamp">MEENA<br>HEALTH<br>✓</div>
-      <div class="c-org">MEENA HEALTH</div><div class="c-sub0">Home Care Division · Riyadh</div>
+      <div class="c-org">MEENA HEALTH</div><div class="c-sub0">Home Health Care Division · Riyadh</div>
       <div class="c-div"></div>
       <div class="c-ttl">Certificate</div><div class="c-sub2">of Completion</div>
       <p class="c-txt">This is to certify that</p>
@@ -961,7 +961,7 @@ async function pageCert(id){
       <p class="c-txt">has successfully completed the training module</p>
       <div class="c-sec">${sec?sec.title:''}</div>
       <p class="c-txt">demonstrating the required competency standards of</p>
-      <p class="c-txt" style="font-weight:700">Meena Health Home Care</p>
+      <p class="c-txt" style="font-weight:700">Meena Health Home Health Care</p>
       <div class="c-meta">
         <div class="c-mi"><div class="lbl">Issue Date</div><div class="val">${date}</div></div>
         <div class="c-mi"><div class="lbl">Head Nurse</div><div class="val">Reman Badawood</div></div>
@@ -1052,7 +1052,7 @@ async function pageAdminDash(){
       <td>${certs.filter(c=>c.user_id===emp.id).length} 🏆</td>
       <td><button class="btn bo bsm" onclick="go('astaff1',{id:'${emp.id}'},{page:'astaff',par:{},label:'Staff'})">View →</button></td></tr>`}).join('');
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
-    <div class="ph"><div><h2>Admin Dashboard</h2><p>Meena Health Home Care — Training Management</p></div>
+    <div class="ph"><div><h2>Admin Dashboard</h2><p>Meena Health Home Health Care — Training Management</p></div>
       ${DEMO_MODE?`<button class="btn bg2 bsm" onclick="go('setup')">⚙️ Connect Database</button>`:''}
     </div>
     <div class="stats">
