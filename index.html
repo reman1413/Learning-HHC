@@ -222,7 +222,10 @@ seed();
 const db = {
   // ── USERS ──
   async users(){
-    if(SB){const{data}=await SB.from('lms_users').select('*');return data||[]}
+    if(SB){
+      const{data,error}=await SB.from('lms_users').select('*');
+      if(!error&&data){ls2('users',data);return data;}
+    }
     return ls('users');
   },
   async userByBadge(bid){
@@ -230,29 +233,47 @@ const db = {
     return ls('users').find(u=>u.badge_id===bid)||null;
   },
   async addUser(u){
-    if(SB){await SB.from('lms_users').insert(u)}
-    else{let a=ls('users');a.push(u);ls2('users',a)}
+    if(SB){
+      const {error}=await SB.from('lms_users').insert(u);
+      if(error)throw new Error('Save failed: '+error.message);
+    }
+    let a=ls('users');a.push(u);ls2('users',a);
   },
   async updUser(id,d){
-    if(SB){await SB.from('lms_users').update(d).eq('id',id)}
-    else{ls2('users',ls('users').map(u=>u.id===id?{...u,...d}:u))}
+    if(SB){
+      const {error}=await SB.from('lms_users').update(d).eq('id',id);
+      if(error)throw new Error('Update failed: '+error.message);
+    }
+    ls2('users',ls('users').map(u=>u.id===id?{...u,...d}:u));
   },
   async delUser(id){
-    if(SB){await SB.from('lms_users').delete().eq('id',id)}
-    else{ls2('users',ls('users').filter(u=>u.id!==id))}
+    if(SB){
+      const {error}=await SB.from('lms_users').delete().eq('id',id);
+      if(error)throw new Error('Delete failed: '+error.message);
+    }
+    ls2('users',ls('users').filter(u=>u.id!==id));
   },
   // ── SECTIONS ──
   async sections(){
-    if(SB){const{data}=await SB.from('lms_sections').select('*').order('order_num');return data||[]}
+    if(SB){
+      const{data,error}=await SB.from('lms_sections').select('*').order('order_num');
+      if(!error&&data){ls2('sections',data);return data;}
+    }
     return ls('sections').sort((a,b)=>a.order_num-b.order_num);
   },
   async addSection(s){
-    if(SB){await SB.from('lms_sections').insert(s)}
-    else{let a=ls('sections');a.push(s);ls2('sections',a)}
+    if(SB){
+      const {error}=await SB.from('lms_sections').insert(s);
+      if(error)throw new Error('Save failed: '+error.message);
+    }
+    let a=ls('sections');a.push(s);ls2('sections',a);
   },
   async updSection(id,d){
-    if(SB){await SB.from('lms_sections').update(d).eq('id',id)}
-    else{ls2('sections',ls('sections').map(s=>s.id===id?{...s,...d}:s))}
+    if(SB){
+      const {error}=await SB.from('lms_sections').update(d).eq('id',id);
+      if(error)throw new Error('Update failed: '+error.message);
+    }
+    ls2('sections',ls('sections').map(s=>s.id===id?{...s,...d}:s));
   },
   async delSection(id){
     if(SB){await SB.from('lms_sections').delete().eq('id',id)}
@@ -266,7 +287,14 @@ const db = {
   },
   // ── LECTURES ──
   async lectures(sid){
-    if(SB){const{data}=await SB.from('lms_lectures').select('*').eq('section_id',sid).order('order_num');return data||[]}
+    if(SB){
+      const{data,error}=await SB.from('lms_lectures').select('*').eq('section_id',sid).order('order_num');
+      if(!error&&data){
+        const others=ls('lectures').filter(l=>l.section_id!==sid);
+        ls2('lectures',[...others,...data]);
+        return data;
+      }
+    }
     return ls('lectures').filter(l=>l.section_id===sid).sort((a,b)=>a.order_num-b.order_num);
   },
   async lecture(id){
@@ -274,33 +302,58 @@ const db = {
     return ls('lectures').find(l=>l.id===id)||null;
   },
   async addLecture(l){
-    if(SB){await SB.from('lms_lectures').insert(l)}
-    else{let a=ls('lectures');a.push(l);ls2('lectures',a)}
+    if(SB){
+      const {error}=await SB.from('lms_lectures').insert(l);
+      if(error)throw new Error('Save failed: '+error.message);
+    }
+    let a=ls('lectures');a.push(l);ls2('lectures',a);
   },
   async updLecture(id,d){
-    if(SB){await SB.from('lms_lectures').update(d).eq('id',id)}
-    else{ls2('lectures',ls('lectures').map(l=>l.id===id?{...l,...d}:l))}
+    if(SB){
+      const {error}=await SB.from('lms_lectures').update(d).eq('id',id);
+      if(error)throw new Error('Update failed: '+error.message);
+    }
+    ls2('lectures',ls('lectures').map(l=>l.id===id?{...l,...d}:l));
   },
   async delLecture(id){
-    if(SB){await SB.from('lms_lectures').delete().eq('id',id)}
-    else{delFile(id);ls2('lectures',ls('lectures').filter(l=>l.id!==id));ls2('questions',ls('questions').filter(q=>q.lecture_id!==id))}
+    if(SB){
+      const {error}=await SB.from('lms_lectures').delete().eq('id',id);
+      if(error)throw new Error('Delete failed: '+error.message);
+    }
+    delFile(id);ls2('lectures',ls('lectures').filter(l=>l.id!==id));ls2('questions',ls('questions').filter(q=>q.lecture_id!==id));
   },
   // ── QUESTIONS ──
   async questions(lid){
-    if(SB){const{data}=await SB.from('lms_questions').select('*').eq('lecture_id',lid);return data||[]}
+    if(SB){
+      const{data,error}=await SB.from('lms_questions').select('*').eq('lecture_id',lid);
+      if(!error&&data){
+        const others=ls('questions').filter(q=>q.lecture_id!==lid);
+        ls2('questions',[...others,...data]);
+        return data;
+      }
+    }
     return ls('questions').filter(q=>q.lecture_id===lid);
   },
   async addQuestion(q){
-    if(SB){await SB.from('lms_questions').insert(q)}
-    else{let a=ls('questions');a.push(q);ls2('questions',a)}
+    if(SB){
+      const {error}=await SB.from('lms_questions').insert(q);
+      if(error)throw new Error('Save failed: '+error.message);
+    }
+    let a=ls('questions');a.push(q);ls2('questions',a);
   },
   async updQuestion(id,d){
-    if(SB){await SB.from('lms_questions').update(d).eq('id',id)}
-    else{ls2('questions',ls('questions').map(q=>q.id===id?{...q,...d}:q))}
+    if(SB){
+      const {error}=await SB.from('lms_questions').update(d).eq('id',id);
+      if(error)throw new Error('Update failed: '+error.message);
+    }
+    ls2('questions',ls('questions').map(q=>q.id===id?{...q,...d}:q));
   },
   async delQuestion(id){
-    if(SB){await SB.from('lms_questions').delete().eq('id',id)}
-    else{ls2('questions',ls('questions').filter(q=>q.id!==id))}
+    if(SB){
+      const {error}=await SB.from('lms_questions').delete().eq('id',id);
+      if(error)throw new Error('Delete failed: '+error.message);
+    }
+    ls2('questions',ls('questions').filter(q=>q.id!==id));
   },
   // ── COMPLETIONS ──
   async completions(uid){
@@ -312,8 +365,8 @@ const db = {
     return ls('completions');
   },
   async addCompletion(c){
-    if(SB){await SB.from('lms_completions').upsert(c,{onConflict:'user_id,lecture_id'})}
-    else{let a=ls('completions');if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){a.push(c);ls2('completions',a)}}
+    if(SB){await SB.from('lms_completions').upsert(c,{onConflict:'user_id,lecture_id'});}
+    let a=ls('completions');if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){a.push(c);ls2('completions',a);}
   },
   async isCompleted(uid,lid){
     if(SB){const{data}=await SB.from('lms_completions').select('id').eq('user_id',uid).eq('lecture_id',lid).single();return!!data}
@@ -329,8 +382,8 @@ const db = {
     return ls('attempts');
   },
   async addAttempt(a){
-    if(SB){await SB.from('lms_attempts').insert(a)}
-    else{let arr=ls('attempts');arr.push(a);ls2('attempts',arr)}
+    if(SB){await SB.from('lms_attempts').insert(a);}
+    let arr=ls('attempts');arr.push(a);ls2('attempts',arr);
   },
   async hasPassed(uid,lid){
     if(SB){const{data}=await SB.from('lms_attempts').select('id').eq('user_id',uid).eq('lecture_id',lid).eq('passed',true).single();return!!data}
@@ -350,8 +403,8 @@ const db = {
     return ls('certs').find(c=>c.id===id)||null;
   },
   async addCert(c){
-    if(SB){await SB.from('lms_certs').insert(c)}
-    else{let a=ls('certs');a.push(c);ls2('certs',a)}
+    if(SB){await SB.from('lms_certs').insert(c);}
+    let a=ls('certs');a.push(c);ls2('certs',a);
   },
   // ── FILE UPLOAD to Supabase Storage ──
   async uploadFile(lid, file, progressCb){
@@ -954,10 +1007,12 @@ function openSecModal(id){
 async function saveSec(){
   const t=document.getElementById('st').value.trim(),d=document.getElementById('sd').value.trim();
   if(!t){toast('Enter a title','er');return}
-  const secs=await db.sections();
-  if(_esid)await db.updSection(_esid,{title:t,description:d});
-  else await db.addSection({id:uid(),title:t,description:d,order_num:secs.length+1,created_at:n()});
-  toast(_esid?'Updated!':'Added!','ok');cmo();pageAdminSections();
+  try{
+    const secs=await db.sections();
+    if(_esid)await db.updSection(_esid,{title:t,description:d});
+    else await db.addSection({id:uid(),title:t,description:d,order_num:secs.length+1,created_at:n()});
+    toast(_esid?'Updated! ✅':'Section added! ✅','ok');cmo();pageAdminSections();
+  }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
 async function delSec(id){if(confirm('Delete section and all lectures?')){await db.delSection(id);toast('Deleted','ok');pageAdminSections()}}
 
@@ -1070,10 +1125,12 @@ async function saveLec(){
   const url=type==='youtube'?(document.getElementById('lurl').value.trim()):'';
   const hq=document.getElementById('lhq').checked;
   if(!t){toast('Enter a title','er');return}
-  const lecs=await db.lectures(_elsid);
-  if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq});
-  else await db.addLecture({id:uid(),section_id:_elsid,title:t,type,url,has_quiz:hq,order_num:lecs.length+1,created_at:n()});
-  toast(_elid?'Updated!':'Added!','ok');cmo();pageAdminLectures(_elsid);
+  try{
+    const lecs=await db.lectures(_elsid);
+    if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq});
+    else await db.addLecture({id:uid(),section_id:_elsid,title:t,type,url,has_quiz:hq,order_num:lecs.length+1,created_at:n()});
+    toast(_elid?'Updated! ✅':'Lecture added! ✅','ok');cmo();pageAdminLectures(_elsid);
+  }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
 async function delLec(id,sid){if(confirm('Delete lecture?')){await db.delLecture(id);toast('Deleted','ok');pageAdminLectures(sid)}}
 
@@ -1125,9 +1182,11 @@ async function saveQ(){
   const ca=document.getElementById('qca').value;
   if(!t||!a||!b||!c||!d){toast('Fill all fields','er');return}
   const data={question_text:t,option_a:a,option_b:b,option_c:c,option_d:d,correct_answer:ca};
-  if(_eqid)await db.updQuestion(_eqid,data);
-  else await db.addQuestion({id:uid(),lecture_id:_eqlid,...data,created_at:n()});
-  toast(_eqid?'Updated!':'Added!','ok');cmo();pageAdminQuestions(_eqlid);
+  try{
+    if(_eqid)await db.updQuestion(_eqid,data);
+    else await db.addQuestion({id:uid(),lecture_id:_eqlid,...data,created_at:n()});
+    toast(_eqid?'Updated! ✅':'Question added! ✅','ok');cmo();pageAdminQuestions(_eqlid);
+  }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
 async function delQ(id,lid){if(confirm('Delete?')){await db.delQuestion(id);toast('Deleted','ok');pageAdminQuestions(lid)}}
 
@@ -1188,14 +1247,19 @@ async function saveEmp(){
   const ei=document.getElementById('ei').value.trim();
   if(!nm||!bd||!ei){toast('Name, employee number, and iqama are required','er');return}
   const data={name:nm,email:ee,badge_id:bd,file_number:ef,iqama_number:ei,role:'employee'};
-  if(_eeId){
-    await db.updUser(_eeId,data);toast('Updated!','ok');
-  }else{
-    const existing=await db.userByBadge(bd);
-    if(existing){toast('Employee number already exists','er');return}
-    await db.addUser({id:uid(),...data,created_at:n()});toast('Employee added!','ok');
+  try{
+    if(_eeId){
+      await db.updUser(_eeId,data);toast('Updated! ✅','ok');
+    }else{
+      const existing=await db.userByBadge(bd);
+      if(existing){toast('Employee number already exists','er');return}
+      await db.addUser({id:uid(),...data,created_at:n()});toast('Employee added! ✅','ok');
+    }
+    cmo();await pageAdminStaff();
+  }catch(e){
+    toast('❌ Error: '+e.message,'er');
+    console.error(e);
   }
-  cmo();pageAdminStaff();
 }
 async function delEmp(id){if(confirm('Remove employee?')){await db.delUser(id);toast('Removed','ok');pageAdminStaff()}}
 
