@@ -589,22 +589,120 @@ async function doLogin(){
 // EMPLOYEE HOME
 // ════════════════════════════════════════════════════════════════
 async function pageHome(){
-  const secs=await db.sections(),comps=await db.completions(U.id);
-  let cards=secs.map(sec=>{
-    const lecs=ls('lectures').filter(l=>l.section_id===sec.id); // quick count
-    const done=lecs.filter(l=>comps.find(c=>c.lecture_id===l.id)).length;
-    const pct=lecs.length?Math.round(done/lecs.length*100):0;
-    return`<div class="sec-card" onclick="go('section',{id:'${sec.id}'},{page:'home',par:{},label:'Home'})">
-      <h3>📚 ${sec.title}</h3><p>${sec.description||'Click to view lectures'}</p>
-      <div class="meta"><span>📖 ${lecs.length} lectures</span><span>✅ ${done} done</span></div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:5px;text-align:right;font-weight:600">${pct}% complete</div>
-    </div>`}).join('');
-  if(!cards)cards=`<div style="text-align:center;padding:80px;color:var(--muted)"><p style="font-size:52px">📭</p><p style="margin-top:12px;font-weight:600">No training sections yet</p></div>`;
+  const secs=await db.sections();
+  const comps=await db.completions(U.id);
+  const allAtts=await db.attempts(U.id);
+  const certs=await db.certs(U.id);
+
+  const cardData=await Promise.all(secs.map(async sec=>{
+    const lecs=await db.lectures(sec.id);
+    if(!lecs.length)return null;
+    let doneCount=0;
+    for(const l of lecs){
+      const watched=comps.find(c=>c.lecture_id===l.id);
+      const passed=l.has_quiz?allAtts.some(a=>a.lecture_id===l.id&&a.passed):true;
+      if(watched&&passed)doneCount++;
+    }
+    const pct=Math.round(doneCount/lecs.length*100);
+    const hasCert=certs.find(c=>c.section_id===sec.id);
+    return{sec,total:lecs.length,doneCount,pct,hasCert,remaining:lecs.length-doneCount};
+  }));
+
+  const valid=cardData.filter(Boolean).sort((a,b)=>{
+    const s=x=>x.pct===100?2:x.pct>0?1:0;
+    return s(b)-s(a);
+  });
+
+  const cardsHtml=valid.map(({sec,total,doneCount,pct,hasCert,remaining})=>{
+    const done=pct===100;
+    const started=pct>0&&!done;
+    const bc=done?'var(--ok)':started?'var(--pu-ll)':'var(--border)';
+    const bar_color=done?'linear-gradient(90deg,var(--ok),#4ade80)':'linear-gradient(90deg,var(--pu),var(--pu-ll))';
+    const badge=done
+      ?`<span style="background:#DCFCE7;color:#166534;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">✅ Complete</span>`
+      :started
+        ?`<span style="background:var(--lav);color:var(--pu);padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">📖 ${remaining} left</span>`
+        :`<span style="background:var(--border);color:var(--muted);padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">Not started</span>`;
+    const certRow=hasCert?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <span style="font-size:12px;font-weight:700;color:#854D0E">🏆 Certificate earned · <span style="font-family:monospace">${hasCert.ref_number}</span></span>
+    </div>`:'';
+    return`<div onclick="go('section',{id:'${sec.id}'},{page:'home',par:{},label:'Home'})"
+      style="background:var(--card);border-radius:16px;padding:22px;border:2px solid ${bc};cursor:pointer;transition:.25s;box-shadow:var(--sh);position:relative;overflow:hidden"
+      onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shh)'"
+      onmouseout="this.style.transform='';this.style.boxShadow='var(--sh)'">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${done?'linear-gradient(90deg,var(--ok),#4ade80)':started?'linear-gradient(90deg,var(--pu-d),var(--pu-ll))':'var(--border)'}"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
+        <h3 style="font-size:16px;font-weight:800;color:var(--pu-d);flex:1">${sec.title}</h3>
+        ${badge}
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5">${sec.description||''}</p>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;color:var(--muted);font-weight:600">${doneCount}/${total} lectures done</span>
+            <span style="font-size:12px;font-weight:800;color:${done?'var(--ok)':'var(--pu)'}">${pct}%</span>
+          </div>
+          <div style="height:8px;background:var(--lav);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${bar_color};border-radius:99px;transition:width .5s"></div>
+          </div>
+        </div>
+        <div style="width:42px;height:42px;border-radius:50%;background:${done?'#DCFCE7':'var(--lav)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${done?'✅':'📚'}</div>
+      </div>
+      ${certRow}
+    </div>`;
+  }).join('');
+
+  // Certs list
+  let certsHtml='';
+  if(certs.length){
+    const secList=await db.sections();
+    const certItems=certs.map(cert=>{
+      const s=secList.find(x=>x.id===cert.section_id);
+      const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+      return`<div onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})"
+        style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--card);border-radius:12px;border:1.5px solid #FDE68A;margin-bottom:10px;cursor:pointer;transition:.2s"
+        onmouseover="this.style.background='#FFFBEB'" onmouseout="this.style.background='var(--card)'">
+        <div style="font-size:26px">🏆</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--pu-d)">${s?s.title:'Certificate'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${date} · Ref: <span style="font-family:monospace;font-weight:700">${cert.ref_number}</span></div>
+        </div>
+        <span style="color:var(--pu-l);font-size:13px;font-weight:700">View →</span>
+      </div>`;
+    }).join('');
+    certsHtml=`<div style="margin-top:36px"><h3 style="font-size:18px;font-weight:800;color:var(--pu-d);margin-bottom:16px">🏆 My Certificates</h3>${certItems}</div>`;
+  }
+
+  const completedSecs=valid.filter(c=>c.pct===100).length;
+  const totalLecs=valid.reduce((s,c)=>s+c.total,0);
+  const completedLecs=valid.reduce((s,c)=>s+c.doneCount,0);
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
-    <div class="ph"><div><h2>My Training Dashboard</h2><p>Complete sections to earn your certificates</p></div></div>
-    <div class="grid">${cards}</div>
-  </div>`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px">
+      <div>
+        <h2 style="font-size:26px;font-weight:800;color:var(--pu-d)">My Training Dashboard</h2>
+        <p style="color:var(--muted);margin-top:4px">Welcome, <strong>${U.name}</strong> 👋</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--pu)">${completedSecs}/${valid.length}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600">Sections</div>
+        </div>
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--pu)">${completedLecs}/${totalLecs}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600">Lectures</div>
+        </div>
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--ok)">${certs.length}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600">Certificates</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+      ${cardsHtml||'<div style="text-align:center;padding:80px;color:var(--muted);grid-column:1/-1"><p style="font-size:52px">📭</p><p style="margin-top:12px;font-weight:600">No training sections yet</p></div>'}
+    </div>
+    ${certsHtml}
+  </div>`;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -690,7 +788,15 @@ async function pageLecture(lid){
       actionBtns=`<button id="qbtn" class="btn bp blg" ${!vidDone?'disabled':''} onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">📝 Take Quiz${!vidDone?' · view content first':''}</button>`;
     }
   } else {
-    actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">✅ Mark Complete</button>`;
+    // No quiz — show "I've watched" button if not yet marked
+    if(vidDone){
+      actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✅ Marked as viewed</div>`;
+    } else {
+      const isFile=lec.type==='pptx';
+      actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">
+        ${isFile?'✅ I have reviewed this file':'✅ I have watched this lecture'}
+      </button>`;
+    }
   }
 
   document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
@@ -863,9 +969,11 @@ async function markWatchedYT(lid){
   }catch(e){toast('❌ '+e.message,'er');console.error(e);}
 }
 async function markDone(lid){
-  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-  toast('✅ Marked complete!','ok');
-  const lec=await db.lecture(lid);go('section',{id:lec.section_id});
+  try{
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    toast('✅ Marked as viewed!','ok');
+    await pageLecture(lid); // refresh page to show updated state
+  }catch(e){toast('❌ '+e.message,'er');console.error(e);}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -994,6 +1102,53 @@ async function pageCert(id){
 // ════════════════════════════════════════════════════════════════
 // ADMIN: CERTIFICATES PAGE — who passed, issue certs
 // ════════════════════════════════════════════════════════════════
+
+async function deleteCert(id){
+  if(!confirm('Delete this certificate? This cannot be undone.'))return;
+  if(SB){
+    const {error}=await SB.from('lms_certs').delete().eq('id',id);
+    if(error){toast('❌ '+error.message,'er');return;}
+  }
+  ls2('certs',ls('certs').filter(c=>c.id!==id));
+  toast('Certificate deleted','ok');
+  await pageAdminCerts();
+}
+async function exportExcel(){
+  const users=await db.users(),secs=await db.sections();
+  const comps=await db.allCompletions(),atts=await db.allAttempts(),certs=await db.allCerts();
+  const emps=users.filter(u=>u.role==='employee');
+  const rows=[];
+  rows.push(['Employee Name','Employee #','File #','Iqama #','Section','Lecture','Status','Best Score','Certificate Ref']);
+  for(const emp of emps){
+    const ec=comps.filter(c=>c.user_id===emp.id);
+    const ea=atts.filter(a=>a.user_id===emp.id);
+    const ecc=certs.filter(c=>c.user_id===emp.id);
+    for(const sec of secs){
+      const lecs=await db.lectures(sec.id);
+      const sc=ecc.find(c=>c.section_id===sec.id);
+      for(const lec of lecs){
+        const w=ec.find(c=>c.lecture_id===lec.id)?'Watched':'Not watched';
+        const la=ea.filter(a=>a.lecture_id===lec.id);
+        const bs=la.length?String(Math.max(...la.map(a=>a.score)))+'%':'-';
+        rows.push([emp.name,emp.badge_id,emp.file_number||'-',emp.iqama_number,sec.title,lec.title,w,bs,sc?sc.ref_number:'-']);
+      }
+    }
+  }
+  const q=function(v){return '"'+String(v).split('"').join('""')+'"';};
+  const nl=String.fromCharCode(13)+String.fromCharCode(10);
+  const csvStr=rows.map(function(r){return r.map(q).join(',');}).join(nl);
+  const bom=String.fromCharCode(65279);
+  const blob=new Blob([bom+csvStr],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='Meena_Training_Report.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Report downloaded!','ok');
+}
+
+
 async function pageAdminCerts(){
   const users=await db.users(),secs=await db.sections();
   const allAtts=await db.allAttempts(),allCerts=await db.allCerts();
@@ -1024,7 +1179,10 @@ async function pageAdminCerts(){
         <td>${avgScore!==null?`<strong style="color:${avgScore>=90?'var(--ok)':'var(--err)'}">${avgScore}%</strong>`:'—'}</td>
         <td>
           ${hasCert
-            ?`<button class="btn bo bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>`
+            ?`<div style="display:flex;gap:6px">
+          <button class="btn bo bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>
+          <button class="btn bd bsm" onclick="deleteCert('${hasCert.id}')">🗑</button>
+        </div>`
             :allPassed
               ?`<button class="btn bp bsm" onclick="issueAdminCert('${emp.id}','${sec.id}')">📜 Issue Certificate</button>`
               :'<span style="color:var(--muted);font-size:12px">Not passed yet</span>'}
@@ -1038,7 +1196,10 @@ async function pageAdminCerts(){
     </div>`;
   }
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
-    <div class="ph"><div><h2>🏆 Certificates & Results</h2><p>Issue certificates to nurses who passed all quizzes</p></div></div>
+    <div class="ph">
+      <div><h2>🏆 Certificates & Results</h2><p>Issue certificates to nurses who passed all quizzes</p></div>
+      <button class="btn bp" onclick="exportExcel()">📊 Download Excel Report</button>
+    </div>
     ${secBlocks||'<div style="text-align:center;padding:60px;color:var(--muted)">No training sections with quizzes yet.</div>'}
   </div>`
 }
@@ -1091,6 +1252,7 @@ async function pageAdminDash(){
       <div class="card" style="cursor:pointer" onclick="go('asections')"><h3 style="color:var(--pu-d);margin-bottom:6px">📚 Content</h3><p style="color:var(--muted);font-size:13px">Sections &amp; lectures</p><div class="btn bp bsm" style="margin-top:14px">Open</div></div>
       <div class="card" style="cursor:pointer" onclick="go('astaff')"><h3 style="color:var(--pu-d);margin-bottom:6px">👥 Staff</h3><p style="color:var(--muted);font-size:13px">Manage employees</p><div class="btn bp bsm" style="margin-top:14px">Open</div></div>
       <div class="card" style="cursor:pointer" onclick="go('acerts')"><h3 style="color:var(--pu-d);margin-bottom:6px">🏆 Certificates</h3><p style="color:var(--muted);font-size:13px">Results &amp; issue certs</p><div class="btn bp bsm" style="margin-top:14px">Open</div></div>
+      <div class="card" style="cursor:pointer" onclick="exportExcel()"><h3 style="color:var(--pu-d);margin-bottom:6px">📊 Excel Report</h3><p style="color:var(--muted);font-size:13px">Download staff progress report</p><div class="btn bp bsm" style="margin-top:14px">Download</div></div>
     </div>
   </div>`
 }
