@@ -636,7 +636,9 @@ async function pageSection(sid){
       <div class="lec-ico">${lec.type==='youtube'?'▶':'📄'}</div>
       <div class="lec-info"><h4>${lec.title}</h4><span>${lec.type==='youtube'?'Video lecture':'Presentation / PDF'}${lec.has_quiz?' · Includes quiz':''}</span></div>
       ${badge}
-    </div>`}).join('');
+    </div>`;
+  }));
+  const itemsHtml=items.join('');
   const banner=hasCert
     ?`<div class="al al-ok"><span>🏆 You earned a certificate for this section!</span><button class="btn bp bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'section',par:{id:'${sid}'},label:'Back'})">View Certificate</button></div>`
     :allDone?`<div class="al al-i"><span>🎉 All lectures complete! Claim your certificate.</span><button class="btn bp bsm" onclick="issueCert('${sid}')">Get Certificate</button></div>`:'';
