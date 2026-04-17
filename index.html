@@ -429,8 +429,10 @@ function bar(){
         <button onclick="go('asections')">📚 Content</button>
         <button onclick="go('astaff')">👥 Staff</button>
         <button onclick="go('acerts')">🏆 Certificates</button>
+        <button onclick="location.reload()" title="Refresh">🔄</button>
       </div>`:''}
       ${isA?dbBadge:''}
+      ${!isA?'<button class="btn-out" onclick="location.reload()" title="Refresh">🔄</button>':''}
       <span class="bar-user">👤 ${U.name} <span style="opacity:.5;font-size:11px">#${U.badge_id}</span></span>
       <button class="btn-out" onclick="logout()">Sign Out</button>
     </div>
@@ -494,9 +496,7 @@ function pageLogin(){
         <input id="bpw" type="password" placeholder="Enter your iqama number" style="font-size:16px;padding:13px 16px" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div id="lerr" style="color:var(--err);font-size:13px;margin-bottom:12px;display:none;font-weight:600;background:#FEE2E2;padding:10px 14px;border-radius:8px"></div>
       <button class="btn bp blg" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
-      <div style="text-align:center;margin-top:16px">
-        <button class="btn bg2 bsm" onclick="go('setup')" style="font-size:12px">⚙️ Database Settings</button>
-      </div>
+
     </div></div>
   </div>`
 }
