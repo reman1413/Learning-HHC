@@ -645,32 +645,70 @@ async function issueCert(sid){
 // ════════════════════════════════════════════════════════════════
 // LECTURE
 // ════════════════════════════════════════════════════════════════
-let ytP=null,vidDone=false,vidInterval=null;
+let vidDone=false;
 
 async function pageLecture(lid){
   const lec=await db.lecture(lid);if(!lec){go('home');return}
   const secs=await db.sections(),sec=secs.find(s=>s.id===lec.section_id);
   vidDone=await db.isCompleted(U.id,lid);
   const passed=lec.has_quiz?await db.hasPassed(U.id,lid):true;
-  const qBtn=lec.has_quiz?`<button id="qbtn" class="btn bp blg" ${!vidDone?'disabled':''} onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">${passed?'↩ Retake Quiz':'📝 Take Quiz'}${!vidDone?' · view content first':''}</button>`:'';
-  const dBtn=!lec.has_quiz?`<button id="dbtn" class="btn bp blg" ${!vidDone?'disabled':''} onclick="markDone('${lid}')">✅ Mark Complete${!vidDone?' · view first':''}</button>`:'';
+  const isYT=lec.type==='youtube';
+
+  // Build content area
   let content='';
-  if(lec.type==='youtube'){
-    content=`<div class="vid-wrap"><div id="ytp"></div></div><div id="swarn" class="skip-warn">⛔ Skipping is not allowed — watch completely.</div>`;
+  if(isYT){
+    content=buildYT(lec.url,lid);
   }else{
     content=buildFileViewer(lid,lec);
   }
+
+  // Build action buttons
+  let actionBtns='';
+  if(vidDone&&lec.has_quiz&&passed){
+    actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✅ Quiz passed!</div>`;
+    if(lec.has_quiz) actionBtns+=`<button class="btn bp blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">↩ Retake Quiz</button>`;
+  } else if(lec.has_quiz){
+    if(isYT&&!vidDone){
+      actionBtns=`<button class="btn bg2 blg" onclick="markWatchedYT('${lid}')">✅ I've Watched the Video — Unlock Quiz</button>`;
+    } else {
+      actionBtns=`<button id="qbtn" class="btn bp blg" ${!vidDone?'disabled':''} onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">📝 Take Quiz${!vidDone?' · view content first':''}</button>`;
+    }
+  } else {
+    actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">✅ Mark Complete</button>`;
+  }
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
-    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec&&sec.id||''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
+    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
     <div class="ph"><div><h2>${lec.title}</h2></div></div>
-    ${!vidDone&&lec.type!=='youtube'?`<div class="al al-w" style="margin-bottom:16px">⚠️ You must view the complete content before taking the quiz.</div>`:''}
+    ${!vidDone&&!isYT?`<div class="al al-w" style="margin-bottom:16px">⚠️ View the complete content to unlock the quiz.</div>`:''}
     ${content}
     <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:center">
-      ${watchedBtn||''}${qBtn}${dBtn}
-      ${vidDone&&lec.has_quiz&&passed?`<div class="al al-ok" style="margin:0;flex:1">✅ Quiz passed!</div>`:''}
+      ${actionBtns}
     </div>
   </div>`;
-  // YouTube opens in new tab - no embed needed
+}
+
+function buildYT(videoId,lid){
+  const thumb='https://img.youtube.com/vi/'+videoId+'/maxresdefault.jpg';
+  const url='https://www.youtube.com/watch?v='+videoId;
+  return`<div style="border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh);background:#0f0720">
+    <a href="${url}" target="_blank" style="display:block;position:relative;cursor:pointer;text-decoration:none">
+      <img src="${thumb}" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'"
+        style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;opacity:.85">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+        <div style="width:72px;height:72px;background:rgba(255,0,0,.92);border-radius:50%;display:flex;align-items:center;justify-content:center">
+          <div style="width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:28px solid #fff;margin-left:6px"></div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:20px 24px;color:#fff;font-size:14px;font-weight:600">
+        ▶ Click to watch on YouTube (opens in new tab)
+      </div>
+    </a>
+    <div style="padding:14px 20px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <span style="color:rgba(255,255,255,.55);font-size:13px">Watch the full video then click the button below</span>
+      <a href="${url}" target="_blank" class="btn bp bsm">▶ Open Video on YouTube</a>
+    </div>
+  </div>`;
 }
 
 function buildFileViewer(lid,lec){
