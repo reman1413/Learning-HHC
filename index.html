@@ -614,10 +614,24 @@ async function pageSection(sid){
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);if(!sec){go('home');return}
   const lecs=await db.lectures(sid),comps=await db.completions(U.id),certs=await db.certs(U.id);
   const hasCert=certs.find(c=>c.section_id===sid);
-  const allDone=lecs.length>0&&lecs.every(l=>comps.find(c=>c.lecture_id===l.id));
-  const items=lecs.map(lec=>{
-    const done=comps.find(c=>c.lecture_id===lec.id);
-    const badge=done?`<span class="bdg bdg-ok">✅ Done</span>`:lec.has_quiz?`<span class="bdg bdg-q">📝 Quiz</span>`:`<span class="bdg bdg-w">${lec.type==='pptx'?'📄':'▶'} View</span>`;
+  // allDone = all lectures watched AND all quizzes passed
+  const quizResults=await Promise.all(lecs.map(async l=>({
+    watched:!!comps.find(c=>c.lecture_id===l.id),
+    passed:l.has_quiz?await db.hasPassed(U.id,l.id):true
+  })));
+  const allDone=lecs.length>0&&quizResults.every(r=>r.watched&&r.passed);
+  const items=await Promise.all(lecs.map(async lec=>{
+    const watched=comps.find(c=>c.lecture_id===lec.id);
+    const quizPassed=lec.has_quiz?await db.hasPassed(U.id,lec.id):true;
+    const done=watched&&quizPassed;
+    let badge='';
+    if(lec.has_quiz){
+      if(done) badge=`<span class="bdg bdg-ok">✅ Done</span>`;
+      else if(watched) badge=`<span class="bdg" style="background:#FEE2E2;color:#991B1B">❌ Retake Quiz</span>`;
+      else badge=`<span class="bdg bdg-q">📝 Quiz</span>`;
+    } else {
+      badge=done?`<span class="bdg bdg-ok">✅ Done</span>`:`<span class="bdg bdg-w">${lec.type==='pptx'?'📄':'▶'} View</span>`;
+    }
     return`<div class="lec-item ${done?'done':''}" onclick="go('lecture',{id:'${lec.id}'},{page:'section',par:{id:'${sid}'},label:'Back to Section'})">
       <div class="lec-ico">${lec.type==='youtube'?'▶':'📄'}</div>
       <div class="lec-info"><h4>${lec.title}</h4><span>${lec.type==='youtube'?'Video lecture':'Presentation / PDF'}${lec.has_quiz?' · Includes quiz':''}</span></div>
@@ -630,7 +644,7 @@ async function pageSection(sid){
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><span>${sec.title}</span></div>
     <div class="ph"><div><h2>${sec.title}</h2><p>${sec.description||''}</p></div></div>
     ${banner}
-    <div>${items||'<div style="text-align:center;padding:40px;color:var(--muted)">No lectures yet.</div>'}</div>
+    <div>${itemsHtml||'<div style="text-align:center;padding:40px;color:var(--muted)">No lectures yet.</div>'}</div>
   </div>`
 }
 async function issueCert(sid){
