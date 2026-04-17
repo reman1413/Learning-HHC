@@ -712,45 +712,65 @@ function buildYT(videoId,lid){
 }
 
 function buildFileViewer(lid,lec){
-  // Try Supabase URL first, then localStorage
   const fileUrl=lec.file_path||null;
   const localFd=getFile(lid);
   const fd=fileUrl?{url:fileUrl,name:lec.file_name||'File',type:lec.file_type||'',size:0}:localFd;
   if(!fd){
     return`<div class="file-viewer"><div class="fv-header"><h4>📄 ${lec.title}</h4></div>
-      <div class="no-file"><div class="nfi">⏳</div><h3>File not uploaded yet</h3><p>The admin has not uploaded this file yet.<br>Please check back later.</p></div></div>`;
+      <div class="no-file"><div class="nfi">⏳</div><h3>File not uploaded yet</h3>
+      <p>The admin has not uploaded this file yet.<br>Please check back later.</p></div></div>`;
   }
   const src=fd.url||fd.data;
   const isPdf=fd.type==='application/pdf'||fd.name.endsWith('.pdf');
   const sizeLabel=fd.size>0?(fd.size>1048576?(fd.size/1048576).toFixed(1)+' MB':Math.round(fd.size/1024)+' KB'):'';
-  const viewerHtml=isPdf
-    ?`<iframe class="pdf-frame" id="pdf-iframe" src="${src}" onload="onPdfLoad()"></iframe>`
-    :`<div style="padding:40px 30px;text-align:center">
-        <div style="font-size:60px;margin-bottom:16px">📊</div>
-        <h3 style="color:#fff;font-size:18px;margin-bottom:8px">${fd.name}</h3>
-        <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:20px">Download to view in Microsoft PowerPoint</p>
-        <button class="btn bp" onclick="downloadFile('${lid}')">⬇️ Download &amp; View</button>
-      </div>`;
+
+  // For PPTX: use Google Docs viewer to display inline (no download needed)
+  const isPptx=fd.name.endsWith('.pptx')||fd.name.endsWith('.ppt');
+  let viewerHtml='';
+  if(isPdf){
+    // Display PDF directly — no download button
+    viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${src}#toolbar=0&navpanes=0" onload="onPdfLoad()"></iframe>`;
+  } else if(isPptx && (fd.url)){
+    // Use Google Docs viewer for PPTX (Supabase public URL)
+    const gUrl='https://docs.google.com/gview?url='+encodeURIComponent(fd.url)+'&embedded=true';
+    viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${gUrl}" onload="onPdfLoad()"></iframe>`;
+  } else {
+    // PPTX stored as base64 — convert hint
+    viewerHtml=`<div style="padding:50px 30px;text-align:center">
+      <div style="font-size:60px;margin-bottom:16px">📊</div>
+      <h3 style="color:#fff;font-size:18px;margin-bottom:8px">${fd.name}</h3>
+      <p style="color:rgba(255,255,255,.5);font-size:14px;line-height:1.7;margin-bottom:20px">
+        This presentation is ready to view.<br>
+        Upload as <strong style="color:var(--pu-ll)">PDF format</strong> for best inline display.
+      </p>
+    </div>`;
+  }
+
   const completeBtnHtml=vidDone
     ?`<span style="color:var(--ok);font-weight:700;font-size:14px">✅ Viewed — quiz unlocked</span>`
-    :`<button class="btn bp bsm" id="view-done-btn" onclick="markPptxViewed('${lid}')" ${isPdf?'disabled':''}>
-        ${isPdf?'Scroll all pages, then click here':'✅ I downloaded and reviewed this file'}
+    :`<button class="btn bp bsm" id="view-done-btn" onclick="markPptxViewed('${lid}')" ${isPdf||isPptx?'disabled':''}>
+        ✅ I have reviewed all slides — Unlock Quiz
       </button>`;
+
   return`<div class="file-viewer">
-    <div class="fv-header"><h4>📄 ${fd.name} ${sizeLabel?`<span style="font-size:11px;opacity:.4;font-weight:500">${sizeLabel}</span>`:''}</h4>
-      <div style="display:flex;gap:8px">
-        <button class="btn bo bsm" onclick="downloadFile('${lid}')">⬇️ Download PDF</button>
-      </div>
+    <div class="fv-header">
+      <h4>📄 ${fd.name} ${sizeLabel?`<span style="font-size:11px;opacity:.4;font-weight:500">${sizeLabel}</span>`:''}</h4>
     </div>
     ${viewerHtml}
     <div class="fv-footer">
-      <span style="color:rgba(255,255,255,.5);font-size:13px">${isPdf?'Scroll through all pages':'Download to view in PowerPoint'}</span>
+      <span style="color:rgba(255,255,255,.5);font-size:13px">
+        ${isPdf?'Scroll through all pages to review':'View all slides carefully'}
+      </span>
       ${completeBtnHtml}
     </div>
   </div>`;
 }
 function onPdfLoad(){
-  setTimeout(()=>{const btn=document.getElementById('view-done-btn');if(btn){btn.disabled=false;btn.textContent='✅ I have reviewed all pages';}},3000);
+  // Enable after 5 seconds of loading
+  setTimeout(()=>{
+    const btn=document.getElementById('view-done-btn');
+    if(btn){btn.disabled=false;btn.textContent='✅ I have reviewed all content — Unlock Quiz';}
+  },5000);
 }
 async function markPptxViewed(lid){
   vidDone=true;
@@ -762,15 +782,8 @@ async function markPptxViewed(lid){
   if(btn)btn.outerHTML=`<span style="color:var(--ok);font-weight:700;font-size:14px">✅ Viewed — quiz unlocked</span>`;
   toast('✅ Reviewed — quiz unlocked!','ok');
 }
-function downloadFile(lid){
-  const lec=db.lecture?null:null; // sync check
-  const localFd=getFile(lid);
-  const lecs=ls('lectures').find(l=>l.id===lid);
-  const src=lecs?.file_path||localFd?.data;
-  if(!src){toast('File not available','er');return}
-  const a=document.createElement('a');a.href=src;a.download=lecs?.file_name||localFd?.name||'file';a.click();
-  setTimeout(()=>markPptxViewed(lid),600);
-}
+// downloadFile removed — employees view only, no download
+
 function onYouTubeIframeAPIReady(){}
 
 function initYT(vid,lid,hasQ){
