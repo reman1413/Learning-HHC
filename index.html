@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meena Health — Learning Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -375,8 +378,16 @@ const db = {
     return ls('completions');
   },
   async addCompletion(c){
-    if(SB){await SB.from('lms_completions').upsert({user_id:c.user_id,lecture_id:c.lecture_id,completed_at:c.completed_at},{onConflict:'user_id,lecture_id'});}
-    let a=ls('completions');if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){c.id=c.id||uid();a.push(c);ls2('completions',a);}
+    if(SB){
+      await SB.from('lms_completions').upsert(
+        {user_id:c.user_id,lecture_id:c.lecture_id,completed_at:c.completed_at},
+        {onConflict:'user_id,lecture_id'}
+      );
+    }
+    let a=ls('completions');
+    if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){
+      c.id=c.id||uid();a.push(c);ls2('completions',a);
+    }
   },
   async isCompleted(uid,lid){
     if(SB){const{data}=await SB.from('lms_completions').select('id').eq('user_id',uid).eq('lecture_id',lid).single();return!!data}
@@ -392,7 +403,12 @@ const db = {
     return ls('attempts');
   },
   async addAttempt(a){
-    if(SB){await SB.from('lms_attempts').insert({user_id:a.user_id,lecture_id:a.lecture_id,score:a.score,passed:a.passed,attempted_at:a.attempted_at});}
+    if(SB){
+      const{error}=await SB.from('lms_attempts').insert(
+        {user_id:a.user_id,lecture_id:a.lecture_id,score:a.score,passed:a.passed,attempted_at:a.attempted_at}
+      );
+      if(error)console.warn('Attempt save error:',error.message);
+    }
     a.id=a.id||uid();let arr=ls('attempts');arr.push(a);ls2('attempts',arr);
   },
   async hasPassed(uid,lid){
@@ -906,7 +922,7 @@ function onPdfLoad(){
 }
 async function markPptxViewed(lid){
   vidDone=true;
-  await db.addCompletion({id:uid(),user_id:U.id,lecture_id:lid,completed_at:n()});
+  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
   const qb=document.getElementById('qbtn'),db2=document.getElementById('dbtn');
   if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
   if(db2){db2.disabled=false;db2.innerHTML='✅ Mark Complete';}
@@ -1048,7 +1064,7 @@ async function submitQ(){
     if(selectedIdx>=0&&q.shuffled[selectedIdx]?.correct)ok++;
   });
   const score=Math.round(ok/qs.length*100),passed=score===100;
-  await db.addAttempt({id:uid(),user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
+  await db.addAttempt({user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
   document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:600px">
     <div class="card" style="text-align:center;padding:52px 36px">
       <div class="r-circle ${passed?'r-pass':'r-fail'}">${passed?'100%':score+'%'}</div>
