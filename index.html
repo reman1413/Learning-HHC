@@ -227,6 +227,9 @@ const db = {
     }
     return ls('users');
   },
+  async allSections(){
+    return this.sections();
+  },
   async userByBadge(bid){
     if(SB){const{data}=await SB.from('lms_users').select('*').eq('badge_id',bid).single();return data||null}
     return ls('users').find(u=>u.badge_id===bid)||null;
@@ -260,7 +263,7 @@ const db = {
       const{data,error}=await SB.from('lms_sections').select('*').order('order_num');
       if(!error&&data){ls2('sections',data);return data;}
     }
-    return ls('sections').sort((a,b)=>a.order_num-b.order_num);
+    return ls('sections').sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   },
   async addSection(s){
     if(SB){
@@ -452,6 +455,8 @@ let PAGE='login',PAR={},BACK=null;
 function setU(u){U=u;u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u')}
 function logout(){setU(null);go('login')}
 function go(page,par={},back=null){BACK=back;PAGE=page;PAR=par;render()}
+// Auto-sync every 60 seconds when logged in
+setInterval(async()=>{if(U&&SB){await syncAll();}},60000);
 function goBack(){if(BACK)go(BACK.page,BACK.par||{});else go('home')}
 
 async function render(){
@@ -495,7 +500,7 @@ function bar(){
         <button onclick="location.reload()" title="Refresh">🔄</button>
       </div>`:''}
       ${isA?dbBadge:''}
-      ${!isA?'<button class="btn-out" onclick="location.reload()" title="Refresh">🔄</button>':''}
+      ${!isA?'<button class="btn-out" onclick="syncThenRefresh()" title="Refresh">🔄 Refresh</button>':''}
       <span class="bar-user">👤 ${U.name} <span style="opacity:.5;font-size:11px">#${U.badge_id}</span></span>
       <button class="btn-out" onclick="logout()">Sign Out</button>
     </div>
@@ -1630,7 +1635,41 @@ function toast(msg,type=''){
   el.className='ti '+(type==='ok'?'ok':type==='er'?'er':'');el.textContent=msg;
   c.appendChild(el);setTimeout(()=>el.remove(),3500);
 }
-window.addEventListener('load',()=>{U?go('home'):go('login')});
+
+async function syncThenRefresh(){
+  toast('Syncing...','');
+  await syncAll();
+  await render();
+  toast('Updated! ✅','ok');
+}
+async function syncAll(){
+  if(!SB)return;
+  try{
+    // Pull ALL data from Supabase into localStorage cache at once
+    const[u,s,l,q,c,a,ce]=await Promise.all([
+      SB.from('lms_users').select('*'),
+      SB.from('lms_sections').select('*').order('order_num'),
+      SB.from('lms_lectures').select('*').order('order_num'),
+      SB.from('lms_questions').select('*'),
+      SB.from('lms_completions').select('*'),
+      SB.from('lms_attempts').select('*'),
+      SB.from('lms_certs').select('*')
+    ]);
+    if(!u.error&&u.data)ls2('users',u.data);
+    if(!s.error&&s.data)ls2('sections',s.data);
+    if(!l.error&&l.data)ls2('lectures',l.data);
+    if(!q.error&&q.data)ls2('questions',q.data);
+    if(!c.error&&c.data)ls2('completions',c.data);
+    if(!a.error&&a.data)ls2('attempts',a.data);
+    if(!ce.error&&ce.data)ls2('certs',ce.data);
+    console.log('Synced from Supabase ✅');
+  }catch(e){console.warn('Sync failed:',e);}
+}
+
+window.addEventListener('load',async()=>{
+  await syncAll();
+  U?go('home'):go('login');
+});
 </script>
 </body>
 </html>
