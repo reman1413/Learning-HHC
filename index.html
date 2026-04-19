@@ -1201,15 +1201,10 @@ function buildFileViewer(lid,lec){
   if(isPdf){
     const isLocalData=src.startsWith('data:');
     if(isLocalData){
-      viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${src}" onload="onPdfLoad()"></iframe>`;
+      viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${src}#toolbar=0&navpanes=0" onload="onPdfLoad()"></iframe>`;
     } else {
       const gDocsUrl='https://docs.google.com/viewer?url='+encodeURIComponent(src)+'&embedded=true';
-      viewerHtml=`<div style="position:relative">
-        <iframe class="pdf-frame" id="pdf-iframe" src="${gDocsUrl}" onload="onPdfLoad()"></iframe>
-        <div style="padding:10px 0;text-align:center">
-          <a href="${src}" target="_blank" class="btn bg2 bsm" style="font-size:12px">📱 Open PDF directly (if viewer doesn't load)</a>
-        </div>
-      </div>`;
+      viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${gDocsUrl}" onload="onPdfLoad()"></iframe>`;
     }
   } else if(isPptx && (fd.url)){
     const gUrl='https://docs.google.com/gview?url='+encodeURIComponent(fd.url)+'&embedded=true';
@@ -1225,16 +1220,14 @@ function buildFileViewer(lid,lec){
     </div>`;
   }
 
-  const dlBtn=isPdf?`<a href="${src}" download="${fd.name}" class="btn bo bsm" style="color:#fff;border-color:rgba(255,255,255,.3)">⬇️ Download PDF</a>`:'';
-  return`<div class="file-viewer">
+  return`<div class="file-viewer" oncontextmenu="return false">
     <div class="fv-header">
       <h4>📄 ${fd.name} ${sizeLabel?`<span style="font-size:11px;opacity:.4;font-weight:500">${sizeLabel}</span>`:''}</h4>
-      ${dlBtn}
     </div>
     ${viewerHtml}
     <div class="fv-footer">
       <span style="color:rgba(255,255,255,.5);font-size:13px">
-        ${isPdf?'Scroll through all pages to review':'View all slides carefully'}
+        👁️ ${isPdf?'Scroll through all pages to review':'View all slides carefully'} — view only
       </span>
     </div>
   </div>`;
