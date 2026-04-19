@@ -11,16 +11,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
-  --pu:#5B1F8C;--pu-d:#420F6E;--pu-l:#7B3FB8;--pu-ll:#9D6FD4;
-  --lav:#EDE0FF;--lav-l:#F7F1FF;--lav-d:#D4B8F5;
-  --bg:#F9F5FF;--card:#FFF;--text:#1A0F2E;--muted:#7C6B96;--border:#E8DCF7;
+  /* Meena Health brand purple */
+  --pu:#8B6FEB;--pu-d:#5B3FD4;--pu-l:#A891F0;--pu-ll:#C7B8F7;
+  --lav:#EDE7FD;--lav-l:#F6F2FE;--lav-d:#D4C5F9;
+  --bg:#F8F5FF;--card:#FFF;--text:#2A1F4A;--muted:#7F6FA8;--border:#E5DBFA;
   --ok:#22C55E;--err:#EF4444;--warn:#F59E0B;
-  --r:14px;--sh:0 4px 24px rgba(91,31,140,.1);--shh:0 8px 32px rgba(91,31,140,.18);
+  --gold:#C9A55C;--gold-l:#E5C88E;
+  --r:14px;--sh:0 4px 24px rgba(139,111,235,.12);--shh:0 8px 32px rgba(139,111,235,.2);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 #app{min-height:100vh}
-.bar{background:linear-gradient(135deg,var(--pu-d),var(--pu) 60%,var(--pu-l));padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(66,15,110,.3);position:sticky;top:0;z-index:100}
+.bar{background:linear-gradient(135deg,var(--pu-d),var(--pu) 60%,var(--pu-l));padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(6,78,59,.3);position:sticky;top:0;z-index:100}
 .bar-logo{display:flex;align-items:center;gap:12px;cursor:pointer}
 .bar-logo .ico{width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;border:1px solid rgba(255,255,255,.3)}
 .bar-logo span{color:#fff;font-size:17px;font-weight:700}
@@ -31,7 +33,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .bar-user{color:rgba(255,255,255,.8);font-size:13px;font-weight:500}
 .btn-out{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.35);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit}
 .btn-out:hover{background:rgba(255,255,255,.26)}
-.back-bar{background:rgba(91,31,140,.06);border-bottom:1px solid var(--border);padding:10px 28px}
+.back-bar{background:rgba(15,118,110,.06);border-bottom:1px solid var(--border);padding:10px 28px}
 .back-btn{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:9px;background:#fff;color:var(--pu);border:1.5px solid var(--pu);cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;transition:.2s}
 .back-btn:hover{background:var(--pu);color:#fff}
 .pg{max-width:1100px;margin:0 auto;padding:32px 28px}
@@ -60,8 +62,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .no-file h3{color:rgba(255,255,255,.7);font-size:18px;font-weight:700;margin-bottom:8px}
 .no-file p{color:rgba(255,255,255,.4);font-size:13px;line-height:1.6}
 .fv-footer{background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.08);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.upload-zone{border:2px dashed rgba(157,111,212,.5);border-radius:12px;padding:36px 24px;text-align:center;cursor:pointer;transition:.2s;background:rgba(91,31,140,.05)}
-.upload-zone:hover{border-color:var(--pu-ll);background:rgba(91,31,140,.1)}
+.upload-zone{border:2px dashed rgba(45,212,191,.5);border-radius:12px;padding:36px 24px;text-align:center;cursor:pointer;transition:.2s;background:rgba(15,118,110,.05)}
+.upload-zone:hover{border-color:var(--pu-ll);background:rgba(15,118,110,.1)}
 .upload-zone.has-file{border-color:var(--ok);background:rgba(34,197,94,.06)}
 .upload-zone input{display:none}
 .q-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
@@ -73,7 +75,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .opts{display:flex;flex-direction:column;gap:10px}
 .opt{padding:14px 18px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:.2s;font-size:15px;display:flex;align-items:center;gap:12px;font-weight:500}
 .opt:hover{border-color:var(--pu-ll);background:var(--lav-l)}
-.opt.sel{border-color:var(--pu);background:rgba(91,31,140,.07);color:var(--pu);font-weight:700}
+.opt.sel{border-color:var(--pu);background:rgba(15,118,110,.07);color:var(--pu);font-weight:700}
 .opt-l{width:30px;height:30px;border-radius:50%;background:var(--lav);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;color:var(--pu)}
 .r-circle{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px;font-weight:800}
 .r-pass{background:#DCFCE7;color:#166534;border:4px solid var(--ok)}
@@ -81,7 +83,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cert-pg{background:#fff;max-width:820px;margin:0 auto}
 .cert-out{padding:36px;background:#fff}
 .cert-in{border:3px solid var(--pu);padding:52px;position:relative;text-align:center}
-.cert-in::before{content:'';position:absolute;inset:8px;border:1px solid rgba(91,31,140,.2);pointer-events:none}
+.cert-in::before{content:'';position:absolute;inset:8px;border:1px solid rgba(15,118,110,.2);pointer-events:none}
 .cert-in::after{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--pu-d),var(--pu),var(--pu-ll));pointer-events:none}
 .c-org{font-size:30px;font-weight:800;color:var(--pu-d);letter-spacing:1.5px}
 .c-sub0{font-size:12px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
@@ -96,8 +98,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .c-mi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
 .c-mi .val{font-size:15px;font-weight:700;color:var(--pu-d);margin-top:5px}
 .c-ref{margin-top:18px;font-size:12px;color:var(--muted)}
-.c-stamp{position:absolute;bottom:44px;right:44px;width:80px;height:80px;border-radius:50%;border:3px solid var(--pu);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--pu);text-align:center;line-height:1.4;transform:rotate(-15deg);background:rgba(91,31,140,.04)}
-.c-wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:80px;font-weight:800;color:rgba(91,31,140,.04);white-space:nowrap;pointer-events:none;letter-spacing:4px}
+.c-stamp{position:absolute;bottom:44px;right:44px;width:80px;height:80px;border-radius:50%;border:3px solid var(--pu);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--pu);text-align:center;line-height:1.4;transform:rotate(-15deg);background:rgba(15,118,110,.04)}
+.c-wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:80px;font-weight:800;color:rgba(15,118,110,.04);white-space:nowrap;pointer-events:none;letter-spacing:4px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:28px}
 .stat{background:var(--card);border-radius:var(--r);padding:22px;border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;position:relative}
 .stat::after{content:'';position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;background:var(--lav);border-radius:50%}
@@ -111,7 +113,7 @@ td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:14px;vertic
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--lav-l)}
 .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;border:none;font-family:inherit}
-.bp{background:linear-gradient(135deg,var(--pu),var(--pu-l));color:#fff;box-shadow:0 4px 14px rgba(91,31,140,.3)}
+.bp{background:linear-gradient(135deg,var(--pu),var(--pu-l));color:#fff;box-shadow:0 4px 14px rgba(15,118,110,.3)}
 .bp:hover{background:linear-gradient(135deg,var(--pu-d),var(--pu));transform:translateY(-1px)}
 .bn{background:var(--pu-d);color:#fff}.bn:hover{background:var(--pu)}
 .bo{background:#fff;color:var(--pu);border:2px solid var(--pu)}.bo:hover{background:var(--pu);color:#fff}
@@ -124,15 +126,15 @@ tr:hover td{background:var(--lav-l)}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 label{display:block;font-size:13px;font-weight:700;color:var(--pu-d);margin-bottom:6px}
 input,select,textarea{width:100%;padding:11px 15px;border:2px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;font-family:inherit;background:#fff}
-input:focus,select:focus,textarea:focus{border-color:var(--pu);box-shadow:0 0 0 3px rgba(91,31,140,.08)}
+input:focus,select:focus,textarea:focus{border-color:var(--pu);box-shadow:0 0 0 3px rgba(15,118,110,.08)}
 textarea{resize:vertical;min-height:80px}
 .mo{position:fixed;inset:0;background:rgba(26,15,46,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
-.modal{background:#fff;border-radius:18px;padding:30px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(91,31,140,.25)}
+.modal{background:#fff;border-radius:18px;padding:30px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,118,110,.25)}
 .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
 .mh h3{font-size:18px;font-weight:800;color:var(--pu-d)}
 .mc{width:34px;height:34px;border-radius:50%;background:var(--lav);border:none;cursor:pointer;font-size:16px;color:var(--pu);font-weight:700}
 #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.ti{background:var(--pu-d);color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;animation:si .3s;box-shadow:0 4px 20px rgba(91,31,140,.3);font-weight:600}
+.ti{background:var(--pu-d);color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;animation:si .3s;box-shadow:0 4px 20px rgba(15,118,110,.3);font-weight:600}
 .ti.ok{background:#16A34A}.ti.er{background:var(--err)}
 @keyframes si{from{transform:translateX(110px);opacity:0}to{transform:translateX(0);opacity:1}}
 .lw{min-height:100vh;display:flex}
@@ -147,7 +149,7 @@ textarea{resize:vertical;min-height:80px}
 .lb p{font-size:14px;color:var(--muted);margin-bottom:30px}
 .rt{display:flex;background:var(--lav);border-radius:12px;padding:4px;margin-bottom:26px}
 .rb{flex:1;padding:9px;text-align:center;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);transition:.2s}
-.rb.on{background:#fff;color:var(--pu);box-shadow:0 2px 10px rgba(91,31,140,.15)}
+.rb.on{background:#fff;color:var(--pu);box-shadow:0 2px 10px rgba(15,118,110,.15)}
 .bc{display:flex;align-items:center;gap:8px;margin-bottom:24px;font-size:14px;font-weight:500}
 .bc a{color:var(--pu-l);cursor:pointer}.bc a:hover{color:var(--pu)}
 .bc span{color:var(--muted)}
@@ -160,10 +162,10 @@ textarea{resize:vertical;min-height:80px}
 .al-w{background:#FEF9C3;border:1.5px solid #FDE68A;color:#854D0E}
 .fb{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .chip{display:inline-flex;align-items:center;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700}
-.cp{background:var(--lav);color:var(--pu)}.cd{background:rgba(91,31,140,.15);color:var(--pu-d)}
+.cp{background:var(--lav);color:var(--pu)}.cd{background:rgba(15,118,110,.15);color:var(--pu-d)}
 
 /* HERO + FILTERS for home */
-.hero-home{background:linear-gradient(135deg,var(--pu-d),var(--pu) 55%,var(--pu-l));border-radius:20px;padding:30px 32px;color:#fff;position:relative;overflow:hidden;margin-bottom:24px;box-shadow:0 10px 40px rgba(66,15,110,.25)}
+.hero-home{background:linear-gradient(135deg,var(--pu-d),var(--pu) 55%,var(--pu-l));border-radius:20px;padding:30px 32px;color:#fff;position:relative;overflow:hidden;margin-bottom:24px;box-shadow:0 10px 40px rgba(6,78,59,.25)}
 .hero-home::before{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:rgba(255,255,255,.07);border-radius:50%}
 .hero-home::after{content:'';position:absolute;bottom:-80px;left:-40px;width:200px;height:200px;background:rgba(255,255,255,.05);border-radius:50%}
 .hero-greet{font-size:14px;opacity:.8;font-weight:500;margin-bottom:4px;position:relative}
@@ -329,6 +331,38 @@ function applySeqOv(x){
     return{...x,is_prerequisite:ov.is_prerequisite,sequence_step:ov.sequence_step};
   }
   return x;
+}
+
+// ── Interactive slides storage (JSON blob per lecture, local override survives syncs)
+function getSlidesOv(){try{return JSON.parse(localStorage.getItem('lms_slides_ov')||'{}')}catch{return{}}}
+function setSlidesData(lid,slides){
+  const o=getSlidesOv();
+  if(slides&&slides.length)o[lid]=slides;
+  else delete o[lid];
+  localStorage.setItem('lms_slides_ov',JSON.stringify(o));
+  // Also try to save to lecture row
+  ls2('lectures',ls('lectures').map(l=>l.id===lid?{...l,slides_data:JSON.stringify(slides||[])}:l));
+}
+function getSlidesData(lid){
+  const o=getSlidesOv();
+  if(o[lid])return o[lid];
+  const lec=ls('lectures').find(l=>l.id===lid);
+  if(lec&&lec.slides_data){
+    try{return JSON.parse(lec.slides_data)||[];}catch{return[];}
+  }
+  return [];
+}
+function delSlidesData(lid){
+  const o=getSlidesOv();delete o[lid];
+  localStorage.setItem('lms_slides_ov',JSON.stringify(o));
+}
+
+// ── Per-user slide progress (which slide index they reached)
+function getSlideProg(lid,uid){
+  return parseInt(localStorage.getItem('lms_sp_'+uid+'_'+lid)||'0',10)||0;
+}
+function setSlideProg(lid,uid,idx){
+  localStorage.setItem('lms_sp_'+uid+'_'+lid,String(idx));
 }
 
 function seed(){
@@ -627,6 +661,7 @@ async function render(){
     case 'asections':await pageAdminSections();break;
     case 'alectures':await pageAdminLectures(PAR.id);break;
     case 'aquestions':await pageAdminQuestions(PAR.id);break;
+    case 'aslides':await pageAdminSlides(PAR.id);break;
     case 'astaff':await pageAdminStaff();break;
     case 'astaff1':await pageAdminStaff1(PAR.id);break;
     case 'acerts':await pageAdminCerts();break;
@@ -637,13 +672,55 @@ async function render(){
 // ════════════════════════════════════════════════════════════════
 // TOPBAR
 // ════════════════════════════════════════════════════════════════
+// Meena logo — ribbon-style "M" matching the brand mark (purple loops)
+function meenaLogo(size,bgStyle){
+  const s=size||38;
+  const style=bgStyle||'white';
+  if(style==='white'){
+    // For dark backgrounds (navbar): white ribbon M
+    return `<svg width="${s}" height="${s}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <defs>
+        <linearGradient id="mlr1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0.7"/>
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <!-- Left loop -->
+      <path d="M 16 46 L 16 24 Q 16 14 24 14 Q 32 14 32 24 L 32 36"
+        stroke="url(#mlr1)" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- Right loop (overlapping) -->
+      <path d="M 32 28 L 32 40 Q 32 50 40 50 Q 48 50 48 40 L 48 18"
+        stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.85"/>
+    </svg>`;
+  }
+  // For light backgrounds: full purple ribbon M
+  return `<svg width="${s}" height="${s}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="display:block">
+    <defs>
+      <linearGradient id="mlr2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#8B6FEB"/>
+        <stop offset="100%" stop-color="#5B3FD4"/>
+      </linearGradient>
+      <linearGradient id="mlr3" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#A891F0"/>
+        <stop offset="100%" stop-color="#8B6FEB"/>
+      </linearGradient>
+    </defs>
+    <!-- Left loop (lighter) -->
+    <path d="M 10 52 L 10 22 Q 10 8 22 8 Q 34 8 34 22 L 34 38"
+      stroke="url(#mlr3)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <!-- Right loop (darker, overlapping) -->
+    <path d="M 30 26 L 30 42 Q 30 56 42 56 Q 54 56 54 42 L 54 12"
+      stroke="url(#mlr2)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
 function bar(){
   if(!U)return'';
   const isA=U.role==='admin';
   const dbBadge=DEMO_MODE?`<span class="db-badge db-demo" title="Using browser storage — data not synced">⚠️ Demo Mode</span>`:`<span class="db-badge db-live">🟢 Live</span>`;
   const backHtml=BACK?`<div class="back-bar"><button class="back-btn" onclick="goBack()">← ${BACK.label||'Back'}</button></div>`:'';
   return`<div class="bar">
-    <div class="bar-logo" onclick="go('home')"><div class="ico">M</div>
+    <div class="bar-logo" onclick="go('home')"><div class="ico" style="background:transparent;border:none;padding:0">${meenaLogo(38,'white')}</div>
       <span>Meena Health <em>| Learning Hub</em></span></div>
     <div class="bar-r">
       ${isA?`<div class="bar-nav">
@@ -668,7 +745,7 @@ function pageSetup(){
   document.getElementById('app').innerHTML=`
   <div class="setup-wrap">
     <div class="setup-card">
-      <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--pu),var(--pu-ll));border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px;margin-bottom:16px">M</div>
+      <div style="margin-bottom:16px">${meenaLogo(52,'gradient')}</div>
       <h2>Connect to Supabase</h2>
       <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Enter your Supabase credentials to enable real-time sync across all devices.</p>
       <div style="background:var(--lav-l);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--pu-d)">
@@ -705,7 +782,7 @@ function pageLogin(){
     </div>
     <div class="lr"><div class="lb">
       <div style="margin-bottom:24px">
-        <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--pu),var(--pu-ll));border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px;margin-bottom:14px">M</div>
+        <div style="margin-bottom:14px">${meenaLogo(52,'gradient')}</div>
         <h2>Welcome 👋</h2><p>Sign in to your training dashboard</p>
       </div>
       <div class="rt">
@@ -955,8 +1032,8 @@ async function pageSection(sid){
     const watched=comps.find(c=>c.lecture_id===lec.id);
     const quizPassed=lec.has_quiz?await db.hasPassed(U.id,lec.id):true;
     const done=watched&&quizPassed;
-    const typeIcon=lec.type==='youtube'?'▶':lec.type==='video'?'🎬':'📄';
-    const typeLabel=lec.type==='youtube'?'Video lecture':lec.type==='video'?'Video file':'Presentation / PDF';
+    const typeIcon=lec.type==='youtube'?'▶':lec.type==='video'?'🎬':lec.type==='interactive'?'🎓':'📄';
+    const typeLabel=lec.type==='youtube'?'Video lecture':lec.type==='video'?'Video file':lec.type==='interactive'?'Interactive slides':'Presentation / PDF';
     const step=stepOf(lec);
     const isLocked=lockOf(lec);
     let badge='';
@@ -1058,6 +1135,12 @@ async function pageLecture(lid){
     }
   }
   const secs=await db.sections(),sec=secs.find(s=>s.id===lec.section_id);
+
+  // Route interactive lectures to the slide player
+  if(lec.type==='interactive'){
+    return pageInteractive(lid);
+  }
+
   vidDone=await db.isCompleted(U.id,lid);
   const passed=lec.has_quiz?await db.hasPassed(U.id,lid):true;
 
@@ -1593,6 +1676,7 @@ async function pageAdminLectures(sid){
     }
     const stepN=l.sequence_step||(l.is_prerequisite?1:0);
     const stepChip=stepN>0?` <span class="chip" style="background:#FEF3C7;color:#92400E;font-size:10px">⭐ Step ${stepN}</span>`:'';
+    const interChip=l.type==='interactive'?` <span class="chip" style="background:#EDE9FE;color:#5B21B6;font-size:10px">🎓 ${(getSlidesData(l.id)||[]).length} slides</span>`:'';
     const isFirst=idx===0,isLast=idx===lecs.length-1;
     return`<tr style="${stepN>0?'background:#FFFBEB':''}"><td>
       <div style="display:flex;align-items:center;gap:8px">
@@ -1600,14 +1684,15 @@ async function pageAdminLectures(sid){
           <button class="btn bg2" style="padding:2px 7px;font-size:11px;border-radius:5px" onclick="moveLec('${l.id}','${sid}',-1)" ${isFirst?'disabled':''} title="Move up">↑</button>
           <button class="btn bg2" style="padding:2px 7px;font-size:11px;border-radius:5px" onclick="moveLec('${l.id}','${sid}',1)" ${isLast?'disabled':''} title="Move down">↓</button>
         </div>
-        <div><strong>${l.title}</strong>${stepChip}<div style="font-size:10px;color:var(--muted);margin-top:2px">#${idx+1}</div></div>
+        <div><strong>${l.title}</strong>${stepChip}${interChip}<div style="font-size:10px;color:var(--muted);margin-top:2px">#${idx+1}</div></div>
       </div>
     </td>
-      <td>${typeChip}</td>
-      <td style="font-size:12px;color:var(--muted)">${sourceCell}</td>
+      <td>${l.type==='interactive'?'<span class="chip" style="background:#EDE9FE;color:#5B21B6">🎓 Interactive</span>':typeChip}</td>
+      <td style="font-size:12px;color:var(--muted)">${l.type==='interactive'?((getSlidesData(l.id)||[]).length+' slides built'):sourceCell}</td>
       <td>${l.has_quiz?`<button class="btn bo bsm" onclick="go('aquestions',{id:'${l.id}'},{page:'alectures',par:{id:'${sid}'},label:'Lectures'})">📝 ${ls('questions').filter(q=>q.lecture_id===l.id).length} Qs</button>`:'—'}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bg2 bsm" onclick="openLecModal('${sid}','${l.id}')">✏️</button>
+        ${l.type==='interactive'?`<button class="btn bp bsm" onclick="go('aslides',{id:'${l.id}'},{page:'alectures',par:{id:'${sid}'},label:'Lectures'})">🎓 Slides</button>`:''}
         ${(l.type==='pptx'||l.type==='video')?`<button class="btn bo bsm" onclick="openUploadModal('${l.id}')">📤 ${hasFile?'Replace':'Upload'}</button>`:''}
         <button class="btn bd bsm" onclick="delLec('${l.id}','${sid}')">🗑</button>
       </div></td></tr>`}).join('');
@@ -1719,6 +1804,7 @@ function openLecModal(sid,id){
       <option value="youtube" ${type==='youtube'?'selected':''}>▶ YouTube Video (embedded inline)</option>
       <option value="video" ${type==='video'?'selected':''}>🎬 Upload Video File (MP4 — plays inline)</option>
       <option value="pptx" ${type==='pptx'?'selected':''}>📄 Presentation / PDF file</option>
+      <option value="interactive" ${type==='interactive'?'selected':''}>🎓 Interactive Slides (step-by-step with questions)</option>
     </select></div>
     <div id="url-f" class="fg" style="${type!=='youtube'?'display:none':''}">
       <label>YouTube Video ID <span style="font-weight:400;color:var(--muted)">(part after ?v=)</span></label>
@@ -1734,6 +1820,13 @@ function openLecModal(sid,id){
       <div style="background:#FEF9C3;border:1.5px solid #FDE68A;border-radius:10px;padding:12px 16px;font-size:13px;color:#854D0E;margin-bottom:16px;line-height:1.6">
         🎬 <strong>Video upload:</strong> After saving, use <strong>Upload</strong> to attach MP4. 
         <br>⚠️ Max 50 MB per video — for longer videos, use YouTube instead (faster streaming).
+      </div>
+    </div>
+    <div id="interactive-note" style="${type==='interactive'?'':'display:none'}">
+      <div style="background:#EDE9FE;border:1.5px solid #C4B5FD;border-radius:10px;padding:12px 16px;font-size:13px;color:#5B21B6;margin-bottom:16px;line-height:1.6">
+        🎓 <strong>Interactive slides mode:</strong> Build a step-by-step lesson with slides and checkpoint questions.
+        <br>After saving, click the <strong>🎓 Slides</strong> button to add your slides and questions.
+        <br>Nurses must answer each checkpoint correctly to advance — progress is auto-saved.
       </div>
     </div>
     <div class="fg" style="margin-top:12px;padding:14px;background:#FFFBEB;border-radius:10px;border:1.5px solid #FDE68A">
@@ -1773,6 +1866,7 @@ function toggleLType(){
   document.getElementById('url-f').style.display=t==='youtube'?'':'none';
   document.getElementById('file-note').style.display=t==='pptx'?'':'none';
   document.getElementById('video-note').style.display=t==='video'?'':'none';
+  const iNote=document.getElementById('interactive-note');if(iNote)iNote.style.display=t==='interactive'?'':'none';
 }
 function toggleQuizCount(){const hq=document.getElementById('lhq').checked;const f=document.getElementById('quiz-count-field');if(f)f.style.display=hq?'':'none';}
 async function saveLec(){
@@ -2053,6 +2147,421 @@ async function saveBulk(){
   }
   toast(`✅ Added ${ok} question${ok>1?'s':''}${fail?` (${fail} failed)`:''}`,'ok');
   cmo();pageAdminQuestions(_bulkLid);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ADMIN: INTERACTIVE SLIDES
+// ════════════════════════════════════════════════════════════════
+async function pageAdminSlides(lid){
+  const lec=await db.lecture(lid);if(!lec){go('home');return}
+  const secs=await db.sections(),sec=secs.find(s=>s.id===lec.section_id);
+  const slides=getSlidesData(lid);
+  const rows=slides.map((s,i)=>{
+    const contentPreview=(s.content||'').slice(0,80).replace(/</g,'&lt;')+((s.content||'').length>80?'...':'');
+    const hasQ=s.q&&s.q.text&&s.q.a&&s.q.b&&s.q.c&&s.q.d&&s.q.correct;
+    const mediaIcon=s.media_type==='youtube'?'▶':s.media_type==='image'?'🖼️':s.media_type==='video'?'🎬':s.media_type==='pdf'?'📄':'📝';
+    return`<tr>
+      <td style="font-weight:800;color:var(--pu);font-size:18px;width:50px;text-align:center">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:16px">${mediaIcon}</span>
+          <strong>${s.title||'(untitled slide)'}</strong>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">${contentPreview||'<em>no content</em>'}</div>
+        ${hasQ?`<div style="margin-top:6px;font-size:11px;color:#166534"><strong>📝 Q:</strong> ${s.q.text.slice(0,60)}${s.q.text.length>60?'...':''} <span style="color:var(--ok);font-weight:700">(Answer: ${s.q.correct.toUpperCase()})</span></div>`:'<div style="margin-top:6px;font-size:11px;color:var(--err)">⚠️ No checkpoint question</div>'}
+      </td>
+      <td><div style="display:flex;flex-direction:column;gap:2px">
+        <button class="btn bg2" style="padding:2px 8px;font-size:11px;border-radius:5px" onclick="moveSlide('${lid}',${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="btn bg2" style="padding:2px 8px;font-size:11px;border-radius:5px" onclick="moveSlide('${lid}',${i},1)" ${i===slides.length-1?'disabled':''}>↓</button>
+      </div></td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn bg2 bsm" onclick="openSlideModal('${lid}',${i})">✏️</button>
+        <button class="btn bd bsm" onclick="delSlide('${lid}',${i})">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('app').innerHTML=bar()+`<div class="pg">
+    <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><a onclick="go('asections')">Sections</a><span>›</span><a onclick="go('alectures',{id:'${sec?sec.id:''}'},{page:'asections',par:{},label:'Sections'})">${sec?sec.title:''}</a><span>›</span><span>Slides</span></div>
+    <div class="ph">
+      <div>
+        <h2>🎓 ${lec.title} — Slides</h2>
+        <p>${slides.length} slide${slides.length!==1?'s':''} built · Nurses must answer each checkpoint correctly to advance</p>
+      </div>
+      <button class="btn bp" onclick="openSlideModal('${lid}')">+ Add Slide</button>
+    </div>
+    <div style="background:#EDE9FE;border:1.5px solid #C4B5FD;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#5B21B6;line-height:1.6">
+      💡 <strong>How it works:</strong> Each slide has content + a question. The nurse sees slide 1, answers the question correctly, then slide 2 opens. If they leave and come back, they resume where they stopped.
+    </div>
+    <div class="tw"><table><thead><tr><th style="width:50px">#</th><th>Slide</th><th style="width:60px">Order</th><th style="width:110px">Actions</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="4" style="text-align:center;padding:50px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🎓</div>No slides yet.<br><span style="font-size:13px">Click <strong>+ Add Slide</strong> to build your first one.</span></td></tr>'}</tbody></table></div>
+  </div><div id="md"></div>`;
+}
+let _eslid='',_esidx=-1;
+function openSlideModal(lid,idx){
+  _eslid=lid;_esidx=(typeof idx==='number')?idx:-1;
+  const slides=getSlidesData(lid);
+  const s=(_esidx>=0)?slides[_esidx]:{title:'',content:'',media_type:'text',media_value:'',q:{text:'',a:'',b:'',c:'',d:'',correct:'a'}};
+  if(!s.q)s.q={text:'',a:'',b:'',c:'',d:'',correct:'a'};
+  document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal" style="max-width:720px">
+    <div class="mh"><h3>${_esidx>=0?'Edit':'Add'} Slide ${_esidx>=0?'#'+(_esidx+1):'#'+(slides.length+1)}</h3><button class="mc" onclick="cmo()">✕</button></div>
+    <div class="fg"><label>Slide Title</label><input id="sl-title" value="${s.title||''}" placeholder="e.g. Introduction to Tracheostomy"></div>
+    <div class="fg"><label>Main Content (text)</label><textarea id="sl-content" style="min-height:140px" placeholder="Write the slide content here. Use line breaks for paragraphs.">${s.content||''}</textarea>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">💡 Tip: Keep it concise — 1-3 paragraphs per slide works best</div>
+    </div>
+    <div class="fg"><label>Optional Media</label>
+      <select id="sl-mtype" onchange="toggleSlideMedia()">
+        <option value="text" ${s.media_type==='text'||!s.media_type?'selected':''}>None — text only</option>
+        <option value="youtube" ${s.media_type==='youtube'?'selected':''}>▶ YouTube video</option>
+        <option value="image" ${s.media_type==='image'?'selected':''}>🖼️ Image (upload or URL)</option>
+        <option value="video" ${s.media_type==='video'?'selected':''}>🎬 Video file (upload)</option>
+        <option value="pdf" ${s.media_type==='pdf'?'selected':''}>📄 PDF file (upload)</option>
+      </select>
+    </div>
+    <div id="sl-media-f" class="fg" style="${(!s.media_type||s.media_type==='text')?'display:none':''}">
+      <div id="sl-yt-f" style="${s.media_type==='youtube'?'':'display:none'}">
+        <label>YouTube Video ID</label>
+        <input id="sl-mvalue" value="${s.media_type==='youtube'?(s.media_value||''):''}" placeholder="e.g. dQw4w9WgXcQ">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">youtube.com/watch?v=<strong>THIS_PART</strong></div>
+      </div>
+      <div id="sl-upload-f" style="${(s.media_type==='image'||s.media_type==='video'||s.media_type==='pdf')?'':'display:none'}">
+        ${s.media_type==='image'?`
+          <label>Image — upload or paste URL</label>
+          <input id="sl-mvalue-url" value="${(s.media_value||'').startsWith('data:')?'':(s.media_value||'')}" placeholder="Paste image URL or upload below"
+            style="margin-bottom:8px">
+          <div style="text-align:center;color:var(--muted);font-size:12px;margin:6px 0">— or —</div>
+        `:''}
+        <div class="upload-zone" id="sl-uz" onclick="document.getElementById('sl-upfile').click()" style="padding:24px 20px">
+          <input type="file" id="sl-upfile" style="display:none" onchange="handleSlideUpload(this)">
+          <div style="font-size:32px;margin-bottom:8px">${s.media_type==='video'?'🎬':s.media_type==='pdf'?'📄':'🖼️'}</div>
+          <div style="font-weight:700;color:var(--pu-d);font-size:13px">Click to upload ${s.media_type==='image'?'image':s.media_type==='video'?'video':'PDF'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px" id="sl-upload-hint">
+            ${s.media_type==='image'?'JPG / PNG / WebP · Max 2 MB':s.media_type==='video'?'MP4 / WebM · Max 30 MB':'PDF · Max 8 MB'}
+          </div>
+          ${s.media_value&&s.media_value.startsWith('data:')?`<div style="margin-top:10px;color:var(--ok);font-size:12px;font-weight:700">✅ File currently attached</div>`:''}
+        </div>
+        <div id="sl-up-status" style="margin-top:8px;font-size:12px;min-height:18px"></div>
+        <input type="hidden" id="sl-mvalue" value="${s.media_value||''}">
+      </div>
+    </div>
+    <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:14px;margin-top:8px">
+      <div style="font-weight:800;color:#166534;margin-bottom:10px">📝 Checkpoint Question</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Nurse must answer this correctly to advance to the next slide. Leave blank if this is the final slide with no question.</div>
+      <div class="fg"><label>Question</label><textarea id="sl-q-text" style="min-height:60px" placeholder="What is the correct answer to...?">${s.q.text||''}</textarea></div>
+      <div class="fg2">
+        <div><label>Option A</label><input id="sl-q-a" value="${s.q.a||''}"></div>
+        <div><label>Option B</label><input id="sl-q-b" value="${s.q.b||''}"></div>
+        <div><label>Option C</label><input id="sl-q-c" value="${s.q.c||''}"></div>
+        <div><label>Option D</label><input id="sl-q-d" value="${s.q.d||''}"></div>
+      </div>
+      <div class="fg"><label>Correct Answer</label>
+        <select id="sl-q-correct">
+          ${['a','b','c','d'].map(k=>`<option value="${k}" ${s.q.correct===k?'selected':''}>Option ${k.toUpperCase()}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px">
+      <button class="btn bg2" onclick="cmo()">Cancel</button>
+      <button class="btn bp" onclick="saveSlide()">💾 Save Slide</button>
+    </div>
+  </div></div>`;
+}
+function toggleSlideMedia(){
+  const t=document.getElementById('sl-mtype').value;
+  const f=document.getElementById('sl-media-f');
+  if(t==='text'){f.style.display='none';return;}
+  f.style.display='';
+  // Re-render the modal to show correct upload UI for the new type
+  const currentData={
+    title:document.getElementById('sl-title').value,
+    content:document.getElementById('sl-content').value,
+    media_type:t,
+    media_value:'',
+    q:{
+      text:document.getElementById('sl-q-text').value,
+      a:document.getElementById('sl-q-a').value,
+      b:document.getElementById('sl-q-b').value,
+      c:document.getElementById('sl-q-c').value,
+      d:document.getElementById('sl-q-d').value,
+      correct:document.getElementById('sl-q-correct').value
+    }
+  };
+  // Swap media panel without losing form data
+  const ytF=document.getElementById('sl-yt-f');
+  const upF=document.getElementById('sl-upload-f');
+  if(t==='youtube'){
+    ytF.style.display='';
+    upF.style.display='none';
+  } else {
+    ytF.style.display='none';
+    upF.style.display='';
+    // Update hint + accept attribute + icon
+    const hint=document.getElementById('sl-upload-hint');
+    const file=document.getElementById('sl-upfile');
+    const uz=document.getElementById('sl-uz');
+    if(t==='image'){
+      hint.textContent='JPG / PNG / WebP · Max 2 MB';
+      file.accept='.jpg,.jpeg,.png,.webp,.gif';
+      uz.querySelector('div:first-child').textContent='🖼️';
+      uz.querySelector('div:nth-child(2)').textContent='Click to upload image';
+    } else if(t==='video'){
+      hint.textContent='MP4 / WebM · Max 30 MB';
+      file.accept='.mp4,.webm,.mov';
+      uz.querySelector('div:first-child').textContent='🎬';
+      uz.querySelector('div:nth-child(2)').textContent='Click to upload video';
+    } else if(t==='pdf'){
+      hint.textContent='PDF · Max 8 MB';
+      file.accept='.pdf';
+      uz.querySelector('div:first-child').textContent='📄';
+      uz.querySelector('div:nth-child(2)').textContent='Click to upload PDF';
+    }
+    // Clear hidden value when switching type
+    document.getElementById('sl-mvalue').value='';
+  }
+}
+function handleSlideUpload(input){
+  const file=input.files[0];if(!file)return;
+  const t=document.getElementById('sl-mtype').value;
+  const st=document.getElementById('sl-up-status');
+  const limits={image:2,video:30,pdf:8};
+  const max=limits[t]||8;
+  if(file.size>max*1024*1024){
+    if(st)st.innerHTML=`<span style="color:var(--err)">⚠️ File too large (${(file.size/1048576).toFixed(1)} MB). Max ${max} MB.</span>`;
+    return;
+  }
+  if(st)st.textContent='Reading file...';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('sl-mvalue').value=e.target.result;
+    const uz=document.getElementById('sl-uz');
+    if(uz){
+      uz.classList.add('has-file');
+      uz.innerHTML=`<div style="font-size:32px;margin-bottom:8px">✅</div>
+        <div style="font-weight:700;color:#166534;font-size:13px">${file.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${(file.size/1024).toFixed(0)} KB · click to replace</div>`;
+    }
+    if(st)st.innerHTML=`<span style="color:var(--ok);font-weight:600">✅ Attached — save the slide to store it</span>`;
+  };
+  reader.onerror=()=>{if(st)st.innerHTML=`<span style="color:var(--err)">❌ Error reading file</span>`};
+  reader.readAsDataURL(file);
+}
+function saveSlide(){
+  const title=document.getElementById('sl-title').value.trim();
+  const content=document.getElementById('sl-content').value.trim();
+  const media_type=document.getElementById('sl-mtype').value;
+  // For image, prefer URL if provided, else use uploaded data
+  let media_value='';
+  if(media_type==='image'){
+    const urlEl=document.getElementById('sl-mvalue-url');
+    const urlVal=urlEl?urlEl.value.trim():'';
+    const upVal=document.getElementById('sl-mvalue').value;
+    media_value=urlVal||upVal;
+  } else if(media_type==='youtube'){
+    media_value=document.getElementById('sl-mvalue').value.trim();
+  } else if(media_type==='video'||media_type==='pdf'){
+    media_value=document.getElementById('sl-mvalue').value;
+  }
+  const qText=document.getElementById('sl-q-text').value.trim();
+  const qA=document.getElementById('sl-q-a').value.trim();
+  const qB=document.getElementById('sl-q-b').value.trim();
+  const qC=document.getElementById('sl-q-c').value.trim();
+  const qD=document.getElementById('sl-q-d').value.trim();
+  const qCorrect=document.getElementById('sl-q-correct').value;
+  if(!title){toast('Please enter a slide title','er');return}
+  if(!content&&media_type==='text'){toast('Please enter slide content','er');return}
+  if(media_type!=='text'&&!media_value){toast('Please provide or upload the media','er');return}
+  // Question is optional (allows last slide with no question)
+  const hasQ=qText&&qA&&qB&&qC&&qD;
+  if(qText&&!hasQ){toast('Fill all question fields, or leave them all empty','er');return}
+  const slide={
+    title,content,
+    media_type,media_value,
+    q:hasQ?{text:qText,a:qA,b:qB,c:qC,d:qD,correct:qCorrect}:null
+  };
+  const slides=getSlidesData(_eslid);
+  try{
+    if(_esidx>=0)slides[_esidx]=slide;
+    else slides.push(slide);
+    setSlidesData(_eslid,slides);
+    toast(_esidx>=0?'Slide updated ✅':'Slide added ✅','ok');
+    cmo();pageAdminSlides(_eslid);
+  } catch(e){
+    toast('❌ Storage full — try a smaller file or fewer slides','er');
+    console.error(e);
+  }
+}
+function delSlide(lid,idx){
+  if(!confirm('Delete this slide?'))return;
+  const slides=getSlidesData(lid);
+  slides.splice(idx,1);
+  setSlidesData(lid,slides);
+  toast('Slide deleted','ok');
+  pageAdminSlides(lid);
+}
+function moveSlide(lid,idx,dir){
+  const slides=getSlidesData(lid);
+  const t=idx+dir;
+  if(t<0||t>=slides.length)return;
+  [slides[idx],slides[t]]=[slides[t],slides[idx]];
+  setSlidesData(lid,slides);
+  pageAdminSlides(lid);
+}
+
+// ════════════════════════════════════════════════════════════════
+// NURSE: INTERACTIVE SLIDE PLAYER
+// ════════════════════════════════════════════════════════════════
+let INT_STATE={};
+async function pageInteractive(lid){
+  const lec=await db.lecture(lid);if(!lec){go('home');return}
+  const secs=await db.sections(),sec=secs.find(s=>s.id===lec.section_id);
+  const slides=getSlidesData(lid);
+  if(!slides.length){
+    document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
+      <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
+      <div class="card" style="text-align:center;padding:60px 30px">
+        <div style="font-size:50px;margin-bottom:14px">🎓</div>
+        <h3 style="color:var(--pu-d);margin-bottom:8px">Slides not ready yet</h3>
+        <p style="color:var(--muted)">This interactive lecture has no slides built yet.<br>Please check back later.</p>
+      </div>
+    </div>`;
+    return;
+  }
+  const savedProg=getSlideProg(lid,U.id);
+  INT_STATE={lid,slides,cur:Math.min(savedProg,slides.length-1),sec,lec,answered:false};
+  renderInteractive();
+}
+function renderInteractive(){
+  const {lid,slides,cur,sec,lec}=INT_STATE;
+  const slide=slides[cur];
+  const total=slides.length;
+  const pct=Math.round(((cur+1)/total)*100);
+  const isLast=cur===total-1;
+
+  // Render media
+  let mediaHtml='';
+  if(slide.media_type==='youtube'&&slide.media_value){
+    mediaHtml=`<div class="vid-wrap" style="margin:14px 0">
+      <iframe src="https://www.youtube.com/embed/${slide.media_value}?rel=0&modestbranding=1" allow="accelerometer;autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+    </div>`;
+  } else if(slide.media_type==='image'&&slide.media_value){
+    mediaHtml=`<div style="margin:14px 0;text-align:center"><img src="${slide.media_value}" style="max-width:100%;border-radius:10px;box-shadow:var(--sh)" alt=""></div>`;
+  } else if(slide.media_type==='video'&&slide.media_value){
+    mediaHtml=`<div style="margin:14px 0;border-radius:10px;overflow:hidden;box-shadow:var(--sh);background:#000">
+      <video controls playsinline preload="metadata" style="width:100%;display:block;aspect-ratio:16/9;background:#000">
+        <source src="${slide.media_value}">
+      </video>
+    </div>`;
+  } else if(slide.media_type==='pdf'&&slide.media_value){
+    mediaHtml=`<div style="margin:14px 0;border-radius:10px;overflow:hidden;box-shadow:var(--sh);background:#1a0f2e" oncontextmenu="return false">
+      <iframe src="${slide.media_value}#toolbar=0&navpanes=0" style="width:100%;height:500px;border:none;background:#fff;display:block"></iframe>
+    </div>`;
+  }
+
+  // Render question
+  let questionHtml='';
+  if(slide.q&&slide.q.text){
+    const sel=INT_STATE.selected;
+    const showResult=INT_STATE.answered;
+    const letters=['a','b','c','d'];
+    const opts=letters.map(k=>{
+      const isCorrect=k===slide.q.correct;
+      const isSel=sel===k;
+      let bg='',color='',border='var(--border)',extra='';
+      if(showResult){
+        const gotIt=sel===slide.q.correct;
+        if(gotIt){
+          // Correct attempt — show correct highlighted
+          if(isCorrect){bg='#DCFCE7';color='#166534';border='var(--ok)';extra=' ✅';}
+        } else {
+          // Wrong attempt — only mark the user's selected option as wrong, DO NOT reveal the correct answer
+          if(isSel){bg='#FEE2E2';color='#991B1B';border='var(--err)';extra=' ❌';}
+        }
+      } else if(isSel){bg='rgba(15,118,110,.08)';color='var(--pu)';border='var(--pu)';}
+      return`<div class="opt" style="border-color:${border};${bg?'background:'+bg+';color:'+color+';font-weight:700':''}" onclick="${showResult?'':`selectIntOpt('${k}')`}">
+        <div class="opt-l" style="${bg?'background:#fff':''}">${k.toUpperCase()}</div>
+        <span>${slide.q[k]}${extra}</span>
+      </div>`;
+    }).join('');
+
+    let feedback='',actionBtn='';
+    if(showResult){
+      const gotIt=sel===slide.q.correct;
+      if(gotIt){
+        feedback=`<div style="background:#DCFCE7;border:1.5px solid #86EFAC;border-radius:10px;padding:12px 14px;margin-top:12px;color:#166534;font-weight:700">
+          ✅ Correct! ${isLast?'You finished the last slide.':'Moving to the next slide...'}
+        </div>`;
+        actionBtn=isLast
+          ?`<button class="btn bp blg" onclick="finishInteractive()">🎉 Finish Lecture</button>`
+          :`<button class="btn bp blg" onclick="nextSlide()">Next Slide →</button>`;
+      } else {
+        feedback=`<div style="background:#FEE2E2;border:1.5px solid #FCA5A5;border-radius:10px;padding:12px 14px;margin-top:12px;color:#991B1B;font-weight:700">
+          ❌ That's not quite right — review the slide and try a different answer!
+        </div>`;
+        actionBtn=`<button class="btn bp blg" onclick="retrySlide()">🔄 Try Again</button>`;
+      }
+    } else {
+      actionBtn=`<button class="btn bp blg" onclick="submitSlideAnswer()" ${!sel?'disabled':''}>Check Answer →</button>`;
+    }
+
+    questionHtml=`<div style="background:var(--lav-l);border:2px solid var(--lav-d);border-radius:14px;padding:20px;margin-top:18px">
+      <div style="font-size:12px;font-weight:800;color:var(--pu-d);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📝 Checkpoint Question</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.5">${slide.q.text}</div>
+      <div class="opts">${opts}</div>
+      ${feedback}
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">${actionBtn}</div>
+    </div>`;
+  } else {
+    // No question on this slide (only valid for last slide)
+    questionHtml=`<div style="margin-top:18px;display:flex;justify-content:flex-end">
+      ${isLast
+        ?`<button class="btn bp blg" onclick="finishInteractive()">🎉 Finish Lecture</button>`
+        :`<button class="btn bp blg" onclick="skipSlide()">Next Slide →</button>`}
+    </div>`;
+  }
+
+  document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
+    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
+    <div style="background:#EDE9FE;border-radius:14px;padding:16px 20px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;color:#5B21B6">🎓 Slide ${cur+1} of ${total}</span>
+        <span style="font-size:13px;font-weight:800;color:#5B21B6">${pct}%</span>
+      </div>
+      <div style="height:8px;background:rgba(15,118,110,.15);border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#5B21B6,#7C3AED);border-radius:99px;transition:width .4s"></div>
+      </div>
+    </div>
+    <div class="card" style="padding:26px">
+      <h2 style="color:var(--pu-d);font-weight:800;margin-bottom:12px">${slide.title}</h2>
+      ${mediaHtml}
+      <div style="font-size:15px;line-height:1.7;color:var(--text);white-space:pre-wrap">${(slide.content||'').replace(/</g,'&lt;')}</div>
+      ${questionHtml}
+    </div>
+  </div>`;
+}
+function selectIntOpt(k){INT_STATE.selected=k;renderInteractive();}
+function submitSlideAnswer(){
+  if(!INT_STATE.selected)return;
+  INT_STATE.answered=true;renderInteractive();
+}
+function retrySlide(){INT_STATE.answered=false;INT_STATE.selected=null;renderInteractive();}
+function nextSlide(){
+  INT_STATE.cur++;
+  INT_STATE.answered=false;INT_STATE.selected=null;
+  setSlideProg(INT_STATE.lid,U.id,INT_STATE.cur);
+  renderInteractive();
+}
+function skipSlide(){
+  // Only for slides without questions (typically last slide)
+  INT_STATE.cur++;
+  setSlideProg(INT_STATE.lid,U.id,INT_STATE.cur);
+  renderInteractive();
+}
+async function finishInteractive(){
+  const {lid,sec}=INT_STATE;
+  try{
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    toast('🎉 Lecture complete!','ok');
+    go('section',{id:sec.id});
+  }catch(e){toast('❌ '+e.message,'er');}
 }
 
 // ════════════════════════════════════════════════════════════════
