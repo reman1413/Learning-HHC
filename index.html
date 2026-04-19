@@ -38,12 +38,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .pg-sm{max-width:800px;margin:0 auto;padding:32px 28px}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:24px;border:1px solid var(--border)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
-.sec-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:26px;border:1px solid var(--border);cursor:pointer;transition:.3s;position:relative;overflow:hidden}
-.sec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--pu-d),var(--pu-ll))}
-.sec-card:hover{transform:translateY(-5px);box-shadow:var(--shh);border-color:var(--pu-ll)}
-.sec-card h3{font-size:16px;font-weight:700;color:var(--pu-d);margin-bottom:8px}
-.sec-card p{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5}
-.sec-card .meta{display:flex;gap:14px;font-size:12px;color:var(--pu-l);font-weight:600}
 .pbar{height:6px;background:var(--lav);border-radius:99px;overflow:hidden;margin-top:10px}
 .pfill{height:100%;background:linear-gradient(90deg,var(--pu),var(--pu-ll));border-radius:99px;transition:width .5s}
 .lec-item{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--card);border-radius:12px;border:1.5px solid var(--border);margin-bottom:12px;cursor:pointer;transition:.2s}
@@ -55,7 +49,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .bdg{padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700}
 .bdg-ok{background:#DCFCE7;color:#166534}.bdg-q{background:#FEF9C3;color:#854D0E}.bdg-w{background:var(--lav);color:var(--pu)}
 .vid-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:var(--r);overflow:hidden;background:#0f0720;margin-bottom:20px;box-shadow:var(--sh)}
-.vid-wrap iframe,.vid-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+.vid-wrap iframe,.vid-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;border:none}
 .skip-warn{background:rgba(239,68,68,.9);color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;text-align:center;display:none;margin-bottom:14px}
 .file-viewer{background:#1a0f2e;border-radius:var(--r);margin-bottom:20px;box-shadow:var(--sh);overflow:hidden}
 .fv-header{background:rgba(255,255,255,.07);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1)}
@@ -167,6 +161,39 @@ textarea{resize:vertical;min-height:80px}
 .fb{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .chip{display:inline-flex;align-items:center;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700}
 .cp{background:var(--lav);color:var(--pu)}.cd{background:rgba(91,31,140,.15);color:var(--pu-d)}
+
+/* HERO + FILTERS for home */
+.hero-home{background:linear-gradient(135deg,var(--pu-d),var(--pu) 55%,var(--pu-l));border-radius:20px;padding:30px 32px;color:#fff;position:relative;overflow:hidden;margin-bottom:24px;box-shadow:0 10px 40px rgba(66,15,110,.25)}
+.hero-home::before{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:rgba(255,255,255,.07);border-radius:50%}
+.hero-home::after{content:'';position:absolute;bottom:-80px;left:-40px;width:200px;height:200px;background:rgba(255,255,255,.05);border-radius:50%}
+.hero-greet{font-size:14px;opacity:.8;font-weight:500;margin-bottom:4px;position:relative}
+.hero-name{font-size:28px;font-weight:800;margin-bottom:14px;position:relative}
+.hero-kpis{display:flex;gap:14px;flex-wrap:wrap;position:relative}
+.hero-kpi{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.18)}
+.hero-kpi .v{font-size:22px;font-weight:800}
+.hero-kpi .l{font-size:11px;opacity:.8;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;align-items:center}
+.fchip{padding:7px 14px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:.2s}
+.fchip:hover{border-color:var(--pu-ll);color:var(--pu)}
+.fchip.on{background:var(--pu);color:#fff;border-color:var(--pu)}
+.fchip .n{opacity:.7;margin-left:4px;font-size:11px}
+.fchip.on .n{opacity:1}
+
+/* Section grid — richer cards */
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:20px}
+.sec-c{background:var(--card);border-radius:16px;border:1.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.25s;box-shadow:var(--sh);position:relative;display:flex;flex-direction:column}
+.sec-c:hover{transform:translateY(-5px);box-shadow:var(--shh);border-color:var(--pu-ll)}
+.sec-c-head{padding:20px 22px 16px;position:relative;overflow:hidden;color:#fff}
+.sec-c-head::before{content:'';position:absolute;top:-30px;right:-30px;width:110px;height:110px;background:rgba(255,255,255,.1);border-radius:50%}
+.sec-c-icon{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;position:relative}
+.sec-c-title{font-size:17px;font-weight:800;line-height:1.3;position:relative}
+.sec-c-chip{position:absolute;top:16px;right:16px;background:rgba(0,0,0,.2);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;z-index:2}
+.sec-c-body{padding:16px 22px 20px;flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.sec-c-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.sec-c-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-weight:600}
+.sec-c-progress{margin-top:4px}
+.sec-c-cert{margin-top:10px;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:12px;color:#854D0E;font-weight:700;display:flex;align-items:center;gap:8px}
+
 /* SETUP SCREEN */
 .setup-wrap{min-height:100vh;background:linear-gradient(145deg,var(--pu-d),var(--pu) 60%,var(--pu-ll));display:flex;align-items:center;justify-content:center;padding:24px}
 .setup-card{background:#fff;border-radius:20px;padding:40px;max-width:540px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
@@ -198,6 +225,9 @@ textarea{resize:vertical;min-height:80px}
   .btn.blg{padding:12px 20px;font-size:14px}
   .c-meta{flex-direction:column;gap:16px;align-items:center}
   .c-org{font-size:22px}.c-sec{font-size:18px}
+  .hero-home{padding:22px 20px}
+  .hero-name{font-size:22px}
+  .sec-grid{grid-template-columns:1fr}
 }
 @media(max-width:420px){
   .bar-logo em{display:none}
@@ -228,6 +258,39 @@ if (SB_URL && SB_KEY) {
 }
 
 // ════════════════════════════════════════════════════════════════
+// SECTION STYLING PRESETS (icon + gradient based on title)
+// ════════════════════════════════════════════════════════════════
+const SEC_THEMES = [
+  {k:['dialys'], icon:'🩸', grad:'linear-gradient(135deg,#B91C1C,#DC2626 60%,#EF4444)'},
+  {k:['trach'], icon:'🫁', grad:'linear-gradient(135deg,#0369A1,#0EA5E9 60%,#38BDF8)'},
+  {k:['wound','jaraha'], icon:'🩹', grad:'linear-gradient(135deg,#BE185D,#EC4899 60%,#F472B6)'},
+  {k:['vacc','vaccin'], icon:'💉', grad:'linear-gradient(135deg,#047857,#10B981 60%,#34D399)'},
+  {k:['iv ','iv-','infus'], icon:'💧', grad:'linear-gradient(135deg,#1D4ED8,#3B82F6 60%,#60A5FA)'},
+  {k:['medica','dawa','drug'], icon:'💊', grad:'linear-gradient(135deg,#7C2D12,#EA580C 60%,#FB923C)'},
+  {k:['infect','control'], icon:'🧼', grad:'linear-gradient(135deg,#166534,#16A34A 60%,#4ADE80)'},
+  {k:['cpr','emerg','bls'], icon:'⛑️', grad:'linear-gradient(135deg,#991B1B,#EF4444 60%,#F87171)'},
+  {k:['diab'], icon:'🩺', grad:'linear-gradient(135deg,#1E40AF,#3730A3 60%,#6366F1)'},
+  {k:['docu','report','record'], icon:'📋', grad:'linear-gradient(135deg,#4338CA,#6366F1 60%,#818CF8)'},
+  {k:['safe','safety'], icon:'🛡️', grad:'linear-gradient(135deg,#CA8A04,#EAB308 60%,#FACC15)'},
+  {k:['phlebo','blood'], icon:'🧪', grad:'linear-gradient(135deg,#7F1D1D,#B91C1C 60%,#DC2626)'},
+  {k:['consult'], icon:'💬', grad:'linear-gradient(135deg,#5B21B6,#7C3AED 60%,#A78BFA)'},
+  {k:['admin','management'], icon:'📊', grad:'linear-gradient(135deg,#374151,#4B5563 60%,#6B7280)'},
+];
+function themeFor(title){
+  const t=(title||'').toLowerCase();
+  for(const p of SEC_THEMES){ if(p.k.some(k=>t.includes(k))) return p; }
+  // fallback by hash
+  const palettes=[
+    {icon:'📚',grad:'linear-gradient(135deg,#5B1F8C,#7B3FB8 60%,#9D6FD4)'},
+    {icon:'🎓',grad:'linear-gradient(135deg,#0F766E,#14B8A6 60%,#5EEAD4)'},
+    {icon:'✨',grad:'linear-gradient(135deg,#9333EA,#C026D3 60%,#E879F9)'},
+    {icon:'🌟',grad:'linear-gradient(135deg,#DB2777,#EC4899 60%,#F9A8D4)'},
+  ];
+  let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
+  return palettes[h%palettes.length];
+}
+
+// ════════════════════════════════════════════════════════════════
 // LOCAL STORAGE (demo / fallback)
 // ════════════════════════════════════════════════════════════════
 function ls(k){try{return JSON.parse(localStorage.getItem('lms_'+k)||'[]')}catch{return[]}}
@@ -237,6 +300,36 @@ function uid(){return 'id'+Date.now()+Math.floor(Math.random()*9999)}
 function saveFile(lid,d){try{localStorage.setItem('lms_f_'+lid,JSON.stringify(d));return true}catch{return false}}
 function getFile(lid){try{return JSON.parse(localStorage.getItem('lms_f_'+lid)||'null')}catch{return null}}
 function delFile(lid){localStorage.removeItem('lms_f_'+lid)}
+
+// ── Sequence overrides — persistent local store that survives Supabase syncs
+// This lets the sequence_step feature work even when the SQL columns aren't added yet
+function getSeqOv(){try{return JSON.parse(localStorage.getItem('lms_seq_ov')||'{}')}catch{return{}}}
+function setSeqOv(lid,data){
+  const o=getSeqOv();
+  const step=data.sequence_step||0;
+  const prereq=!!data.is_prerequisite;
+  if(step>0||prereq){o[lid]={is_prerequisite:prereq,sequence_step:step};}
+  else{delete o[lid];}
+  localStorage.setItem('lms_seq_ov',JSON.stringify(o));
+}
+function delSeqOv(lid){const o=getSeqOv();delete o[lid];localStorage.setItem('lms_seq_ov',JSON.stringify(o));}
+function applySeqOv(x){
+  if(!x)return x;
+  const o=getSeqOv();
+  if(Array.isArray(x)){
+    return x.map(l=>{
+      const ov=o[l.id];
+      if(!ov)return l;
+      return{...l,is_prerequisite:ov.is_prerequisite,sequence_step:ov.sequence_step};
+    });
+  }
+  if(x.id){
+    const ov=o[x.id];
+    if(!ov)return x;
+    return{...x,is_prerequisite:ov.is_prerequisite,sequence_step:ov.sequence_step};
+  }
+  return x;
+}
 
 function seed(){
   if(ls('seeded').length)return;
@@ -252,7 +345,6 @@ seed();
 // DB LAYER — Supabase or localStorage
 // ════════════════════════════════════════════════════════════════
 const db = {
-  // ── USERS ──
   async users(){
     if(SB){
       const{data,error}=await SB.from('lms_users').select('*');
@@ -290,7 +382,6 @@ const db = {
     }
     ls2('users',ls('users').filter(u=>u.id!==id));
   },
-  // ── SECTIONS ──
   async sections(){
     if(SB){
       const{data,error}=await SB.from('lms_sections').select('*').order('order_num');
@@ -324,21 +415,21 @@ const db = {
       ls2('questions',ls('questions').filter(q=>!lids.includes(q.lecture_id)));
     }
   },
-  // ── LECTURES ──
   async lectures(sid){
     if(SB){
       const{data,error}=await SB.from('lms_lectures').select('*').eq('section_id',sid).order('order_num');
       if(!error&&data){
+        const merged=applySeqOv(data);
         const others=ls('lectures').filter(l=>l.section_id!==sid);
-        ls2('lectures',[...others,...data]);
-        return data;
+        ls2('lectures',[...others,...merged]);
+        return merged;
       }
     }
-    return ls('lectures').filter(l=>l.section_id===sid).sort((a,b)=>a.order_num-b.order_num);
+    return applySeqOv(ls('lectures').filter(l=>l.section_id===sid).sort((a,b)=>a.order_num-b.order_num));
   },
   async lecture(id){
-    if(SB){const{data}=await SB.from('lms_lectures').select('*').eq('id',id).single();return data||null}
-    return ls('lectures').find(l=>l.id===id)||null;
+    if(SB){const{data}=await SB.from('lms_lectures').select('*').eq('id',id).single();return applySeqOv(data)||null}
+    return applySeqOv(ls('lectures').find(l=>l.id===id))||null;
   },
   async addLecture(l){
     if(SB){
@@ -361,9 +452,8 @@ const db = {
       const {error}=await SB.from('lms_lectures').delete().eq('id',id);
       if(error)throw new Error('Delete failed: '+error.message);
     }
-    delFile(id);ls2('lectures',ls('lectures').filter(l=>l.id!==id));ls2('questions',ls('questions').filter(q=>q.lecture_id!==id));
+    delFile(id);delSeqOv(id);ls2('lectures',ls('lectures').filter(l=>l.id!==id));ls2('questions',ls('questions').filter(q=>q.lecture_id!==id));
   },
-  // ── QUESTIONS ──
   async questions(lid){
     if(SB){
       const{data,error}=await SB.from('lms_questions').select('*').eq('lecture_id',lid);
@@ -398,7 +488,6 @@ const db = {
     }
     ls2('questions',ls('questions').filter(q=>q.id!==id));
   },
-  // ── COMPLETIONS ──
   async completions(uid){
     if(SB){const{data}=await SB.from('lms_completions').select('*').eq('user_id',uid);return data||[]}
     return ls('completions').filter(c=>c.user_id===uid);
@@ -423,7 +512,6 @@ const db = {
     if(SB){const{data}=await SB.from('lms_completions').select('id').eq('user_id',uid).eq('lecture_id',lid).single();return!!data}
     return ls('completions').some(c=>c.user_id===uid&&c.lecture_id===lid);
   },
-  // ── ATTEMPTS ──
   async attempts(uid){
     if(SB){const{data}=await SB.from('lms_attempts').select('*').eq('user_id',uid);return data||[]}
     return ls('attempts').filter(a=>a.user_id===uid);
@@ -445,7 +533,6 @@ const db = {
     if(SB){const{data}=await SB.from('lms_attempts').select('id').eq('user_id',uid).eq('lecture_id',lid).eq('passed',true).single();return!!data}
     return ls('attempts').some(a=>a.user_id===uid&&a.lecture_id===lid&&a.passed);
   },
-  // ── CERTS ──
   async certs(uid){
     if(SB){const{data}=await SB.from('lms_certs').select('*').eq('user_id',uid);return data||[]}
     return ls('certs').filter(c=>c.user_id===uid);
@@ -465,7 +552,6 @@ const db = {
     }
     c.id=uid();let a=ls('certs');a.push(c);ls2('certs',a);return c;
   },
-  // ── FILE UPLOAD to Supabase Storage ──
   async uploadFile(lid, file, progressCb){
     if(SB){
       const path=`lectures/${lid}/${file.name}`;
@@ -474,7 +560,6 @@ const db = {
       const{data}=SB.storage.from('lms-files').getPublicUrl(path);
       return{url:data.publicUrl,name:file.name,type:file.type,size:file.size};
     }else{
-      // localStorage base64
       return new Promise((res,rej)=>{
         const reader=new FileReader();
         reader.onload=e=>{
@@ -494,14 +579,37 @@ const db = {
 };
 
 // ════════════════════════════════════════════════════════════════
+// AUTO-SEED: Ensure Dialysis Team section exists
+// ════════════════════════════════════════════════════════════════
+async function ensureDefaultSections(){
+  if(localStorage.getItem('lms_default_seeded_v2'))return;
+  try{
+    const existing=await db.sections();
+    const defaults=[
+      {title:'Dialysis Team',description:'Training materials and continuing education for the dialysis nursing team',placeholder_icon:'🩸'}
+    ];
+    let added=false;
+    for(const def of defaults){
+      const exists=existing.find(s=>s.title.toLowerCase().includes(def.title.toLowerCase().split(' ')[0]));
+      if(!exists){
+        await db.addSection({title:def.title,description:def.description,order_num:(existing.length||0)+1,created_at:n()});
+        added=true;
+      }
+    }
+    localStorage.setItem('lms_default_seeded_v2','1');
+    if(added)console.log('Default sections seeded ✅');
+  }catch(e){console.warn('Default seed failed:',e);}
+}
+
+// ════════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════════
 let U=JSON.parse(sessionStorage.getItem('lms_u')||'null');
 let PAGE='login',PAR={},BACK=null;
+let HOME_FILTER='all'; // all | inprogress | completed | notstarted
 function setU(u){U=u;u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u')}
 function logout(){setU(null);go('login')}
 function go(page,par={},back=null){BACK=back;PAGE=page;PAR=par;render()}
-// Auto-sync every 60 seconds when logged in
 setInterval(async()=>{if(U&&SB){await syncAll();}},60000);
 function goBack(){if(BACK)go(BACK.page,BACK.par||{});else go('home')}
 
@@ -585,7 +693,7 @@ function saveSupabase(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// LOGIN — badge_id + iqama_number
+// LOGIN
 // ════════════════════════════════════════════════════════════════
 function pageLogin(){
   document.getElementById('app').innerHTML=`
@@ -619,7 +727,6 @@ function setRole(r){
   _role=r;
   document.getElementById('r-e').classList.toggle('on',r==='employee');
   document.getElementById('r-a').classList.toggle('on',r==='admin');
-  // Admin uses password, employee uses iqama
   const lbl=document.getElementById('pw-label');
   if(lbl)lbl.textContent=r==='admin'?'Password':'Iqama Number (رقم الإقامة)';
 }
@@ -629,7 +736,6 @@ async function doLogin(){
   if(!b||!p){showErr('Please enter employee number and iqama number');return}
   const u=await db.userByBadge(b);
   if(!u){showErr('Employee number not found');return}
-  // Admin uses stored password field, employees use iqama_number
   const pwField=_role==='admin'?'iqama_number':'iqama_number';
   if(u.iqama_number!==p){showErr('Incorrect iqama number');return}
   if(_role==='admin'&&u.role!=='admin'){showErr('No admin access for this account');return}
@@ -637,76 +743,108 @@ async function doLogin(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// EMPLOYEE HOME
+// EMPLOYEE HOME — REDESIGNED
 // ════════════════════════════════════════════════════════════════
 async function pageHome(){
+  await ensureDefaultSections();
   const secs=await db.sections();
   const comps=await db.completions(U.id);
   const allAtts=await db.attempts(U.id);
   const certs=await db.certs(U.id);
 
+  // Build card data for ALL sections (including empty ones)
   const cardData=await Promise.all(secs.map(async sec=>{
     const lecs=await db.lectures(sec.id);
-    if(!lecs.length)return null;
     let doneCount=0;
     for(const l of lecs){
       const watched=comps.find(c=>c.lecture_id===l.id);
       const passed=l.has_quiz?allAtts.some(a=>a.lecture_id===l.id&&a.passed):true;
       if(watched&&passed)doneCount++;
     }
-    const pct=Math.round(doneCount/lecs.length*100);
+    const pct=lecs.length?Math.round(doneCount/lecs.length*100):0;
     const hasCert=certs.find(c=>c.section_id===sec.id);
-    return{sec,total:lecs.length,doneCount,pct,hasCert,remaining:lecs.length-doneCount};
+    const status=lecs.length===0?'empty':pct===100?'completed':pct>0?'inprogress':'notstarted';
+    return{sec,lecs,total:lecs.length,doneCount,pct,hasCert,remaining:lecs.length-doneCount,status};
   }));
 
-  const valid=cardData.filter(Boolean).sort((a,b)=>{
-    const s=x=>x.pct===100?2:x.pct>0?1:0;
-    return s(b)-s(a);
-  });
+  // Sort: in-progress → not started → completed → empty
+  const sortOrder={inprogress:1,notstarted:2,completed:3,empty:4};
+  cardData.sort((a,b)=>sortOrder[a.status]-sortOrder[b.status]);
 
-  const cardsHtml=valid.map(({sec,total,doneCount,pct,hasCert,remaining})=>{
-    const done=pct===100;
-    const started=pct>0&&!done;
-    const bc=done?'var(--ok)':started?'var(--pu-ll)':'var(--border)';
-    const bar_color=done?'linear-gradient(90deg,var(--ok),#4ade80)':'linear-gradient(90deg,var(--pu),var(--pu-ll))';
-    const badge=done
-      ?`<span style="background:#DCFCE7;color:#166534;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">✅ Complete</span>`
-      :started
-        ?`<span style="background:var(--lav);color:var(--pu);padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">📖 ${remaining} left</span>`
-        :`<span style="background:var(--border);color:var(--muted);padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap">Not started</span>`;
-    const certRow=hasCert?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-      <span style="font-size:12px;font-weight:700;color:#854D0E">🏆 Certificate earned · <span style="font-family:monospace">${hasCert.ref_number}</span></span>
-    </div>`:'';
-    return`<div onclick="go('section',{id:'${sec.id}'},{page:'home',par:{},label:'Home'})"
-      style="background:var(--card);border-radius:16px;padding:22px;border:2px solid ${bc};cursor:pointer;transition:.25s;box-shadow:var(--sh);position:relative;overflow:hidden"
-      onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shh)'"
-      onmouseout="this.style.transform='';this.style.boxShadow='var(--sh)'">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${done?'linear-gradient(90deg,var(--ok),#4ade80)':started?'linear-gradient(90deg,var(--pu-d),var(--pu-ll))':'var(--border)'}"></div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
-        <h3 style="font-size:16px;font-weight:800;color:var(--pu-d);flex:1">${sec.title}</h3>
-        ${badge}
-      </div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5">${sec.description||''}</p>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="flex:1">
-          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-            <span style="font-size:12px;color:var(--muted);font-weight:600">${doneCount}/${total} lectures done</span>
-            <span style="font-size:12px;font-weight:800;color:${done?'var(--ok)':'var(--pu)'}">${pct}%</span>
-          </div>
-          <div style="height:8px;background:var(--lav);border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${bar_color};border-radius:99px;transition:width .5s"></div>
-          </div>
+  // Apply filter
+  const filtered=HOME_FILTER==='all'?cardData:cardData.filter(c=>c.status===HOME_FILTER);
+
+  const counts={
+    all:cardData.length,
+    inprogress:cardData.filter(c=>c.status==='inprogress').length,
+    notstarted:cardData.filter(c=>c.status==='notstarted').length,
+    completed:cardData.filter(c=>c.status==='completed').length,
+  };
+
+  const completedSecs=cardData.filter(c=>c.status==='completed').length;
+  const totalLecs=cardData.reduce((s,c)=>s+c.total,0);
+  const completedLecs=cardData.reduce((s,c)=>s+c.doneCount,0);
+
+  // Build cards
+  const cardsHtml=filtered.map(({sec,total,doneCount,pct,hasCert,status})=>{
+    const theme=themeFor(sec.title);
+    let statusChip='',statusBar='var(--border)',clickable=true;
+    if(status==='completed'){
+      statusChip=`<span class="sec-c-chip" style="background:rgba(34,197,94,.95);color:#fff">✅ Complete</span>`;
+      statusBar='linear-gradient(90deg,var(--ok),#4ade80)';
+    } else if(status==='inprogress'){
+      statusChip=`<span class="sec-c-chip">📖 ${doneCount}/${total}</span>`;
+      statusBar='linear-gradient(90deg,var(--pu),var(--pu-ll))';
+    } else if(status==='empty'){
+      statusChip=`<span class="sec-c-chip" style="background:rgba(0,0,0,.3)">🔜 Coming Soon</span>`;
+      clickable=false;
+    } else {
+      statusChip=`<span class="sec-c-chip">New</span>`;
+    }
+    const clickAttr=clickable?`onclick="go('section',{id:'${sec.id}'},{page:'home',par:{},label:'Home'})"`:`onclick="toast('No lectures yet — check back soon!','')"`;
+    const cursor=clickable?'pointer':'default';
+    const progressHtml=total>0?`
+      <div class="sec-c-progress">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--muted);font-weight:600">Progress</span>
+          <span style="font-size:11px;font-weight:800;color:${status==='completed'?'var(--ok)':'var(--pu)'}">${pct}%</span>
         </div>
-        <div style="width:42px;height:42px;border-radius:50%;background:${done?'#DCFCE7':'var(--lav)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${done?'✅':'📚'}</div>
+        <div style="height:6px;background:var(--lav);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${statusBar};border-radius:99px;transition:width .5s"></div>
+        </div>
+      </div>`:`
+      <div style="padding:10px 12px;background:var(--lav-l);border:1px dashed var(--border);border-radius:10px;text-align:center;font-size:12px;color:var(--muted);font-weight:600">
+        🔜 Lectures will be added soon
+      </div>`;
+    const certHtml=hasCert?`<div class="sec-c-cert" onclick="event.stopPropagation();go('cert',{id:'${hasCert.id}'},{page:'home',par:{},label:'Home'})" style="cursor:pointer">
+      🏆 Certificate · <span style="font-family:monospace">${hasCert.ref_number}</span>
+    </div>`:'';
+    return`<div class="sec-c" ${clickAttr} style="cursor:${cursor};${status==='empty'?'opacity:.85':''}">
+      <div class="sec-c-head" style="background:${theme.grad}">
+        ${statusChip}
+        <div class="sec-c-icon">${theme.icon}</div>
+        <div class="sec-c-title">${sec.title}</div>
       </div>
-      ${certRow}
+      <div class="sec-c-body">
+        <div>
+          ${sec.description?`<div class="sec-c-desc">${sec.description}</div>`:''}
+        </div>
+        <div>
+          <div class="sec-c-meta" style="margin-bottom:6px">
+            <span>📖 ${total} ${total===1?'lecture':'lectures'}</span>
+            ${status==='completed'?'<span style="color:var(--ok)">✓ Done</span>':status==='inprogress'?`<span style="color:var(--pu)">${total-doneCount} left</span>`:''}
+          </div>
+          ${progressHtml}
+          ${certHtml}
+        </div>
+      </div>
     </div>`;
   }).join('');
 
   // Certs list
   let certsHtml='';
   if(certs.length){
-    const secList=await db.sections();
+    const secList=secs;
     const certItems=certs.map(cert=>{
       const s=secList.find(x=>x.id===cert.section_id);
       const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
@@ -724,37 +862,40 @@ async function pageHome(){
     certsHtml=`<div style="margin-top:36px"><h3 style="font-size:18px;font-weight:800;color:var(--pu-d);margin-bottom:16px">🏆 My Certificates</h3>${certItems}</div>`;
   }
 
-  const completedSecs=valid.filter(c=>c.pct===100).length;
-  const totalLecs=valid.reduce((s,c)=>s+c.total,0);
-  const completedLecs=valid.reduce((s,c)=>s+c.doneCount,0);
+  const filterChip=(k,label)=>`<div class="fchip ${HOME_FILTER===k?'on':''}" onclick="setHomeFilter('${k}')">${label} <span class="n">${counts[k]}</span></div>`;
 
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px">
-      <div>
-        <h2 style="font-size:26px;font-weight:800;color:var(--pu-d)">My Training Dashboard</h2>
-        <p style="color:var(--muted);margin-top:4px">Welcome, <strong>${U.name}</strong> 👋</p>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--pu)">${completedSecs}/${valid.length}</div>
-          <div style="font-size:11px;color:var(--muted);font-weight:600">Sections</div>
-        </div>
-        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--pu)">${completedLecs}/${totalLecs}</div>
-          <div style="font-size:11px;color:var(--muted);font-weight:600">Lectures</div>
-        </div>
-        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 18px;text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--ok)">${certs.length}</div>
-          <div style="font-size:11px;color:var(--muted);font-weight:600">Certificates</div>
-        </div>
+    <div class="hero-home">
+      <div class="hero-greet">Welcome back 👋</div>
+      <div class="hero-name">${U.name}</div>
+      <div class="hero-kpis">
+        <div class="hero-kpi"><div class="v">${completedSecs}/${cardData.filter(c=>c.status!=='empty').length||cardData.length}</div><div class="l">Sections</div></div>
+        <div class="hero-kpi"><div class="v">${completedLecs}/${totalLecs}</div><div class="l">Lectures</div></div>
+        <div class="hero-kpi"><div class="v">${certs.length}</div><div class="l">Certificates</div></div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
-      ${cardsHtml||'<div style="text-align:center;padding:80px;color:var(--muted);grid-column:1/-1"><p style="font-size:52px">📭</p><p style="margin-top:12px;font-weight:600">No training sections yet</p></div>'}
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <h3 style="font-size:18px;font-weight:800;color:var(--pu-d)">Training Sections</h3>
+    </div>
+    <div class="filter-row">
+      ${filterChip('all','All')}
+      ${filterChip('inprogress','📖 In Progress')}
+      ${filterChip('notstarted','🆕 Not Started')}
+      ${filterChip('completed','✅ Completed')}
+    </div>
+
+    <div class="sec-grid">
+      ${cardsHtml||`<div style="text-align:center;padding:60px;color:var(--muted);grid-column:1/-1;background:var(--card);border-radius:16px;border:1px dashed var(--border)">
+        <p style="font-size:48px">📭</p>
+        <p style="margin-top:12px;font-weight:600">No sections match this filter</p>
+        <button class="btn bg2" style="margin-top:14px" onclick="setHomeFilter('all')">Show all sections</button>
+      </div>`}
     </div>
     ${certsHtml}
   </div>`;
 }
+function setHomeFilter(f){HOME_FILTER=f;pageHome();}
 
 // ════════════════════════════════════════════════════════════════
 // SECTION
@@ -763,39 +904,105 @@ async function pageSection(sid){
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);if(!sec){go('home');return}
   const lecs=await db.lectures(sid),comps=await db.completions(U.id),certs=await db.certs(U.id);
   const hasCert=certs.find(c=>c.section_id===sid);
-  // allDone = all lectures watched AND all quizzes passed
   const quizResults=await Promise.all(lecs.map(async l=>({
     watched:!!comps.find(c=>c.lecture_id===l.id),
     passed:l.has_quiz?await db.hasPassed(U.id,l.id):true
   })));
   const allDone=lecs.length>0&&quizResults.every(r=>r.watched&&r.passed);
+
+  // ── Multi-step sequence logic ──
+  // Each lecture can have sequence_step 0 (free) or 1-5 (ordered).
+  // Step N unlocks only after ALL lectures at step N-1 are completed.
+  // Free (step 0) lectures unlock after ALL sequence steps are completed.
+  // Backward compat: is_prerequisite=true → treat as step 1 if no sequence_step set.
+  const stepOf=l=>l.sequence_step||(l.is_prerequisite?1:0);
+  const sequentialLecs=lecs.filter(l=>stepOf(l)>0);
+  const stepsGrouped={};
+  sequentialLecs.forEach(l=>{const s=stepOf(l);(stepsGrouped[s]=stepsGrouped[s]||[]).push(l)});
+  const sortedSteps=Object.keys(stepsGrouped).map(Number).sort((a,b)=>a-b);
+
+  // Helper: is a lecture fully completed?
+  const isDone=async l=>{
+    const w=!!comps.find(c=>c.lecture_id===l.id);
+    const p=l.has_quiz?await db.hasPassed(U.id,l.id):true;
+    return w&&p;
+  };
+  // Check completion per step
+  const stepDone={};
+  for(const step of sortedSteps){
+    const results=await Promise.all(stepsGrouped[step].map(isDone));
+    stepDone[step]=results.every(Boolean);
+  }
+  const allSeqDone=sortedSteps.every(s=>stepDone[s]);
+
+  // Determine lock state for each lecture
+  const lockOf=l=>{
+    const step=stepOf(l);
+    if(step===0){
+      // Free lecture — locked until ALL sequence steps are done
+      return sortedSteps.length>0&&!allSeqDone;
+    }
+    // Step lecture — unlocked if all previous steps done
+    const prevSteps=sortedSteps.filter(s=>s<step);
+    return prevSteps.some(s=>!stepDone[s]);
+  };
+
+  const pendingSteps=sortedSteps.filter(s=>!stepDone[s]);
+  const nextPendingStep=pendingSteps[0];
+  const nextPendingNames=nextPendingStep?stepsGrouped[nextPendingStep].map(l=>l.title):[];
+
   const items=await Promise.all(lecs.map(async lec=>{
     const watched=comps.find(c=>c.lecture_id===lec.id);
     const quizPassed=lec.has_quiz?await db.hasPassed(U.id,lec.id):true;
     const done=watched&&quizPassed;
+    const typeIcon=lec.type==='youtube'?'▶':lec.type==='video'?'🎬':'📄';
+    const typeLabel=lec.type==='youtube'?'Video lecture':lec.type==='video'?'Video file':'Presentation / PDF';
+    const step=stepOf(lec);
+    const isLocked=lockOf(lec);
     let badge='';
-    if(lec.has_quiz){
+    if(isLocked){
+      badge=`<span class="bdg" style="background:#F3F4F6;color:#6B7280">🔒 Locked</span>`;
+    } else if(lec.has_quiz){
       if(done) badge=`<span class="bdg bdg-ok">✅ Done</span>`;
       else if(watched) badge=`<span class="bdg" style="background:#FEE2E2;color:#991B1B">❌ Retake Quiz</span>`;
       else badge=`<span class="bdg bdg-q">📝 Quiz</span>`;
     } else {
-      badge=done?`<span class="bdg bdg-ok">✅ Done</span>`:`<span class="bdg bdg-w">${lec.type==='pptx'?'📄':'▶'} View</span>`;
+      badge=done?`<span class="bdg bdg-ok">✅ Done</span>`:`<span class="bdg bdg-w">${typeIcon} View</span>`;
     }
-    return`<div class="lec-item ${done?'done':''}" onclick="go('lecture',{id:'${lec.id}'},{page:'section',par:{id:'${sid}'},label:'Back to Section'})">
-      <div class="lec-ico">${lec.type==='youtube'?'▶':'📄'}</div>
-      <div class="lec-info"><h4>${lec.title}</h4><span>${lec.type==='youtube'?'Video lecture':'Presentation / PDF'}${lec.has_quiz?' · Includes quiz':''}</span></div>
-      ${badge}
+    const stepBadge=step>0?`<span class="bdg" style="background:#FEF3C7;color:#92400E;margin-right:6px">⭐ Step ${step}</span>`:'';
+    const clickHandler=isLocked
+      ?`onclick="toast('🔒 Complete Step '+${step>0?step-1:'all sequence steps'}+' first','')"`
+      :`onclick="go('lecture',{id:'${lec.id}'},{page:'section',par:{id:'${sid}'},label:'Back to Section'})"`;
+    const rowStyle=isLocked?'opacity:.6;background:#FAFAFA;':step>0?'border-left:4px solid #F59E0B;background:#FFFBEB':'';
+    return`<div class="lec-item ${done?'done':''}" style="${rowStyle}" ${clickHandler}>
+      <div class="lec-ico" style="${isLocked?'filter:grayscale(1);opacity:.7':''}">${isLocked?'🔒':typeIcon}</div>
+      <div class="lec-info"><h4>${lec.title}</h4><span>${typeLabel}${lec.has_quiz?' · Includes quiz':''}</span></div>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end">${stepBadge}${badge}</div>
     </div>`;
   }));
   const itemsHtml=items.join('');
+
+  const prereqBanner=sortedSteps.length>0&&!allSeqDone
+    ?`<div class="al al-w"><span>⭐ <strong>Follow the sequence:</strong> Complete <strong>Step ${nextPendingStep}</strong> (${nextPendingNames.join(', ')}) to unlock the next step${pendingSteps.length>1?'s':''}.</span></div>`
+    :'';
   const banner=hasCert
     ?`<div class="al al-ok"><span>🏆 You earned a certificate for this section!</span><button class="btn bp bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'section',par:{id:'${sid}'},label:'Back'})">View Certificate</button></div>`
-    :allDone?`<div class="al al-i"><span>🎉 All lectures complete! Claim your certificate.</span><button class="btn bp bsm" onclick="issueCert('${sid}')">Get Certificate</button></div>`:'';
+    :allDone?`<div class="al al-i"><span>🎉 All lectures complete! Claim your certificate.</span><button class="btn bp bsm" onclick="issueCert('${sid}')">Get Certificate</button></div>`:prereqBanner;
+  const theme=themeFor(sec.title);
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><span>${sec.title}</span></div>
-    <div class="ph"><div><h2>${sec.title}</h2><p>${sec.description||''}</p></div></div>
+    <div style="background:${theme.grad};border-radius:16px;padding:24px 28px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(255,255,255,.1);border-radius:50%"></div>
+      <div style="width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;position:relative">${theme.icon}</div>
+      <h2 style="font-size:24px;font-weight:800;position:relative">${sec.title}</h2>
+      ${sec.description?`<p style="margin-top:6px;opacity:.85;font-size:14px;position:relative">${sec.description}</p>`:''}
+    </div>
     ${banner}
-    <div>${itemsHtml||'<div style="text-align:center;padding:40px;color:var(--muted)">No lectures yet.</div>'}</div>
+    <div>${itemsHtml||`<div style="text-align:center;padding:50px 20px;background:var(--card);border-radius:var(--r);border:1px dashed var(--border);color:var(--muted)">
+      <div style="font-size:42px;margin-bottom:10px">🔜</div>
+      <p style="font-weight:600">No lectures in this section yet</p>
+      <p style="font-size:13px;margin-top:4px">Lectures will be added soon — check back later!</p>
+    </div>`}</div>
   </div>`
 }
 async function issueCert(sid){
@@ -811,82 +1018,172 @@ async function issueCert(sid){
 // LECTURE
 // ════════════════════════════════════════════════════════════════
 let vidDone=false;
+let YT_PLAYER=null;
 
 async function pageLecture(lid){
   const lec=await db.lecture(lid);if(!lec){go('home');return}
+  // Enforce sequence lock on direct navigation
+  const sectionLecs=await db.lectures(lec.section_id);
+  const stepOf=l=>l.sequence_step||(l.is_prerequisite?1:0);
+  const myStep=stepOf(lec);
+  const allStepLecs=sectionLecs.filter(l=>stepOf(l)>0);
+  if(allStepLecs.length){
+    const comps2=await db.completions(U.id);
+    const stepsGrouped={};
+    allStepLecs.forEach(l=>{const s=stepOf(l);(stepsGrouped[s]=stepsGrouped[s]||[]).push(l)});
+    const sortedSteps=Object.keys(stepsGrouped).map(Number).sort((a,b)=>a-b);
+    const isDone=async l=>{
+      const w=!!comps2.find(c=>c.lecture_id===l.id);
+      const p=l.has_quiz?await db.hasPassed(U.id,l.id):true;
+      return w&&p;
+    };
+    const stepDone={};
+    for(const s of sortedSteps){
+      const r=await Promise.all(stepsGrouped[s].map(isDone));
+      stepDone[s]=r.every(Boolean);
+    }
+    let locked=false;
+    if(myStep===0){
+      // Free lecture — needs ALL sequence steps done
+      locked=!sortedSteps.every(s=>stepDone[s]);
+    } else {
+      // Step lecture — needs all previous steps done
+      const prev=sortedSteps.filter(s=>s<myStep);
+      locked=prev.some(s=>!stepDone[s]);
+    }
+    if(locked){
+      toast('🔒 Complete the previous step first','er');
+      go('section',{id:lec.section_id});
+      return;
+    }
+  }
   const secs=await db.sections(),sec=secs.find(s=>s.id===lec.section_id);
   vidDone=await db.isCompleted(U.id,lid);
   const passed=lec.has_quiz?await db.hasPassed(U.id,lid):true;
-  const isYT=lec.type==='youtube';
 
-  // Build content area
   let content='';
-  if(isYT){
+  if(lec.type==='youtube'){
     content=buildYT(lec.url,lid);
+  }else if(lec.type==='video'){
+    content=buildVideo(lid,lec);
   }else{
     content=buildFileViewer(lid,lec);
   }
 
-  // Build action buttons
   let actionBtns='';
   if(vidDone&&lec.has_quiz&&passed){
     actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✅ Quiz passed!</div>`;
     if(lec.has_quiz) actionBtns+=`<button class="btn bp blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">↩ Retake Quiz</button>`;
   } else if(lec.has_quiz){
-    if(isYT&&!vidDone){
-      actionBtns=`<button class="btn bg2 blg" onclick="markWatchedYT('${lid}')">✅ I've Watched the Video — Unlock Quiz</button>`;
+    if(!vidDone){
+      actionBtns=`<button class="btn bg2 blg" onclick="markWatchedManual('${lid}')">✅ I've finished — Unlock Quiz</button>`;
     } else {
-      actionBtns=`<button id="qbtn" class="btn bp blg" ${!vidDone?'disabled':''} onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">📝 Take Quiz${!vidDone?' · view content first':''}</button>`;
+      actionBtns=`<button id="qbtn" class="btn bp blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">📝 Take Quiz</button>`;
     }
   } else {
-    // No quiz — show "I've watched" button if not yet marked
     if(vidDone){
       actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✅ Marked as viewed</div>`;
     } else {
-      const isFile=lec.type==='pptx';
-      actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">
-        ${isFile?'✅ I have reviewed this file':'✅ I have watched this lecture'}
-      </button>`;
+      actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">✅ Mark as complete</button>`;
     }
   }
 
   document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
     <div class="ph"><div><h2>${lec.title}</h2></div></div>
-    ${!vidDone&&!isYT?`<div class="al al-w" style="margin-bottom:16px">⚠️ View the complete content to unlock the quiz.</div>`:''}
+    ${!vidDone?`<div class="al al-w" style="margin-bottom:16px">⚠️ Watch / review all content to unlock the next step.</div>`:''}
     ${content}
     <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:center">
       ${actionBtns}
     </div>
   </div>`;
+
+  // Initialize YouTube iframe with API listener (for auto-complete)
+  if(lec.type==='youtube')initYTListener(lid);
 }
 
+// ════════════════════════════════════════════════════════════════
+// YOUTUBE — EMBEDDED INLINE (no redirect)
+// ════════════════════════════════════════════════════════════════
 function buildYT(videoId,lid){
-  const url='https://www.youtube.com/watch?v='+videoId;
-  return`<div style="border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh)">
-    <a href="${url}" target="_blank" style="display:block;text-decoration:none">
-      <div style="background:linear-gradient(135deg,#1a0f2e 0%,#2d1b4e 50%,#1a0f2e 100%);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;overflow:hidden">
-        <!-- Background pattern -->
-        <div style="position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(45deg,var(--pu) 0,var(--pu) 1px,transparent 0,transparent 50%) 0/20px 20px"></div>
-        <!-- YouTube logo style button -->
-        <div style="position:relative;z-index:1;text-align:center">
-          <div style="width:88px;height:62px;background:#FF0000;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 32px rgba(255,0,0,.4)">
-            <div style="width:0;height:0;border-top:16px solid transparent;border-bottom:16px solid transparent;border-left:26px solid #fff;margin-left:5px"></div>
-          </div>
-          <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:6px">Watch on YouTube</div>
-          <div style="color:rgba(255,255,255,.5);font-size:13px">Click to open in a new tab</div>
-        </div>
-        <!-- YouTube ID badge -->
-        <div style="position:absolute;bottom:14px;right:16px;background:rgba(0,0,0,.5);color:rgba(255,255,255,.4);font-size:11px;padding:3px 8px;border-radius:6px;font-family:monospace">${videoId}</div>
-      </div>
-    </a>
-    <div style="background:var(--pu-d);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <span style="color:rgba(255,255,255,.7);font-size:13px;font-weight:500">👁️ Watch the full video, then unlock the quiz below</span>
-      <a href="${url}" target="_blank" class="btn" style="background:#FF0000;color:#fff;box-shadow:0 4px 14px rgba(255,0,0,.3)">▶ Open on YouTube</a>
+  return`<div class="vid-wrap">
+    <iframe id="yt-iframe"
+      src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}"
+      allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"
+      allowfullscreen></iframe>
+  </div>
+  <div style="background:var(--lav-l);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+    💡 <span>Watch the full video — the system will auto-detect when it ends.</span>
+  </div>`;
+}
+function initYTListener(lid){
+  const iframe=document.getElementById('yt-iframe');
+  if(!iframe)return;
+  let playing=false;
+  const handler=function(e){
+    if(e.source!==iframe.contentWindow)return;
+    if(!e.data||typeof e.data!=='string')return;
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event==='onStateChange'){
+        if(d.info===1)playing=true;
+        if(d.info===0&&playing&&!vidDone){
+          (async()=>{
+            vidDone=true;
+            await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+            toast('✅ Video complete — quiz unlocked!','ok');
+            await pageLecture(lid);
+          })();
+        }
+      }
+    }catch(err){}
+  };
+  window.addEventListener('message',handler);
+  // Subscribe to YouTube events via postMessage
+  setTimeout(()=>{
+    try{
+      iframe.contentWindow.postMessage(JSON.stringify({event:'listening'}),'*');
+      iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'addEventListener',args:['onStateChange']}),'*');
+    }catch(e){}
+  },1000);
+}
+
+// ════════════════════════════════════════════════════════════════
+// VIDEO FILE (MP4) — INLINE HTML5 PLAYER
+// ════════════════════════════════════════════════════════════════
+function buildVideo(lid,lec){
+  const fileUrl=lec.file_path||null;
+  const localFd=getFile(lid);
+  const src=fileUrl||(localFd?localFd.data:null);
+  const name=lec.file_name||localFd?.name||'Video';
+  if(!src){
+    return`<div class="file-viewer"><div class="fv-header"><h4>🎬 ${lec.title}</h4></div>
+      <div class="no-file"><div class="nfi">⏳</div><h3>Video not uploaded yet</h3>
+      <p>The admin has not uploaded this video yet.<br>Please check back later.</p></div></div>`;
+  }
+  const sizeLabel=localFd&&localFd.size?(localFd.size>1048576?(localFd.size/1048576).toFixed(1)+' MB':Math.round(localFd.size/1024)+' KB'):'';
+  return`<div class="file-viewer">
+    <div class="fv-header"><h4>🎬 ${name} ${sizeLabel?`<span style="font-size:11px;opacity:.4;font-weight:500">${sizeLabel}</span>`:''}</h4></div>
+    <video id="vid-player" controls playsinline preload="metadata" style="width:100%;display:block;background:#000;aspect-ratio:16/9" onended="onVideoEnded('${lid}')">
+      <source src="${src}" type="${lec.file_type||'video/mp4'}">
+      Your browser doesn't support inline video playback.
+    </video>
+    <div class="fv-footer">
+      <span style="color:rgba(255,255,255,.5);font-size:13px">📺 Watch the full video — completion is auto-detected</span>
     </div>
   </div>`;
 }
+async function onVideoEnded(lid){
+  if(vidDone)return;
+  vidDone=true;
+  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+  toast('✅ Video complete — quiz unlocked!','ok');
+  await pageLecture(lid);
+}
 
+// ════════════════════════════════════════════════════════════════
+// PDF / PPTX VIEWER
+// ════════════════════════════════════════════════════════════════
 function buildFileViewer(lid,lec){
   const fileUrl=lec.file_path||null;
   const localFd=getFile(lid);
@@ -899,18 +1196,13 @@ function buildFileViewer(lid,lec){
   const src=fd.url||fd.data;
   const isPdf=fd.type==='application/pdf'||fd.name.endsWith('.pdf');
   const sizeLabel=fd.size>0?(fd.size>1048576?(fd.size/1048576).toFixed(1)+' MB':Math.round(fd.size/1024)+' KB'):'';
-
-  // For PPTX: use Google Docs viewer to display inline (no download needed)
   const isPptx=fd.name.endsWith('.pptx')||fd.name.endsWith('.ppt');
   let viewerHtml='';
   if(isPdf){
-    // Use Google Docs viewer for universal mobile support
     const isLocalData=src.startsWith('data:');
     if(isLocalData){
-      // Local base64 - use iframe directly
       viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${src}" onload="onPdfLoad()"></iframe>`;
     } else {
-      // Supabase URL - use Google Docs viewer for mobile compatibility
       const gDocsUrl='https://docs.google.com/viewer?url='+encodeURIComponent(src)+'&embedded=true';
       viewerHtml=`<div style="position:relative">
         <iframe class="pdf-frame" id="pdf-iframe" src="${gDocsUrl}" onload="onPdfLoad()"></iframe>
@@ -920,11 +1212,9 @@ function buildFileViewer(lid,lec){
       </div>`;
     }
   } else if(isPptx && (fd.url)){
-    // Use Google Docs viewer for PPTX (Supabase public URL)
     const gUrl='https://docs.google.com/gview?url='+encodeURIComponent(fd.url)+'&embedded=true';
     viewerHtml=`<iframe class="pdf-frame" id="pdf-iframe" src="${gUrl}" onload="onPdfLoad()"></iframe>`;
   } else {
-    // PPTX stored as base64 — convert hint
     viewerHtml=`<div style="padding:50px 30px;text-align:center">
       <div style="font-size:60px;margin-bottom:16px">📊</div>
       <h3 style="color:#fff;font-size:18px;margin-bottom:8px">${fd.name}</h3>
@@ -934,12 +1224,6 @@ function buildFileViewer(lid,lec){
       </p>
     </div>`;
   }
-
-  const completeBtnHtml=vidDone
-    ?`<span style="color:var(--ok);font-weight:700;font-size:14px">✅ Viewed — quiz unlocked</span>`
-    :`<button class="btn bp bsm" id="view-done-btn" onclick="markPptxViewed('${lid}')" ${isPdf||isPptx?'disabled':''}>
-        ✅ I have reviewed all slides — Unlock Quiz
-      </button>`;
 
   const dlBtn=isPdf?`<a href="${src}" download="${fd.name}" class="btn bo bsm" style="color:#fff;border-color:rgba(255,255,255,.3)">⬇️ Download PDF</a>`:'';
   return`<div class="file-viewer">
@@ -952,83 +1236,16 @@ function buildFileViewer(lid,lec){
       <span style="color:rgba(255,255,255,.5);font-size:13px">
         ${isPdf?'Scroll through all pages to review':'View all slides carefully'}
       </span>
-      ${completeBtnHtml}
     </div>
   </div>`;
 }
-function onPdfLoad(){
-  // Enable after 5 seconds of loading
-  setTimeout(()=>{
-    const btn=document.getElementById('view-done-btn');
-    if(btn){btn.disabled=false;btn.textContent='✅ I have reviewed all content — Unlock Quiz';}
-  },5000);
-}
-async function markPptxViewed(lid){
-  vidDone=true;
-  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-  const qb=document.getElementById('qbtn'),db2=document.getElementById('dbtn');
-  if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
-  if(db2){db2.disabled=false;db2.innerHTML='✅ Mark Complete';}
-  const btn=document.getElementById('view-done-btn');
-  if(btn)btn.outerHTML=`<span style="color:var(--ok);font-weight:700;font-size:14px">✅ Viewed — quiz unlocked</span>`;
-  toast('✅ Reviewed — quiz unlocked!','ok');
-}
-// downloadFile removed — employees view only, no download
+function onPdfLoad(){}
 
-function onYouTubeIframeAPIReady(){}
-
-function initYT(vid,lid,hasQ){
-  // Use direct iframe - faster and more reliable
-  const wrap=document.getElementById('ytp');
-  if(!wrap)return;
-  wrap.style.position='absolute';wrap.style.top='0';wrap.style.left='0';wrap.style.width='100%';wrap.style.height='100%';
-  const iframe=document.createElement('iframe');
-  iframe.id='yt-iframe';
-  iframe.src='https://www.youtube.com/embed/'+vid+'?rel=0&modestbranding=1&enablejsapi=1&origin='+encodeURIComponent(location.origin);
-  iframe.style.cssText='width:100%;height:100%;border:none;';
-  iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture';
-  iframe.allowFullscreen=true;
-  wrap.appendChild(iframe);
-  // Listen via postMessage for video end
-  let watching=false;
-  window.onmessage=async function(e){
-    if(!e.data||typeof e.data!=='string')return;
-    try{
-      const d=JSON.parse(e.data);
-      if(d.event==='onStateChange'){
-        if(d.info===1)watching=true; // playing
-        if(d.info===0&&watching){ // ended
-          vidDone=true;
-          await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-          const qb=document.getElementById('qbtn'),db2=document.getElementById('dbtn');
-          if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
-          if(db2){db2.disabled=false;db2.innerHTML='✅ Mark Complete';}
-          toast('✅ Video complete!','ok');
-        }
-      }
-    }catch(err){}
-  };
-  // Also add manual "mark watched" button after 10 seconds as fallback
-  setTimeout(()=>{
-    if(!vidDone){
-      const sw=document.getElementById('swarn');
-      if(sw){sw.style.display='block';sw.style.background='rgba(91,31,140,0.9)';sw.textContent='📺 Finished watching? Click to unlock quiz';}
-      sw&&sw.addEventListener('click',async function(){
-        vidDone=true;
-        await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-        const qb=document.getElementById('qbtn');
-        if(qb){qb.disabled=false;qb.innerHTML='📝 Take Quiz';}
-        this.style.display='none';
-        toast('✅ Marked as watched!','ok');
-      },{once:true});
-    }
-  },10000);
-}
-async function markWatchedYT(lid){
+async function markWatchedManual(lid){
   try{
     vidDone=true;
     await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-    toast('✅ Watched — quiz unlocked!','ok');
+    toast('✅ Marked as complete — quiz unlocked!','ok');
     await pageLecture(lid);
   }catch(e){toast('❌ '+e.message,'er');console.error(e);}
 }
@@ -1036,25 +1253,22 @@ async function markDone(lid){
   try{
     await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
     toast('✅ Marked as viewed!','ok');
-    await pageLecture(lid); // refresh page to show updated state
+    await pageLecture(lid);
   }catch(e){toast('❌ '+e.message,'er');console.error(e);}
 }
 
 // ════════════════════════════════════════════════════════════════
-// QUIZ — random 10, shuffled options per employee
+// QUIZ
 // ════════════════════════════════════════════════════════════════
 let QS={};
 async function pageQuiz(lid){
   const lec=await db.lecture(lid);if(!lec){go('home');return}
   const all=await db.questions(lid);
   if(!all.length){toast('No questions available yet','er');return}
-  // Always pick 10 random questions from bank (max 40), shuffle every time
   const quizCount=Math.min(lec.quiz_count||10, all.length);
-  // True random shuffle using timestamp seed for uniqueness each attempt
   const seed=Date.now();
   const shuffleArr=arr=>[...arr].map(v=>({v,s:Math.sin(seed*Math.random())})).sort((a,b)=>a.s-b.s).map(x=>x.v);
   const picked=shuffleArr(all).slice(0,quizCount);
-  // Shuffle options for each question differently each time
   const qs=picked.map(q=>{
     const opts=shuffleArr([
       {key:'a',text:q.option_a,correct:q.correct_answer==='a'},
@@ -1164,9 +1378,8 @@ async function pageCert(id){
 }
 
 // ════════════════════════════════════════════════════════════════
-// ADMIN: CERTIFICATES PAGE — who passed, issue certs
+// ADMIN: CERTS PAGE
 // ════════════════════════════════════════════════════════════════
-
 async function deleteCert(id){
   if(!confirm('Delete this certificate? This cannot be undone.'))return;
   if(SB){
@@ -1211,7 +1424,6 @@ async function exportExcel(){
   URL.revokeObjectURL(url);
   toast('Report downloaded!','ok');
 }
-
 
 async function pageAdminCerts(){
   const users=await db.users(),secs=await db.sections();
@@ -1282,6 +1494,7 @@ async function issueAdminCert(userId,sid){
 // ADMIN: DASHBOARD
 // ════════════════════════════════════════════════════════════════
 async function pageAdminDash(){
+  await ensureDefaultSections();
   const users=await db.users(),secs=await db.sections();
   const comps=await db.allCompletions(),atts=await db.allAttempts(),certs=await db.allCerts();
   const emps=users.filter(u=>u.role==='employee');
@@ -1326,13 +1539,21 @@ async function pageAdminDash(){
 // ════════════════════════════════════════════════════════════════
 async function pageAdminSections(){
   const secs=await db.sections();
-  const rows=secs.map(s=>`<tr><td><strong>${s.title}</strong><br><span style="font-size:12px;color:var(--muted)">${s.description||''}</span></td>
+  const rows=secs.map(s=>{
+    const t=themeFor(s.title);
+    return`<tr><td>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:9px;background:${t.grad};display:flex;align-items:center;justify-content:center;font-size:18px">${t.icon}</div>
+        <div><strong>${s.title}</strong><br><span style="font-size:12px;color:var(--muted)">${s.description||''}</span></div>
+      </div>
+    </td>
     <td><span class="chip cp">${ls('lectures').filter(l=>l.section_id===s.id).length} lectures</span></td>
     <td><div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn bo bsm" onclick="go('alectures',{id:'${s.id}'},{page:'asections',par:{},label:'Sections'})">📖 Lectures</button>
       <button class="btn bg2 bsm" onclick="openSecModal('${s.id}')">✏️</button>
       <button class="btn bd bsm" onclick="delSec('${s.id}')">🗑</button>
-    </div></td></tr>`).join('');
+    </div></td></tr>`;
+  }).join('');
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><span>Sections</span></div>
     <div class="ph"><div><h2>Training Sections</h2></div><button class="btn bp" onclick="openSecModal()">+ New Section</button></div>
@@ -1368,38 +1589,76 @@ async function delSec(id){if(confirm('Delete section and all lectures?')){await 
 async function pageAdminLectures(sid){
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);
   const lecs=await db.lectures(sid);
-  const rows=lecs.map(l=>{
+  const rows=lecs.map((l,idx)=>{
     const localFd=getFile(l.id),hasFile=l.file_path||localFd;
-    return`<tr><td><strong>${l.title}</strong></td>
-      <td><span class="chip ${l.type==='youtube'?'cp':'cd'}">${l.type==='youtube'?'▶ YouTube':'📄 File'}</span></td>
-      <td style="font-size:12px;color:var(--muted)">
-        ${l.type==='youtube'?(l.url||'—'):hasFile?`<span style="color:var(--ok);font-weight:700">✅ ${l.file_name||localFd?.name||'Uploaded'}</span>`:'<span style="color:var(--err)">⚠️ No file</span>'}
-      </td>
+    const typeChip=l.type==='youtube'?'<span class="chip cp">▶ YouTube</span>':l.type==='video'?'<span class="chip" style="background:#FEE2E2;color:#991B1B">🎬 Video File</span>':'<span class="chip cd">📄 File</span>';
+    let sourceCell='';
+    if(l.type==='youtube'){
+      sourceCell=l.url?`<a href="https://youtube.com/watch?v=${l.url}" target="_blank" style="color:var(--pu-l);font-family:monospace;font-size:12px">${l.url}</a>`:'—';
+    } else {
+      sourceCell=hasFile?`<span style="color:var(--ok);font-weight:700">✅ ${l.file_name||localFd?.name||'Uploaded'}</span>`:'<span style="color:var(--err)">⚠️ No file</span>';
+    }
+    const stepN=l.sequence_step||(l.is_prerequisite?1:0);
+    const stepChip=stepN>0?` <span class="chip" style="background:#FEF3C7;color:#92400E;font-size:10px">⭐ Step ${stepN}</span>`:'';
+    const isFirst=idx===0,isLast=idx===lecs.length-1;
+    return`<tr style="${stepN>0?'background:#FFFBEB':''}"><td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="btn bg2" style="padding:2px 7px;font-size:11px;border-radius:5px" onclick="moveLec('${l.id}','${sid}',-1)" ${isFirst?'disabled':''} title="Move up">↑</button>
+          <button class="btn bg2" style="padding:2px 7px;font-size:11px;border-radius:5px" onclick="moveLec('${l.id}','${sid}',1)" ${isLast?'disabled':''} title="Move down">↓</button>
+        </div>
+        <div><strong>${l.title}</strong>${stepChip}<div style="font-size:10px;color:var(--muted);margin-top:2px">#${idx+1}</div></div>
+      </div>
+    </td>
+      <td>${typeChip}</td>
+      <td style="font-size:12px;color:var(--muted)">${sourceCell}</td>
       <td>${l.has_quiz?`<button class="btn bo bsm" onclick="go('aquestions',{id:'${l.id}'},{page:'alectures',par:{id:'${sid}'},label:'Lectures'})">📝 ${ls('questions').filter(q=>q.lecture_id===l.id).length} Qs</button>`:'—'}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bg2 bsm" onclick="openLecModal('${sid}','${l.id}')">✏️</button>
-        ${l.type==='pptx'?`<button class="btn bo bsm" onclick="openUploadModal('${l.id}')">📤 ${hasFile?'Replace':'Upload'}</button>`:''}
+        ${(l.type==='pptx'||l.type==='video')?`<button class="btn bo bsm" onclick="openUploadModal('${l.id}')">📤 ${hasFile?'Replace':'Upload'}</button>`:''}
         <button class="btn bd bsm" onclick="delLec('${l.id}','${sid}')">🗑</button>
       </div></td></tr>`}).join('');
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><a onclick="go('asections')">Sections</a><span>›</span><span>${sec?sec.title:''}</span></div>
-    <div class="ph"><div><h2>${sec?sec.title:''}</h2></div><button class="btn bp" onclick="openLecModal('${sid}')">+ Add Lecture</button></div>
+    <div class="ph"><div><h2>${sec?sec.title:''}</h2><p style="font-size:13px;color:var(--muted)">Use ↑↓ arrows to change lecture order • Assign Sequence Steps to control what unlocks when</p></div><button class="btn bp" onclick="openLecModal('${sid}')">+ Add Lecture</button></div>
     <div class="tw"><table><thead><tr><th>Title</th><th>Type</th><th>Source</th><th>Quiz</th><th>Actions</th></tr></thead>
     <tbody>${rows||'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No lectures yet.</td></tr>'}</tbody></table></div>
   </div><div id="md"></div>`
 }
+async function moveLec(id,sid,dir){
+  const lecs=await db.lectures(sid);
+  const idx=lecs.findIndex(l=>l.id===id);
+  const targetIdx=idx+dir;
+  if(targetIdx<0||targetIdx>=lecs.length)return;
+  const a=lecs[idx],b=lecs[targetIdx];
+  const aOrder=a.order_num||(idx+1),bOrder=b.order_num||(targetIdx+1);
+  try{
+    await db.updLecture(a.id,{order_num:bOrder});
+    await db.updLecture(b.id,{order_num:aOrder});
+    toast('✅ Order updated','ok');
+    pageAdminLectures(sid);
+  }catch(e){toast('❌ '+e.message,'er');}
+}
 function openUploadModal(lid){
   const lec=ls('lectures').find(l=>l.id===lid);
   const existing=getFile(lid);
+  const isVideo=lec&&lec.type==='video';
+  const accept=isVideo?'.mp4,.webm,.mov':'.pdf,.pptx,.ppt';
+  const maxSize=isVideo?50:8; // MB
+  const formats=isVideo?'MP4 (best) · WebM · MOV':'PDF (best) · PPTX · PPT';
+  const warning=isVideo?`<div style="background:#FEF9C3;border:1.5px solid #FDE68A;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#854D0E;line-height:1.5">
+    💡 <strong>Video tip:</strong> Keep videos under 50MB for fast loading. For longer videos, use YouTube instead — it streams faster and saves storage.
+  </div>`:'';
   document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal">
-    <div class="mh"><h3>Upload File — ${lec?lec.title:''}</h3><button class="mc" onclick="cmo()">✕</button></div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Employees will see and download this file. Recommended format: PDF for best display.</p>
+    <div class="mh"><h3>Upload ${isVideo?'Video':'File'} — ${lec?lec.title:''}</h3><button class="mc" onclick="cmo()">✕</button></div>
+    ${warning}
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Employees will ${isVideo?'watch this video inline':'see and download this file'}.</p>
     ${existing?`<div style="background:#DCFCE7;border:1.5px solid #86EFAC;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#166534">✅ Current: <strong>${existing.name}</strong> — upload to replace</div>`:''}
     <div class="upload-zone" id="uz" onclick="document.getElementById('upfile').click()">
-      <input type="file" id="upfile" accept=".pdf,.pptx,.ppt" onchange="handleAdminUpload('${lid}',this)">
-      <div style="font-size:40px;margin-bottom:10px">📂</div>
-      <div style="font-weight:700;color:var(--pu-d);margin-bottom:5px">Click to select file</div>
-      <div style="font-size:12px;color:var(--muted)">PDF (best) · PPTX · PPT &nbsp;·&nbsp; Max 8 MB</div>
+      <input type="file" id="upfile" accept="${accept}" onchange="handleAdminUpload('${lid}',this,${isVideo})">
+      <div style="font-size:40px;margin-bottom:10px">${isVideo?'🎬':'📂'}</div>
+      <div style="font-weight:700;color:var(--pu-d);margin-bottom:5px">Click to select ${isVideo?'video':'file'}</div>
+      <div style="font-size:12px;color:var(--muted)">${formats} &nbsp;·&nbsp; Max ${maxSize} MB</div>
     </div>
     <div id="up-status" style="margin-top:12px;font-size:13px;min-height:20px"></div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px">
@@ -1409,16 +1668,17 @@ function openUploadModal(lid){
   </div></div>`
 }
 let _pendingFile=null;
-function handleAdminUpload(lid,input){
+function handleAdminUpload(lid,input,isVideo){
   const file=input.files[0];if(!file)return;
   const st=document.getElementById('up-status');
-  if(file.size>8*1024*1024){if(st)st.innerHTML=`<span style="color:var(--err)">⚠️ File too large (${(file.size/1048576).toFixed(1)} MB). Use PDF under 8 MB.</span>`;return}
+  const maxBytes=(isVideo?50:8)*1024*1024;
+  if(file.size>maxBytes){if(st)st.innerHTML=`<span style="color:var(--err)">⚠️ File too large (${(file.size/1048576).toFixed(1)} MB). Max ${isVideo?50:8} MB.</span>`;return}
   if(st)st.textContent='Reading file...';
   const reader=new FileReader();
   reader.onload=e=>{
     _pendingFile={data:e.target.result,name:file.name,type:file.type,size:file.size};
     const uz=document.getElementById('uz');
-    if(uz){uz.classList.add('has-file');uz.innerHTML=`<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:700;color:#166534">${file.name}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${Math.round(file.size/1024)} KB</div>`;}
+    if(uz){uz.classList.add('has-file');uz.innerHTML=`<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:700;color:#166534">${file.name}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${(file.size/1048576).toFixed(2)} MB</div>`;}
     if(st)st.innerHTML=`<span style="color:var(--ok);font-weight:600">✅ File ready to save</span>`;
     const btn=document.getElementById('save-btn');if(btn)btn.disabled=false;
   };
@@ -1431,7 +1691,6 @@ async function finishUpload(lid){
   if(btn){btn.disabled=true;btn.textContent='Uploading...';}
   try{
     if(SB){
-      // Upload to Supabase Storage
       const path='lectures/'+lid+'/'+_pendingFile.name;
       const byteStr=atob(_pendingFile.data.split(',')[1]);
       const ab=new ArrayBuffer(byteStr.length);
@@ -1442,7 +1701,6 @@ async function finishUpload(lid){
       if(error)throw new Error(error.message);
       const {data}=SB.storage.from('lms-files').getPublicUrl(path);
       await db.updLecture(lid,{file_name:_pendingFile.name,file_type:_pendingFile.type,file_path:data.publicUrl});
-      // Also cache locally
       saveFile(lid,{..._pendingFile,url:data.publicUrl});
       toast('✅ File uploaded to cloud!','ok');
     } else {
@@ -1460,22 +1718,44 @@ async function finishUpload(lid){
 let _elid='',_elsid='';
 function openLecModal(sid,id){
   _elsid=sid;_elid=id||'';const l=id?ls('lectures').find(x=>x.id===id):null;
-  const isPptx=l&&l.type==='pptx';
+  const type=l?l.type:'youtube';
   document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal">
     <div class="mh"><h3>${id?'Edit':'Add'} Lecture</h3><button class="mc" onclick="cmo()">✕</button></div>
     <div class="fg"><label>Title</label><input id="lt" value="${l?l.title:''}" placeholder="Lecture title"></div>
-    <div class="fg"><label>Type</label><select id="ltype" onchange="toggleLType()">
-      <option value="youtube" ${!isPptx?'selected':''}>▶ YouTube Video</option>
-      <option value="pptx" ${isPptx?'selected':''}>📄 Presentation / PDF file</option>
+    <div class="fg"><label>Content Type</label><select id="ltype" onchange="toggleLType()">
+      <option value="youtube" ${type==='youtube'?'selected':''}>▶ YouTube Video (embedded inline)</option>
+      <option value="video" ${type==='video'?'selected':''}>🎬 Upload Video File (MP4 — plays inline)</option>
+      <option value="pptx" ${type==='pptx'?'selected':''}>📄 Presentation / PDF file</option>
     </select></div>
-    <div id="url-f" class="fg" style="${isPptx?'display:none':''}">
+    <div id="url-f" class="fg" style="${type!=='youtube'?'display:none':''}">
       <label>YouTube Video ID <span style="font-weight:400;color:var(--muted)">(part after ?v=)</span></label>
       <input id="lurl" value="${l&&l.url?l.url:''}" placeholder="e.g. dQw4w9WgXcQ">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">youtube.com/watch?v=<strong>THIS_PART</strong></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">youtube.com/watch?v=<strong>THIS_PART</strong> — video plays embedded in the site, no redirect</div>
     </div>
-    <div id="pptx-note" style="${isPptx?'':'display:none'}">
-      <div style="background:var(--lav-l);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--pu-d)">
+    <div id="file-note" style="${type==='pptx'?'':'display:none'}">
+      <div style="background:var(--lav-l);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--pu-d);margin-bottom:16px">
         📌 After saving, use the <strong>Upload</strong> button to attach your PDF or PPTX file.
+      </div>
+    </div>
+    <div id="video-note" style="${type==='video'?'':'display:none'}">
+      <div style="background:#FEF9C3;border:1.5px solid #FDE68A;border-radius:10px;padding:12px 16px;font-size:13px;color:#854D0E;margin-bottom:16px;line-height:1.6">
+        🎬 <strong>Video upload:</strong> After saving, use <strong>Upload</strong> to attach MP4. 
+        <br>⚠️ Max 50 MB per video — for longer videos, use YouTube instead (faster streaming).
+      </div>
+    </div>
+    <div class="fg" style="margin-top:12px;padding:14px;background:#FFFBEB;border-radius:10px;border:1.5px solid #FDE68A">
+      <label style="color:#92400E;margin-bottom:8px">⭐ <strong>Unlock order (sequence step)</strong></label>
+      <select id="lreq">
+        <option value="0" ${!(l&&(l.sequence_step||l.is_prerequisite))?'selected':''}>🔓 No sequence — free access</option>
+        <option value="1" ${l&&(l.sequence_step===1||(!l.sequence_step&&l.is_prerequisite))?'selected':''}>1️⃣ Step 1 — Watch first (always unlocked)</option>
+        <option value="2" ${l&&l.sequence_step===2?'selected':''}>2️⃣ Step 2 — Unlocks after Step 1</option>
+        <option value="3" ${l&&l.sequence_step===3?'selected':''}>3️⃣ Step 3 — Unlocks after Step 2</option>
+        <option value="4" ${l&&l.sequence_step===4?'selected':''}>4️⃣ Step 4 — Unlocks after Step 3</option>
+        <option value="5" ${l&&l.sequence_step===5?'selected':''}>5️⃣ Step 5 — Unlocks after Step 4</option>
+      </select>
+      <div style="font-size:11px;color:#92400E;margin-top:6px;line-height:1.6">
+        💡 <strong>Example:</strong> Mark Lecture A as Step 1 and Lecture B as Step 2 — nurses must finish A before B opens, then everything else unlocks.<br>
+        Free lectures unlock only after ALL sequence steps are completed.
       </div>
     </div>
     <div class="fg" style="display:flex;align-items:center;gap:10px;margin-top:12px">
@@ -1485,7 +1765,7 @@ function openLecModal(sid,id){
     <div id="quiz-count-field" class="fg" style="${l&&l.has_quiz?'':'display:none'}">
       <label>Number of questions per attempt <span style="font-weight:400;color:var(--muted)">(random from your question bank)</span></label>
       <select id="lqc">
-        ${[5,10,15,20].map(n=>`<option value="${n}" ${(l&&l.quiz_count||10)===n?'selected':''}>${n} questions per attempt</option>`).join('')}
+        ${[5,10,15,20].map(num=>`<option value="${num}" ${(l&&l.quiz_count||10)===num?'selected':''}>${num} questions per attempt</option>`).join('')}
       </select>
       <div style="font-size:12px;color:var(--muted);margin-top:5px">Upload up to 40 questions — system picks randomly each time</div>
     </div>
@@ -1495,20 +1775,53 @@ function openLecModal(sid,id){
     </div>
   </div></div>`
 }
-function toggleLType(){const t=document.getElementById('ltype').value;document.getElementById('url-f').style.display=t==='pptx'?'none':'';document.getElementById('pptx-note').style.display=t==='pptx'?'':'none';}
+function toggleLType(){
+  const t=document.getElementById('ltype').value;
+  document.getElementById('url-f').style.display=t==='youtube'?'':'none';
+  document.getElementById('file-note').style.display=t==='pptx'?'':'none';
+  document.getElementById('video-note').style.display=t==='video'?'':'none';
+}
 function toggleQuizCount(){const hq=document.getElementById('lhq').checked;const f=document.getElementById('quiz-count-field');if(f)f.style.display=hq?'':'none';}
 async function saveLec(){
   const t=document.getElementById('lt').value.trim();
   const type=document.getElementById('ltype').value;
   const url=type==='youtube'?(document.getElementById('lurl').value.trim()):'';
   const hq=document.getElementById('lhq').checked;
+  const seqStep=parseInt(document.getElementById('lreq')?.value||'0',10)||0;
+  const isPrereq=seqStep===1; // backward compat
   const qcEl=document.getElementById('lqc');
   const qc=qcEl?parseInt(qcEl.value):10;
   if(!t){toast('Enter a title','er');return}
+  const fullData={title:t,type,url,has_quiz:hq,quiz_count:qc,is_prerequisite:isPrereq,sequence_step:seqStep};
+  const basicData={title:t,type,url,has_quiz:hq,quiz_count:qc};
   try{
     const lecs=await db.lectures(_elsid);
-    if(_elid)await db.updLecture(_elid,{title:t,type,url,has_quiz:hq,quiz_count:qc});
-    else await db.addLecture({section_id:_elsid,title:t,type,url,has_quiz:hq,quiz_count:qc,order_num:lecs.length+1,created_at:n()});
+    let savedId=_elid;
+    try{
+      if(_elid)await db.updLecture(_elid,fullData);
+      else {
+        const newLec=await db.addLecture({section_id:_elsid,...fullData,order_num:lecs.length+1,created_at:n()});
+        savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id);
+      }
+    }catch(e){
+      // Fallback: try without new columns if they don't exist in DB
+      const msg=e.message||'';
+      if(/is_prerequisite|sequence_step/i.test(msg)){
+        console.warn('Column missing — saving without sequence fields. Run in Supabase:\nALTER TABLE lms_lectures ADD COLUMN IF NOT EXISTS is_prerequisite BOOLEAN DEFAULT false;\nALTER TABLE lms_lectures ADD COLUMN IF NOT EXISTS sequence_step INTEGER DEFAULT 0;');
+        toast('⚠️ Saved locally. Run SQL migration for cloud sync (see console)','');
+        if(_elid)await db.updLecture(_elid,basicData);
+        else {
+          const newLec=await db.addLecture({section_id:_elsid,...basicData,order_num:lecs.length+1,created_at:n()});
+          savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id);
+        }
+      } else { throw e; }
+    }
+    // ALWAYS persist the sequence override locally — survives syncAll overwrites
+    if(savedId){
+      setSeqOv(savedId,{is_prerequisite:isPrereq,sequence_step:seqStep});
+      // Also update current ls cache so UI reflects change immediately
+      ls2('lectures',ls('lectures').map(l=>l.id===savedId?{...l,is_prerequisite:isPrereq,sequence_step:seqStep}:l));
+    }
     toast(_elid?'Updated! ✅':'Lecture added! ✅','ok');cmo();pageAdminLectures(_elsid);
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
@@ -1533,7 +1846,11 @@ async function pageAdminQuestions(lid){
     </div></td></tr>`).join('');
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><a onclick="go('asections')">Sections</a><span>›</span><a onclick="go('alectures',{id:'${sec?sec.id:''}'},{page:'asections',par:{},label:'Sections'})">${sec?sec.title:''}</a><span>›</span><span>Questions</span></div>
-    <div class="ph"><div><h2>${lec?lec.title:''}</h2><p>${qs.length} questions — 10 random per attempt, options shuffled</p></div><button class="btn bp" onclick="openQModal('${lid}')">+ Add Question</button></div>
+    <div class="ph"><div><h2>${lec?lec.title:''}</h2><p>${qs.length} questions — 10 random per attempt, options shuffled</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn bo" onclick="openBulkQModal('${lid}')">📋 Bulk Paste</button>
+      <button class="btn bp" onclick="openQModal('${lid}')">+ Add Question</button>
+    </div></div>
     <div class="tw"><table><thead><tr><th>#</th><th>Question</th><th>Options</th><th>Actions</th></tr></thead>
     <tbody>${rows||'<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">No questions yet. Add up to 50.</td></tr>'}</tbody></table></div>
   </div><div id="md"></div>`
@@ -1571,7 +1888,182 @@ async function saveQ(){
 async function delQ(id,lid){if(confirm('Delete?')){await db.delQuestion(id);toast('Deleted','ok');pageAdminQuestions(lid)}}
 
 // ════════════════════════════════════════════════════════════════
-// ADMIN: STAFF — with all fields
+// BULK QUESTIONS — paste all at once
+// ════════════════════════════════════════════════════════════════
+let _bulkLid='';
+let _bulkParsed=[];
+function openBulkQModal(lid){
+  _bulkLid=lid;_bulkParsed=[];
+  const example=`1. What is the normal range for adult resting heart rate?
+A) 40-60 bpm
+B) 60-100 bpm *
+C) 100-140 bpm
+D) 140-180 bpm
+
+2. Which site is preferred for IM injection in adults?
+a) Deltoid
+b) Ventrogluteal *
+c) Dorsogluteal
+d) Vastus lateralis
+
+3. How often should a peripheral IV site be assessed?
+A) Every shift
+B) Every 4 hours
+C) Every hour *
+D) Once daily`;
+  document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal" style="max-width:780px">
+    <div class="mh"><h3>📋 Bulk Paste Questions</h3><button class="mc" onclick="cmo()">✕</button></div>
+    <div style="background:var(--lav-l);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--pu-d);line-height:1.7">
+      <strong>📘 How to format:</strong>
+      <ul style="margin:8px 0 0 20px;padding:0;font-size:12.5px">
+        <li>Separate each question with a <strong>blank line</strong></li>
+        <li>Put the question on the first line (with or without numbering)</li>
+        <li>Options start with <code style="background:#fff;padding:1px 6px;border-radius:4px">A)</code> <code style="background:#fff;padding:1px 6px;border-radius:4px">B)</code> <code style="background:#fff;padding:1px 6px;border-radius:4px">C)</code> <code style="background:#fff;padding:1px 6px;border-radius:4px">D)</code> — or <code style="background:#fff;padding:1px 6px;border-radius:4px">A.</code> <code style="background:#fff;padding:1px 6px;border-radius:4px">A:</code></li>
+        <li>Mark the correct answer with <strong style="color:#F59E0B">*</strong> at end of the option, OR add a line like <code style="background:#fff;padding:1px 6px;border-radius:4px">Answer: B</code></li>
+      </ul>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn bg2 bsm" onclick="loadBulkExample()">📖 Load example</button>
+      <button class="btn bg2 bsm" onclick="document.getElementById('bulk-text').value=''">🧹 Clear</button>
+    </div>
+    <textarea id="bulk-text" placeholder="Paste your questions here..." style="min-height:280px;font-family:'Consolas',monospace;font-size:13px;line-height:1.6">${example}</textarea>
+    <div id="bulk-preview" style="margin-top:12px"></div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:14px">
+      <button class="btn bg2" onclick="cmo()">Cancel</button>
+      <button class="btn bo" onclick="previewBulk()">🔍 Preview</button>
+      <button class="btn bp" id="bulk-save" onclick="saveBulk()" disabled>💾 Add All Questions</button>
+    </div>
+  </div></div>`;
+}
+function loadBulkExample(){
+  document.getElementById('bulk-text').value=`1. What is the normal range for adult resting heart rate?
+A) 40-60 bpm
+B) 60-100 bpm *
+C) 100-140 bpm
+D) 140-180 bpm
+
+2. Which site is preferred for IM injection in adults?
+a) Deltoid
+b) Ventrogluteal *
+c) Dorsogluteal
+d) Vastus lateralis
+
+3. How often should a peripheral IV site be assessed?
+A) Every shift
+B) Every 4 hours
+C) Every hour *
+D) Once daily`;
+}
+function parseBulkQuestions(text){
+  const out=[],errors=[];
+  // Split by blank lines (one or more)
+  const blocks=text.split(/\n\s*\n+/).map(b=>b.trim()).filter(Boolean);
+  blocks.forEach((block,idx)=>{
+    const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length<5){
+      errors.push(`Block ${idx+1}: needs at least 5 lines (question + 4 options), got ${lines.length}`);
+      return;
+    }
+    let questionText='';
+    const opts={a:'',b:'',c:'',d:''};
+    let correct='';
+    for(const line of lines){
+      // Option pattern: A) / A. / A: / A- with optional space
+      const optMatch=line.match(/^([a-dA-D])\s*[\)\.:\-]\s*(.+)$/);
+      if(optMatch){
+        let text=optMatch[2].trim();
+        const key=optMatch[1].toLowerCase();
+        // Check for correct marker
+        if(/[\*\✓\✅]\s*$/.test(text)){
+          correct=key;
+          text=text.replace(/\s*[\*\✓\✅]\s*$/,'').trim();
+        } else if(/\s*\(correct\)\s*$/i.test(text)){
+          correct=key;
+          text=text.replace(/\s*\(correct\)\s*$/i,'').trim();
+        }
+        opts[key]=text;
+        continue;
+      }
+      // Answer line: "Answer: B" / "Correct: B" / "الجواب: B"
+      const ansMatch=line.match(/^(?:Answer|Correct|الجواب|الاجابة)\s*[:\-]\s*([a-dA-D])/i);
+      if(ansMatch){
+        correct=ansMatch[1].toLowerCase();
+        continue;
+      }
+      // Q line: "Q:" / "Question:" / numbered "1." "1)"
+      const qMatch=line.match(/^(?:Q|Question|س|السؤال)\s*[:\-]\s*(.+)$/i)
+                 ||line.match(/^\d+\s*[\.\)\-]\s*(.+)$/);
+      if(qMatch){
+        questionText=qMatch[qMatch.length-1].trim();
+        continue;
+      }
+      // If no question yet, this IS the question
+      if(!questionText){questionText=line;}
+      else if(!opts.a){questionText+=' '+line;} // continuation
+    }
+    // Validate
+    if(!questionText){errors.push(`Block ${idx+1}: no question text found`);return;}
+    if(!opts.a||!opts.b||!opts.c||!opts.d){
+      const missing=['a','b','c','d'].filter(k=>!opts[k]).map(k=>k.toUpperCase()).join(', ');
+      errors.push(`Block ${idx+1} "${questionText.slice(0,40)}...": missing option(s) ${missing}`);
+      return;
+    }
+    if(!correct){errors.push(`Block ${idx+1} "${questionText.slice(0,40)}...": no correct answer marked (use * or "Answer: X")`);return;}
+    out.push({
+      question_text:questionText,
+      option_a:opts.a,option_b:opts.b,option_c:opts.c,option_d:opts.d,
+      correct_answer:correct
+    });
+  });
+  return{questions:out,errors};
+}
+function previewBulk(){
+  const text=document.getElementById('bulk-text').value;
+  if(!text.trim()){toast('Paste some questions first','er');return}
+  const {questions,errors}=parseBulkQuestions(text);
+  _bulkParsed=questions;
+  const prev=document.getElementById('bulk-preview');
+  let html='';
+  if(errors.length){
+    html+=`<div style="background:#FEE2E2;border:1.5px solid #FCA5A5;border-radius:10px;padding:12px 14px;font-size:12px;color:#991B1B;margin-bottom:10px;max-height:140px;overflow-y:auto">
+      <strong>⚠️ ${errors.length} error${errors.length>1?'s':''}:</strong>
+      <ul style="margin:6px 0 0 18px;line-height:1.5">${errors.map(e=>`<li>${e}</li>`).join('')}</ul>
+    </div>`;
+  }
+  if(questions.length){
+    const letters=['a','b','c','d'];
+    const qList=questions.slice(0,5).map((q,i)=>`
+      <div style="padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px">
+        <div style="font-weight:700;color:var(--pu-d);margin-bottom:4px">${i+1}. ${q.question_text}</div>
+        ${letters.map(k=>`<div style="padding-left:10px;color:${q.correct_answer===k?'#166534':'var(--muted)'};font-weight:${q.correct_answer===k?'700':'400'}">${k.toUpperCase()}) ${q['option_'+k]} ${q.correct_answer===k?'✅':''}</div>`).join('')}
+      </div>`).join('');
+    html+=`<div style="background:#DCFCE7;border:1.5px solid #86EFAC;border-radius:10px;padding:12px 14px;margin-bottom:10px;color:#166534;font-weight:700;font-size:13px">
+      ✅ ${questions.length} question${questions.length>1?'s':''} ready to add
+    </div>
+    <div style="max-height:220px;overflow-y:auto">${qList}${questions.length>5?`<div style="text-align:center;color:var(--muted);padding:8px;font-size:12px">...and ${questions.length-5} more</div>`:''}</div>`;
+    document.getElementById('bulk-save').disabled=false;
+  } else {
+    document.getElementById('bulk-save').disabled=true;
+  }
+  prev.innerHTML=html;
+}
+async function saveBulk(){
+  if(!_bulkParsed.length){toast('Preview first','er');return}
+  const btn=document.getElementById('bulk-save');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  let ok=0,fail=0;
+  for(const q of _bulkParsed){
+    try{
+      await db.addQuestion({lecture_id:_bulkLid,...q,created_at:n()});
+      ok++;
+    }catch(e){fail++;console.error(e);}
+  }
+  toast(`✅ Added ${ok} question${ok>1?'s':''}${fail?` (${fail} failed)`:''}`,'ok');
+  cmo();pageAdminQuestions(_bulkLid);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ADMIN: STAFF
 // ════════════════════════════════════════════════════════════════
 async function pageAdminStaff(){
   const users=await db.users(),secs=await db.sections();
@@ -1704,7 +2196,6 @@ async function syncThenRefresh(){
 async function syncAll(){
   if(!SB)return;
   try{
-    // Pull ALL data from Supabase into localStorage cache at once
     const[u,s,l,q,c,a,ce]=await Promise.all([
       SB.from('lms_users').select('*'),
       SB.from('lms_sections').select('*').order('order_num'),
@@ -1716,7 +2207,7 @@ async function syncAll(){
     ]);
     if(!u.error&&u.data)ls2('users',u.data);
     if(!s.error&&s.data)ls2('sections',s.data);
-    if(!l.error&&l.data)ls2('lectures',l.data);
+    if(!l.error&&l.data)ls2('lectures',applySeqOv(l.data));
     if(!q.error&&q.data)ls2('questions',q.data);
     if(!c.error&&c.data)ls2('completions',c.data);
     if(!a.error&&a.data)ls2('attempts',a.data);
