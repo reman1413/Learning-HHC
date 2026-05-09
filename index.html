@@ -1271,7 +1271,13 @@ let U=JSON.parse(sessionStorage.getItem('lms_u')||'null');
 let PAGE='login',PAR={},BACK=null;
 let HOME_FILTER='all';
 function setU(u){U=u;u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u')}
-function logout(){setU(null);go('login')}
+function logout(){
+  try{
+    // Clear session-based notification tracker for this user
+    Object.keys(sessionStorage).filter(k=>k.startsWith('lms_announced_certs_')).forEach(k=>sessionStorage.removeItem(k));
+  }catch(e){}
+  setU(null);go('login');
+}
 function go(page,par={},back=null){BACK=back;PAGE=page;PAR=par;render()}
 setInterval(async()=>{if(U&&SB){await syncAll();}},60000);
 function goBack(){if(BACK)go(BACK.page,BACK.par||{});else go('home')}
@@ -1737,11 +1743,25 @@ async function pageSection(sid){
 }
 // AUTO-ISSUE certificate when all lectures in a section are complete
 // Returns the existing or newly-created cert, or null if not all done
+// Session-based announced certs tracker — prevents toast spam on navigation
+function _getAnnouncedCerts(){
+  try{return new Set(JSON.parse(sessionStorage.getItem('lms_announced_certs_'+(U?.id||''))||'[]'))}catch{return new Set()}
+}
+function _markCertAnnounced(certId){
+  try{
+    const s=_getAnnouncedCerts();s.add(certId);
+    sessionStorage.setItem('lms_announced_certs_'+(U?.id||''),JSON.stringify([...s]));
+  }catch(e){}
+}
 async function checkAndAutoIssueCert(sectionId){
   if(!sectionId||!U)return null;
   const certs=await db.certs(U.id);
   const existing=certs.find(c=>c.section_id===sectionId);
-  if(existing)return existing;
+  if(existing){
+    // Already issued — silently mark as announced so we never toast for it
+    _markCertAnnounced(existing.id);
+    return existing;
+  }
   const lecs=await db.lectures(sectionId);
   if(!lecs.length)return null;
   const comps=await db.completions(U.id);
@@ -1761,7 +1781,13 @@ async function checkAndAutoIssueCert(sectionId){
   const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
   const cert={user_id:U.id,section_id:sectionId,ref_number:ref,issued_at:n()};
   const saved=await db.addCert(cert);
-  toast('🏆 Certificate earned: '+sec.title+'!','ok');
+  const certId=(saved&&saved.id)||cert.id;
+  // Only show toast if not already announced this session
+  const announced=_getAnnouncedCerts();
+  if(certId&&!announced.has(certId)){
+    toast('🏆 Certificate earned: '+sec.title+'!','ok');
+    _markCertAnnounced(certId);
+  }
   return saved||cert;
 }
 
