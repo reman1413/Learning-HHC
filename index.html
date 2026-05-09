@@ -811,7 +811,29 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
 
 /* ── Responsive ── */
 @media(max-width:768px){
-  .ll{display:none}.lr{width:100%}
+  /* Login page on mobile — stack vertically with purple hero on top */
+  .lw{flex-direction:column;min-height:100vh}
+  .ll{
+    flex:none;width:100%;
+    min-height:46vh;
+    padding:36px 22px 26px
+  }
+  .ll-content{max-width:100%}
+  .ll-logo-wrap{width:120px;height:120px;margin-bottom:18px}
+  .ll-logo{width:96px;height:96px;padding:14px}
+  .ll-meena-text{max-width:170px;max-height:90px;margin-bottom:8px}
+  .ll p{font-size:13px;line-height:1.6;padding:0 8px}
+  .ll-sub{font-size:10.5px;letter-spacing:4px;margin-bottom:12px}
+  .ll-divider{margin:10px auto 14px}
+  .ll-footer{
+    position:static;margin-top:20px;padding:0;
+    font-size:10px;letter-spacing:2px
+  }
+  .lr{width:100%;padding:32px 22px;flex:1;background:var(--cream)}
+  .lr::before{display:none}
+  .lb{max-width:100%}
+  .lb h2{font-size:26px}
+  .lb p{font-size:13.5px;margin-bottom:24px}
   .grid{grid-template-columns:1fr}
   .stats{grid-template-columns:repeat(2,1fr)}
   .bar-nav{display:none}
@@ -843,6 +865,13 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
   .bar-logo-text .name{font-size:14px}
   .bar-user span:not(.badge){display:none}
   .c-stamp{display:none}
+  .ll{min-height:42vh;padding:30px 18px 22px}
+  .ll-logo-wrap{width:104px;height:104px}
+  .ll-logo{width:84px;height:84px;padding:12px}
+  .ll-meena-text{max-width:150px;max-height:78px}
+  .ll p{font-size:12.5px}
+  .lr{padding:28px 18px}
+  .lb h2{font-size:24px}
 }
 
 @media print{.no-print{display:none!important}body{background:#fff}body::before{display:none}}
