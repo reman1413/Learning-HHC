@@ -367,6 +367,19 @@ body::before{
   transition:.25s
 }
 .stat:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.stat-clickable{cursor:pointer}
+.stat-clickable:hover{border-color:var(--pu-ll);transform:translateY(-4px)}
+.stat-clickable:hover .stat-arrow{opacity:1;transform:translateX(0)}
+.stat-clickable:hover .sv{color:var(--pu)}
+.stat-arrow{
+  position:absolute;top:18px;right:18px;
+  width:30px;height:30px;border-radius:50%;
+  background:var(--pu-soft);color:var(--pu-d);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;font-family:'Readex Pro';
+  opacity:0;transform:translateX(-6px);
+  transition:.25s;z-index:2
+}
 .stat::before{
   content:'';position:absolute;top:0;left:0;width:4px;height:100%;
   background:var(--grad-pu)
@@ -1442,6 +1455,12 @@ async function doLogin(){
 // ════════════════════════════════════════════════════════════════
 async function pageHome(){
   await ensureDefaultSections();
+  // Sweep: auto-issue certs for any section the nurse already completed
+  // (catches retroactive completions and any missed cases)
+  try {
+    const _allSecs=await db.sections();
+    for(const _s of _allSecs){await checkAndAutoIssueCert(_s.id);}
+  } catch(e){console.warn('Cert sweep:',e);}
   const secs=await db.sections();
   const comps=await db.completions(U.id);
   const allAtts=await db.attempts(U.id);
@@ -1666,9 +1685,14 @@ async function pageSection(sid){
   const prereqBanner=sortedSteps.length>0&&!allSeqDone
     ?`<div class="al al-w"><span>⭐ <strong>Follow the sequence:</strong> Complete <strong>Step ${nextPendingStep}</strong> (${nextPendingNames.join(', ')}) to unlock the next step${pendingSteps.length>1?'s':''}.</span></div>`
     :'';
-  const banner=hasCert
-    ?`<div class="al al-ok"><span>🏆 You earned a certificate for this section!</span><button class="btn bp bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'section',par:{id:'${sid}'},label:'Back'})">View Certificate</button></div>`
-    :allDone?`<div class="al al-i"><span>🎉 All lectures complete! Claim your certificate.</span><button class="btn bp bsm" onclick="issueCert('${sid}')">Get Certificate</button></div>`:prereqBanner;
+  // Auto-issue certificate if all lectures complete (handles legacy users + safety net)
+  let activeCert=hasCert;
+  if(allDone&&!activeCert){
+    activeCert=await checkAndAutoIssueCert(sid);
+  }
+  const banner=activeCert
+    ?`<div class="al al-ok"><span>🏆 <strong>Certificate earned!</strong> You completed all lectures in this section.</span><button class="btn bp bsm" onclick="go('cert',{id:'${activeCert.id}'},{page:'section',par:{id:'${sid}'},label:'Back'})">🏆 View Certificate</button></div>`
+    :prereqBanner;
   const theme=themeFor(sec.title);
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><span>${sec.title}</span></div>
@@ -1687,13 +1711,39 @@ async function pageSection(sid){
     </div>`}</div>
   </div>`
 }
-async function issueCert(sid){
-  const secs=await db.sections(),sec=secs.find(s=>s.id===sid);
+// AUTO-ISSUE certificate when all lectures in a section are complete
+// Returns the existing or newly-created cert, or null if not all done
+async function checkAndAutoIssueCert(sectionId){
+  if(!sectionId||!U)return null;
+  const certs=await db.certs(U.id);
+  const existing=certs.find(c=>c.section_id===sectionId);
+  if(existing)return existing;
+  const lecs=await db.lectures(sectionId);
+  if(!lecs.length)return null;
+  const comps=await db.completions(U.id);
+  for(const lec of lecs){
+    const watched=!!comps.find(c=>c.lecture_id===lec.id);
+    if(!watched)return null;
+    if(lec.has_quiz){
+      const passed=await db.hasPassed(U.id,lec.id);
+      if(!passed)return null;
+    }
+  }
+  // All lectures complete — auto-issue certificate
+  const secs=await db.sections();
+  const sec=secs.find(s=>s.id===sectionId);
+  if(!sec)return null;
   const code=sec.title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,4);
   const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
-  const cert={user_id:U.id,section_id:sid,ref_number:ref,issued_at:n()};
-  await db.addCert(cert);toast('🏆 Certificate issued!','ok');
-  go('cert',{id:cert.id},{page:'section',par:{id:sid},label:'Back to Section'});
+  const cert={user_id:U.id,section_id:sectionId,ref_number:ref,issued_at:n()};
+  const saved=await db.addCert(cert);
+  toast('🏆 Certificate earned: '+sec.title+'!','ok');
+  return saved||cert;
+}
+
+async function issueCert(sid){
+  const cert=await checkAndAutoIssueCert(sid);
+  if(cert)go('cert',{id:cert.id},{page:'section',par:{id:sid},label:'Back to Section'});
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1757,7 +1807,7 @@ async function pageLecture(lid){
   let actionBtns='';
   if(vidDone&&lec.has_quiz&&passed){
     actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✓ Quiz passed!</div>`;
-    if(lec.has_quiz) actionBtns+=`<button class="btn bp blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">↻ Retake Quiz</button>`;
+    if(lec.has_quiz) actionBtns+=`<button class="btn bg2 blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">↻ Retake Quiz</button>`;
   } else if(lec.has_quiz){
     if(!vidDone){
       actionBtns=`<button class="btn bg2 blg" onclick="markWatchedManual('${lid}')">✓ I've finished — Unlock Quiz</button>`;
@@ -1772,6 +1822,53 @@ async function pageLecture(lid){
     }
   }
 
+  // ─── NEXT LECTURE BUTTON ───
+  // Show "Next" when current lecture is fully done (watched + passed if quiz)
+  const isCurrentDone = vidDone && (lec.has_quiz ? passed : true);
+  let nextBtn = '';
+  if(isCurrentDone){
+    const sortedSecLecs = [...sectionLecs].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const curIdx = sortedSecLecs.findIndex(l=>l.id===lid);
+    const nextLec = curIdx>=0 && curIdx < sortedSecLecs.length-1 ? sortedSecLecs[curIdx+1] : null;
+    if(nextLec){
+      // Check if next lecture is locked using same logic as pageSection
+      const compsAll = await db.completions(U.id);
+      const stepOf2 = l=>l.sequence_step||(l.is_prerequisite?1:0);
+      const seqLecs = sectionLecs.filter(l=>stepOf2(l)>0);
+      let nextLocked = false;
+      if(seqLecs.length){
+        const grp = {};
+        seqLecs.forEach(l=>{const s=stepOf2(l);(grp[s]=grp[s]||[]).push(l)});
+        const sSteps = Object.keys(grp).map(Number).sort((a,b)=>a-b);
+        const sDone = {};
+        for(const s of sSteps){
+          const results = await Promise.all(grp[s].map(async l=>{
+            const w = !!compsAll.find(c=>c.lecture_id===l.id);
+            const p = l.has_quiz ? await db.hasPassed(U.id,l.id) : true;
+            return w && p;
+          }));
+          sDone[s] = results.every(Boolean);
+        }
+        const nStep = stepOf2(nextLec);
+        if(nStep===0){
+          nextLocked = !sSteps.every(s=>sDone[s]);
+        } else {
+          const prev = sSteps.filter(s=>s<nStep);
+          nextLocked = prev.some(s=>!sDone[s]);
+        }
+      }
+      if(nextLocked){
+        nextBtn = `<button class="btn bg2 blg" disabled title="Complete the previous step first" style="opacity:.55;cursor:not-allowed">🔒 Next Locked</button>`;
+      } else {
+        const nextTitle = nextLec.title.length>28 ? nextLec.title.slice(0,28)+'…' : nextLec.title;
+        nextBtn = `<button class="btn bp blg" onclick="go('lecture',{id:'${nextLec.id}'},{page:'section',par:{id:'${lec.section_id}'},label:'Back to Section'})" title="${nextLec.title.replace(/"/g,'&quot;')}">${nextTitle} →</button>`;
+      }
+    } else {
+      // Last lecture — offer return to section
+      nextBtn = `<button class="btn bmint blg" onclick="go('section',{id:'${lec.section_id}'})">🏁 Finish Section →</button>`;
+    }
+  }
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
     <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
     <div class="ph"><div><h2>${lec.title}</h2></div></div>
@@ -1779,6 +1876,7 @@ async function pageLecture(lid){
     ${content}
     <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;align-items:center">
       ${actionBtns}
+      ${nextBtn}
     </div>
   </div>`;
 
@@ -1811,7 +1909,9 @@ function initYTListener(lid){
           (async()=>{
             vidDone=true;
             await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-            toast('✓ Video complete — quiz unlocked!','ok');
+            toast('✓ Video complete!','ok');
+            const lec=await db.lecture(lid);
+            if(lec)await checkAndAutoIssueCert(lec.section_id);
             await pageLecture(lid);
           })();
         }
@@ -1853,7 +1953,9 @@ async function onVideoEnded(lid){
   if(vidDone)return;
   vidDone=true;
   await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-  toast('✓ Video complete — quiz unlocked!','ok');
+  toast('✓ Video complete!','ok');
+  const lec=await db.lecture(lid);
+  if(lec)await checkAndAutoIssueCert(lec.section_id);
   await pageLecture(lid);
 }
 
@@ -1919,6 +2021,8 @@ async function markDone(lid){
   try{
     await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
     toast('✓ Marked as viewed!','ok');
+    const lec=await db.lecture(lid);
+    if(lec)await checkAndAutoIssueCert(lec.section_id);
     await pageLecture(lid);
   }catch(e){toast('❌ '+e.message,'er');console.error(e);}
 }
@@ -1988,6 +2092,10 @@ async function submitQ(){
   });
   const score=Math.round(ok/qs.length*100),passed=score===100;
   await db.addAttempt({user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
+  if(passed){
+    const lec=await db.lecture(QS.lid);
+    if(lec)await checkAndAutoIssueCert(lec.section_id);
+  }
   document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:620px">
     <div class="card" style="text-align:center;padding:54px 38px">
       <div class="r-circle ${passed?'r-pass':'r-fail'}">${passed?'100%':score+'%'}</div>
@@ -2156,56 +2264,92 @@ async function exportExcel(){
 
 async function pageAdminCerts(){
   const users=await db.users(),secs=await db.sections();
-  const allAtts=await db.allAttempts(),allCerts=await db.allCerts();
-  const employees=users.filter(u=>u.role==='employee');
+  const allCerts=await db.allCerts(),allAtts=await db.allAttempts();
+  const empMap={};users.forEach(u=>{empMap[u.id]=u});
+  const secMap={};secs.forEach(s=>{secMap[s.id]=s});
+
+  // Group certificates by section
+  const bySection={};
+  allCerts.forEach(cert=>{
+    const sec=secMap[cert.section_id];if(!sec)return;
+    const emp=empMap[cert.user_id];if(!emp)return;
+    (bySection[sec.id]=bySection[sec.id]||{sec,certs:[]}).certs.push({cert,emp});
+  });
+
+  const totalCerts=allCerts.length;
+  const uniqueNurses=new Set(allCerts.map(c=>c.user_id)).size;
 
   let secBlocks='';
-  for(const sec of secs){
-    const lecs=await db.lectures(sec.id);
-    if(!lecs.some(l=>l.has_quiz))continue;
-    const quizLecs=lecs.filter(l=>l.has_quiz);
-    let rows='';
-    for(const emp of employees){
-      const empAtts=allAtts.filter(a=>a.user_id===emp.id);
-      const passedLecs=quizLecs.filter(l=>empAtts.some(a=>a.lecture_id===l.id&&a.passed));
-      const allPassed=passedLecs.length===quizLecs.length;
-      const hasCert=allCerts.find(c=>c.user_id===emp.id&&c.section_id===sec.id);
-      const bestScores=quizLecs.map(l=>{
-        const la=empAtts.filter(a=>a.lecture_id===l.id);
-        return la.length?Math.max(...la.map(a=>a.score)):null;
-      });
-      const avgScore=bestScores.filter(s=>s!==null).length?
-        Math.round(bestScores.filter(s=>s!==null).reduce((a,b)=>a+b,0)/bestScores.filter(s=>s!==null).length):null;
-      rows+=`<tr>
+  // Sort sections by order_num so they match the rest of the app
+  const sortedSecIds=Object.keys(bySection).sort((a,b)=>(secMap[a].order_num||0)-(secMap[b].order_num||0));
+  for(const sid of sortedSecIds){
+    const{sec,certs:secCerts}=bySection[sid];
+    // Sort by issued_at descending (newest first)
+    secCerts.sort((a,b)=>new Date(b.cert.issued_at)-new Date(a.cert.issued_at));
+    const theme=themeFor(sec.title);
+    const rows=secCerts.map(({cert,emp})=>{
+      const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+      // Get this employee's avg quiz score in this section (if there are quiz lectures)
+      const lecs=ls('lectures').filter(l=>l.section_id===sid);
+      const quizLecs=lecs.filter(l=>l.has_quiz);
+      let scoreCell='—';
+      if(quizLecs.length){
+        const empAtts=allAtts.filter(a=>a.user_id===emp.id);
+        const bestScores=quizLecs.map(l=>{
+          const la=empAtts.filter(a=>a.lecture_id===l.id);
+          return la.length?Math.max(...la.map(a=>a.score)):null;
+        }).filter(s=>s!==null);
+        if(bestScores.length){
+          const avg=Math.round(bestScores.reduce((a,b)=>a+b,0)/bestScores.length);
+          scoreCell=`<strong style="color:${avg>=90?'var(--ok)':'var(--ink)'}">${avg}%</strong>`;
+        }
+      }
+      return`<tr>
         <td><strong>${emp.name}</strong></td>
         <td><span class="chip cd">#${emp.badge_id}</span></td>
         <td>${emp.file_number||'—'}</td>
-        <td>${passedLecs.length}/${quizLecs.length} ${allPassed?'✅':''}</td>
-        <td>${avgScore!==null?`<strong style="color:${avgScore>=90?'var(--ok)':'var(--err)'}">${avgScore}%</strong>`:'—'}</td>
-        <td>
-          ${hasCert
-            ?`<div style="display:flex;gap:6px">
-          <button class="btn bo bsm" onclick="go('cert',{id:'${hasCert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>
-          <button class="btn bd bsm" onclick="deleteCert('${hasCert.id}')">🗑</button>
-        </div>`
-            :allPassed
-              ?`<button class="btn bp bsm" onclick="issueAdminCert('${emp.id}','${sec.id}')">📜 Issue Certificate</button>`
-              :'<span style="color:var(--muted);font-size:12px">Not passed yet</span>'}
-        </td>
+        <td style="font-size:13px;color:var(--muted)">${date}</td>
+        <td><span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d);font-size:12.5px">${cert.ref_number}</span></td>
+        <td>${scoreCell}</td>
+        <td><div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn bo bsm" onclick="go('cert',{id:'${cert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>
+          <button class="btn bd bsm" onclick="deleteCert('${cert.id}')" title="Delete certificate">🗑</button>
+        </div></td>
       </tr>`;
-    }
-    secBlocks+=`<div class="card" style="margin-bottom:22px">
-      <h3 style="color:var(--ink);font-weight:600;margin-bottom:18px;font-family:'Fraunces';font-size:20px">📚 ${sec.title}</h3>
-      <div class="tw"><table><thead><tr><th>Nurse Name</th><th>Employee #</th><th>File #</th><th>Passed Quizzes</th><th>Avg Score</th><th>Certificate</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No employees yet</td></tr>'}</tbody></table></div>
+    }).join('');
+    secBlocks+=`<div class="card" style="margin-bottom:22px;overflow:hidden;padding:0">
+      <div style="background:${theme.grad};padding:18px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:20px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25)">${theme.icon}</div>
+          <div>
+            <h3 style="font-weight:700;font-size:18px;font-family:'Readex Pro'">${sec.title}</h3>
+            <div style="font-size:12px;opacity:.85;margin-top:2px;font-weight:600">${secCerts.length} certified ${secCerts.length===1?'nurse':'nurses'}</div>
+          </div>
+        </div>
+        <span style="background:rgba(255,255,255,.22);padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.2)">🏆 ${secCerts.length}</span>
+      </div>
+      <div style="padding:18px 24px">
+        <div class="tw" style="border:none;box-shadow:none"><table><thead><tr><th>Nurse Name</th><th>Employee #</th><th>File #</th><th>Issued</th><th>Ref. Number</th><th>Avg Score</th><th style="text-align:right">Actions</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      </div>
     </div>`;
   }
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="ph">
-      <div><h2>🏆 Certificates &amp; Results</h2><p>Issue certificates to nurses who passed all quizzes</p></div>
+      <div><h2>🏆 Certificates Issued</h2><p>Showing only nurses who completed all section requirements and earned a certificate.</p></div>
       <button class="btn bmint" onclick="exportExcel()">📊 Download Excel Report</button>
     </div>
-    ${secBlocks||'<div style="text-align:center;padding:64px;color:var(--muted);background:var(--card);border-radius:18px;border:1px dashed var(--border-d)">No training sections with quizzes yet.</div>'}
+    ${totalCerts?`<div class="stats" style="margin-bottom:24px">
+      <div class="stat"><div class="si">🏆</div><div class="sv">${totalCerts}</div><div class="sl">Total Certificates</div></div>
+      <div class="stat"><div class="si">👩‍⚕️</div><div class="sv">${uniqueNurses}</div><div class="sl">Certified Nurses</div></div>
+      <div class="stat"><div class="si">📚</div><div class="sv">${sortedSecIds.length}</div><div class="sl">Sections w/ Certs</div></div>
+    </div>`:''}
+    ${secBlocks||`<div style="text-align:center;padding:80px 30px;color:var(--muted);background:var(--card);border-radius:18px;border:1px dashed var(--border-d)">
+      <div style="font-size:60px;margin-bottom:16px;opacity:.4">🏆</div>
+      <p style="font-weight:700;color:var(--ink);font-size:17px;margin-bottom:6px;font-family:'Readex Pro'">No certificates issued yet</p>
+      <p style="font-size:13.5px;line-height:1.6;max-width:420px;margin:0 auto">Certificates are issued automatically when a nurse completes all lectures (and quizzes, if any) in a section. They will appear here once earned.</p>
+    </div>`}
   </div>`
 }
 async function issueAdminCert(userId,sid){
@@ -2242,11 +2386,11 @@ async function pageAdminDash(){
       ${DEMO_MODE?`<button class="btn bg2 bsm" onclick="go('setup')">⚙ Connect Database</button>`:''}
     </div>
     <div class="stats">
-      <div class="stat"><div class="si">👩‍⚕️</div><div class="sv">${emps.length}</div><div class="sl">Employees</div></div>
-      <div class="stat"><div class="si">📚</div><div class="sv">${secs.length}</div><div class="sl">Sections</div></div>
-      <div class="stat"><div class="si">✅</div><div class="sv">${comps.length}</div><div class="sl">Completions</div></div>
-      <div class="stat"><div class="si">📝</div><div class="sv">${pr}%</div><div class="sl">Pass Rate</div></div>
-      <div class="stat"><div class="si">🏆</div><div class="sv">${certs.length}</div><div class="sl">Certificates</div></div>
+      <div class="stat stat-clickable" onclick="go('astaff')" title="View all staff"><div class="si">👩‍⚕️</div><div class="sv">${emps.length}</div><div class="sl">Employees</div><div class="stat-arrow">→</div></div>
+      <div class="stat stat-clickable" onclick="go('asections')" title="Manage sections"><div class="si">📚</div><div class="sv">${secs.length}</div><div class="sl">Sections</div><div class="stat-arrow">→</div></div>
+      <div class="stat stat-clickable" onclick="go('asections')" title="View engagement per section"><div class="si">✅</div><div class="sv">${comps.length}</div><div class="sl">Completions</div><div class="stat-arrow">→</div></div>
+      <div class="stat stat-clickable" onclick="go('acerts')" title="View quiz results"><div class="si">📝</div><div class="sv">${pr}%</div><div class="sl">Pass Rate</div><div class="stat-arrow">→</div></div>
+      <div class="stat stat-clickable" onclick="go('acerts')" title="View all certificates"><div class="si">🏆</div><div class="sv">${certs.length}</div><div class="sl">Certificates</div><div class="stat-arrow">→</div></div>
     </div>
     <div class="card" style="margin-bottom:22px">
       <div class="fb" style="margin-bottom:18px"><h3 style="font-size:20px;font-weight:600;color:var(--ink);font-family:'Fraunces'">Staff Progress</h3>
@@ -2288,26 +2432,75 @@ async function pageAdminDash(){
 // ════════════════════════════════════════════════════════════════
 async function pageAdminSections(){
   const secs=await db.sections();
+  const users=await db.users();
+  const allComps=await db.allCompletions();
+  const allCerts=await db.allCerts();
+  const allAtts=await db.allAttempts();
+  const employees=users.filter(u=>u.role==='employee');
+  const totalEmps=employees.length;
+
+  // Compute engagement per section
+  const secStats={};
+  for(const s of secs){
+    const lecs=ls('lectures').filter(l=>l.section_id===s.id);
+    const lecIds=lecs.map(l=>l.id);
+    // started = at least one lecture watched in this section
+    const startedSet=new Set();
+    allComps.filter(c=>lecIds.includes(c.lecture_id)).forEach(c=>startedSet.add(c.user_id));
+    // completed = ALL lectures done (watched + passed if quiz)
+    let completedCount=0;
+    for(const emp of employees){
+      if(!lecs.length){break;}
+      let allDone=true;
+      for(const lec of lecs){
+        const w=allComps.find(c=>c.user_id===emp.id&&c.lecture_id===lec.id);
+        if(!w){allDone=false;break;}
+        if(lec.has_quiz){
+          const p=allAtts.some(a=>a.user_id===emp.id&&a.lecture_id===lec.id&&a.passed);
+          if(!p){allDone=false;break;}
+        }
+      }
+      if(allDone)completedCount++;
+    }
+    const certCount=allCerts.filter(c=>c.section_id===s.id).length;
+    secStats[s.id]={lecs:lecs.length,started:startedSet.size,completed:completedCount,certs:certCount};
+  }
+
   const rows=secs.map(s=>{
     const t=themeFor(s.title);
+    const st=secStats[s.id];
+    const startedPct=totalEmps?Math.round(st.started/totalEmps*100):0;
+    const completedPct=totalEmps?Math.round(st.completed/totalEmps*100):0;
     return`<tr><td>
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:42px;height:42px;border-radius:11px;background:${t.grad};display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--sh)">${t.icon}</div>
         <div><strong style="color:var(--ink)">${s.title}</strong><br><span style="font-size:12px;color:var(--muted)">${s.description||''}</span></div>
       </div>
     </td>
-    <td><span class="chip cp">${ls('lectures').filter(l=>l.section_id===s.id).length} lectures</span></td>
+    <td><span class="chip cp">${st.lecs} ${st.lecs===1?'lecture':'lectures'}</span></td>
+    <td><div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:'Readex Pro';font-weight:700;color:var(--ink);font-size:14px">${st.started}</span>
+      <span style="font-size:11px;color:var(--muted)">/ ${totalEmps}</span>
+      ${st.started>0?`<div class="pbar" style="width:60px;height:6px"><div class="pfill" style="width:${startedPct}%;background:linear-gradient(90deg,var(--sky),#7BA3D9)"></div></div>`:''}
+    </div></td>
+    <td><div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:'Readex Pro';font-weight:700;color:${st.completed>0?'var(--ok)':'var(--muted)'};font-size:14px">${st.completed}</span>
+      <span style="font-size:11px;color:var(--muted)">/ ${totalEmps}</span>
+      ${st.completed>0?`<div class="pbar" style="width:60px;height:6px"><div class="pfill" style="width:${completedPct}%;background:linear-gradient(90deg,var(--ok),#8FA88E)"></div></div>`:''}
+    </div></td>
+    <td>${st.certs>0?`<span class="chip" style="background:var(--gold-soft);color:#854D0E;border:1px solid #FDE68A">🏆 ${st.certs}</span>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td>
     <td><div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn bo bsm" onclick="go('alectures',{id:'${s.id}'},{page:'asections',par:{},label:'Sections'})">📖 Lectures</button>
       <button class="btn bg2 bsm" onclick="openSecModal('${s.id}')">✏</button>
       <button class="btn bd bsm" onclick="delSec('${s.id}')">🗑</button>
     </div></td></tr>`;
   }).join('');
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><span>Sections</span></div>
-    <div class="ph"><div><h2>Training Sections</h2></div><button class="btn bp" onclick="openSecModal()">+ New Section</button></div>
-    <div class="tw"><table><thead><tr><th>Section</th><th>Lectures</th><th>Actions</th></tr></thead>
-    <tbody>${rows||'<tr><td colspan="3" style="text-align:center;padding:48px;color:var(--muted)">No sections yet.</td></tr>'}</tbody></table></div>
+    <div class="ph"><div><h2>Training Sections</h2><p>Engagement & completion per section across ${totalEmps} ${totalEmps===1?'nurse':'nurses'}</p></div><button class="btn bp" onclick="openSecModal()">+ New Section</button></div>
+    <div class="tw"><table><thead><tr><th>Section</th><th>Lectures</th><th>👀 Started</th><th>✅ Completed</th><th>🏆 Certs</th><th>Actions</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="text-align:center;padding:48px;color:var(--muted)">No sections yet.</td></tr>'}</tbody></table></div>
   </div><div id="md"></div>`
 }
 let _esid='';
@@ -2987,11 +3180,12 @@ function prevSlide(){
   renderInteractive();
 }
 async function finishInteractive(){
-  const{lid,hasQuiz}=INT_STATE;
+  const{lid,hasQuiz,sec}=INT_STATE;
   await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
   setSlideProg(lid,U.id,0);
+  if(!hasQuiz)await checkAndAutoIssueCert(sec);
   if(hasQuiz){toast('🎉 Lecture complete! Now the quiz...','ok');setTimeout(()=>go('quiz',{id:lid}),700);}
-  else{toast('🎉 Lecture complete!','ok');setTimeout(()=>{const sec=INT_STATE.sec;go('section',{id:sec});},700);}
+  else{toast('🎉 Lecture complete!','ok');setTimeout(()=>go('section',{id:sec}),700);}
 }
 
 // ════════════════════════════════════════════════════════════════
