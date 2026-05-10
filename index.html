@@ -181,6 +181,24 @@ body::before{
 .pbar{height:7px;background:var(--pu-soft);border-radius:99px;overflow:hidden}
 .pfill{height:100%;background:linear-gradient(90deg, var(--pu), var(--pu-l));border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 
+/* ── My certificate row (employee home) ── */
+.my-cert-item{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 20px;background:var(--card);border-radius:14px;
+  border:1.5px solid #FDE68A;margin-bottom:11px;
+  cursor:pointer;transition:.25s;box-shadow:var(--sh);
+  -webkit-tap-highlight-color:rgba(184,152,94,.15)
+}
+.my-cert-item:hover,.my-cert-item:active{
+  background:var(--gold-soft);
+  transform:translateX(4px)
+}
+.my-cert-item:focus{outline:2px solid var(--pu);outline-offset:2px}
+@media(max-width:768px){
+  .my-cert-item:active{transform:scale(.98)}
+  .my-cert-item:hover{transform:none}
+}
+
 /* ── Lecture row ── */
 .lec-item{
   display:flex;align-items:center;gap:16px;
@@ -767,6 +785,19 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
   padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;z-index:2;
   border:1px solid rgba(255,255,255,.15);font-family:'Readex Pro'
 }
+.sec-c-new{
+  position:absolute;top:18px;left:18px;
+  background:linear-gradient(135deg,#9863F1,#6B3FB5);
+  padding:5px 12px;border-radius:99px;
+  font-size:10.5px;font-weight:800;letter-spacing:1px;
+  color:#fff;z-index:2;font-family:'Readex Pro';
+  box-shadow:0 4px 12px rgba(152,99,241,.45);
+  animation: newPulse 2s ease-in-out infinite
+}
+@keyframes newPulse{
+  0%,100% { box-shadow: 0 4px 12px rgba(152,99,241,.45) }
+  50% { box-shadow: 0 4px 20px rgba(152,99,241,.75) }
+}
 .sec-c-body{padding:18px 24px 22px;flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
 .sec-c-desc{font-size:13.5px;color:var(--muted);line-height:1.55}
 .sec-c-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-weight:700;font-family:'Readex Pro'}
@@ -1271,13 +1302,7 @@ let U=JSON.parse(sessionStorage.getItem('lms_u')||'null');
 let PAGE='login',PAR={},BACK=null;
 let HOME_FILTER='all';
 function setU(u){U=u;u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u')}
-function logout(){
-  try{
-    // Clear session-based notification tracker for this user
-    Object.keys(sessionStorage).filter(k=>k.startsWith('lms_announced_certs_')).forEach(k=>sessionStorage.removeItem(k));
-  }catch(e){}
-  setU(null);go('login');
-}
+function logout(){setU(null);go('login')}
 function go(page,par={},back=null){BACK=back;PAGE=page;PAR=par;render()}
 setInterval(async()=>{if(U&&SB){await syncAll();}},60000);
 function goBack(){if(BACK)go(BACK.page,BACK.par||{});else go('home')}
@@ -1486,10 +1511,13 @@ async function doLogin(){
 async function pageHome(){
   await ensureDefaultSections();
   // Sweep: auto-issue certs for any section the nurse already completed
-  // (catches retroactive completions and any missed cases)
   try {
     const _allSecs=await db.sections();
     for(const _s of _allSecs){await checkAndAutoIssueCert(_s.id);}
+    // First-time visit: mark all current sections as seen (no NEW badge spam)
+    if(localStorage.getItem(_seenSecsKey())===null){
+      _markSectionsAsSeen(_allSecs.map(s=>s.id));
+    }
   } catch(e){console.warn('Cert sweep:',e);}
   const secs=await db.sections();
   const comps=await db.completions(U.id);
@@ -1526,8 +1554,9 @@ async function pageHome(){
   const totalLecs=cardData.reduce((s,c)=>s+c.total,0);
   const completedLecs=cardData.reduce((s,c)=>s+c.doneCount,0);
 
-  const cardsHtml=filtered.map(({sec,total,doneCount,pct,hasCert,status})=>{
+  const cardsHtml=filtered.map(({sec,lecs,total,doneCount,pct,hasCert,status})=>{
     const theme=themeFor(sec.title);
+    const isNew=_isSectionNew(sec.id);
     let statusChip='',statusBar='var(--border)',clickable=true;
     if(status==='completed'){
       statusChip=`<span class="sec-c-chip" style="background:rgba(16,185,129,.92);border-color:rgba(255,255,255,.3);color:#fff">✓ Complete</span>`;
@@ -1559,8 +1588,11 @@ async function pageHome(){
     const certHtml=hasCert?`<div class="sec-c-cert" onclick="event.stopPropagation();go('cert',{id:'${hasCert.id}'},{page:'home',par:{},label:'Home'})">
       🏆 Certificate · <span style="font-family:'Readex Pro';font-weight:800">${hasCert.ref_number}</span>
     </div>`:'';
-    return`<div class="sec-c" ${clickAttr} style="cursor:${cursor};${status==='empty'?'opacity:.85':''}">
+    const lecTitles=lecs.map(l=>l.title).join(' ');
+    const searchData=(sec.title+' '+(sec.description||'')+' '+lecTitles).toLowerCase();
+    return`<div class="sec-c" ${clickAttr} data-search="${searchData.replace(/"/g,'&quot;')}" style="cursor:${cursor};${status==='empty'?'opacity:.85':''}">
       <div class="sec-c-head" style="background:${theme.grad}">
+        ${isNew?`<span class="sec-c-new">✨ NEW</span>`:''}
         ${statusChip}
         <div class="sec-c-icon">${theme.icon}</div>
         <div class="sec-c-title">${sec.title}</div>
@@ -1587,9 +1619,7 @@ async function pageHome(){
     const certItems=certs.map(cert=>{
       const s=secList.find(x=>x.id===cert.section_id);
       const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-      return`<div onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})"
-        style="display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--card);border-radius:14px;border:1.5px solid #FDE68A;margin-bottom:11px;cursor:pointer;transition:.25s;box-shadow:var(--sh)"
-        onmouseover="this.style.background='var(--gold-soft)';this.style.transform='translateX(4px)'" onmouseout="this.style.background='var(--card)';this.style.transform='translateX(0)'">
+      return`<div class="my-cert-item" role="button" tabindex="0" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">
         <div style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(245,158,11,.25)">🏆</div>
         <div style="flex:1">
           <div style="font-weight:700;color:var(--ink);font-family:'Readex Pro'">${s?s.title:'Certificate'}</div>
@@ -1618,6 +1648,13 @@ async function pageHome(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <h3 style="font-size:22px;font-weight:600;color:var(--ink);font-family:'Fraunces';letter-spacing:-.01em">Training Sections</h3>
     </div>
+    <div style="background:var(--card);border-radius:14px;padding:12px 18px;margin-bottom:14px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;box-shadow:var(--sh)">
+      <span style="font-size:17px">🔍</span>
+      <input id="lec-search" placeholder="Search lectures or sections..." 
+        style="flex:1;border:none;outline:none;background:transparent;font-size:14px;font-family:inherit;padding:5px 0" 
+        oninput="filterHomeContent(this.value)">
+      <span id="lec-search-status" style="font-size:11.5px;color:var(--muted);font-weight:600"></span>
+    </div>
     <div class="filter-row">
       ${filterChip('all','All')}
       ${filterChip('inprogress','📖 In Progress')}
@@ -1636,11 +1673,29 @@ async function pageHome(){
   </div>`;
 }
 function setHomeFilter(f){HOME_FILTER=f;pageHome();}
+function filterHomeContent(query){
+  const q=(query||'').toLowerCase().trim();
+  const cards=document.querySelectorAll('.sec-c');
+  let matched=0;
+  cards.forEach(c=>{
+    const text=c.getAttribute('data-search')||'';
+    const show=!q||text.includes(q);
+    c.style.display=show?'':'none';
+    if(show)matched++;
+  });
+  const status=document.getElementById('lec-search-status');
+  if(status)status.textContent=q?(matched+' match'+(matched===1?'':'es')):'';
+  // Hide filter chips when searching
+  const fr=document.querySelector('.filter-row');
+  if(fr)fr.style.opacity=q?'.5':'1';
+}
 
 // ════════════════════════════════════════════════════════════════
 // SECTION
 // ════════════════════════════════════════════════════════════════
 async function pageSection(sid){
+  // Mark this section as seen (removes NEW badge)
+  if(U)_markSectionsAsSeen([sid]);
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);if(!sec){go('home');return}
   const lecs=await db.lectures(sid),comps=await db.completions(U.id),certs=await db.certs(U.id);
   const hasCert=certs.find(c=>c.section_id===sid);
@@ -1743,23 +1798,37 @@ async function pageSection(sid){
 }
 // AUTO-ISSUE certificate when all lectures in a section are complete
 // Returns the existing or newly-created cert, or null if not all done
-// Session-based announced certs tracker — prevents toast spam on navigation
-function _getAnnouncedCerts(){
-  try{return new Set(JSON.parse(sessionStorage.getItem('lms_announced_certs_'+(U?.id||''))||'[]'))}catch{return new Set()}
-}
-function _markCertAnnounced(certId){
+// PERMANENT cert announcement tracker (localStorage by sectionId)
+// Once a section's cert toast is shown, never shown again — even after logout/relogin
+// Section-seen tracker — used for "NEW" badge on freshly-added sections
+function _seenSecsKey(){return 'mh_seen_secs_'+(U?.id||'')}
+function _getSeenSections(){try{return new Set(JSON.parse(localStorage.getItem(_seenSecsKey())||'[]'))}catch{return new Set()}}
+function _markSectionsAsSeen(secIds){
   try{
-    const s=_getAnnouncedCerts();s.add(certId);
-    sessionStorage.setItem('lms_announced_certs_'+(U?.id||''),JSON.stringify([...s]));
+    const s=_getSeenSections();
+    secIds.forEach(id=>s.add(id));
+    localStorage.setItem(_seenSecsKey(),JSON.stringify([...s]));
   }catch(e){}
 }
+function _isSectionNew(secId){
+  if(!U)return false;
+  // First-time user: no seen list yet -> nothing is "new" (avoids initial spam)
+  const raw=localStorage.getItem(_seenSecsKey());
+  if(raw===null)return false;
+  return !_getSeenSections().has(secId);
+}
+
+function _certAnnouncedKey(secId){return 'mh_cert_announced_'+(U?.id||'')+'_'+secId}
+function _isCertAnnounced(secId){try{return localStorage.getItem(_certAnnouncedKey(secId))==='1'}catch{return false}}
+function _markCertAnnounced(secId){try{localStorage.setItem(_certAnnouncedKey(secId),'1')}catch(e){}}
+
 async function checkAndAutoIssueCert(sectionId){
   if(!sectionId||!U)return null;
   const certs=await db.certs(U.id);
   const existing=certs.find(c=>c.section_id===sectionId);
   if(existing){
-    // Already issued — silently mark as announced so we never toast for it
-    _markCertAnnounced(existing.id);
+    // Already exists — silently mark to prevent any future toast
+    _markCertAnnounced(sectionId);
     return existing;
   }
   const lecs=await db.lectures(sectionId);
@@ -1781,12 +1850,10 @@ async function checkAndAutoIssueCert(sectionId){
   const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
   const cert={user_id:U.id,section_id:sectionId,ref_number:ref,issued_at:n()};
   const saved=await db.addCert(cert);
-  const certId=(saved&&saved.id)||cert.id;
-  // Only show toast if not already announced this session
-  const announced=_getAnnouncedCerts();
-  if(certId&&!announced.has(certId)){
+  // Only toast for sections never announced before (persists forever in localStorage)
+  if(!_isCertAnnounced(sectionId)){
     toast('🏆 Certificate earned: '+sec.title+'!','ok');
-    _markCertAnnounced(certId);
+    _markCertAnnounced(sectionId);
   }
   return saved||cert;
 }
@@ -2140,7 +2207,10 @@ async function submitQ(){
     const selectedIdx=letters.indexOf(QS.ans[i]);
     if(selectedIdx>=0&&q.shuffled[selectedIdx]?.correct)ok++;
   });
-  const score=Math.round(ok/qs.length*100),passed=score===100;
+  const score=Math.round(ok/qs.length*100);
+  const lec0=await db.lecture(QS.lid);
+  const passPct=(lec0&&lec0.quiz_pass_pct)||100;
+  const passed=score>=passPct;
   await db.addAttempt({user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
   if(passed){
     const lec=await db.lecture(QS.lid);
@@ -2150,7 +2220,7 @@ async function submitQ(){
     <div class="card" style="text-align:center;padding:54px 38px">
       <div class="r-circle ${passed?'r-pass':'r-fail'}">${passed?'100%':score+'%'}</div>
       <h2 style="font-size:32px;color:var(--ink);margin-bottom:10px;font-family:'Fraunces';font-weight:600">${passed?'🎉 Excellent!':'😔 Not Passed'}</h2>
-      <p style="color:var(--muted);margin-bottom:28px;font-size:15px;line-height:1.6">You got ${ok} out of ${qs.length} correct. ${passed?'Congratulations! 🎉':'You need 100% to earn the certificate. Please retry.'}</p>
+      <p style="color:var(--muted);margin-bottom:28px;font-size:15px;line-height:1.6">You got ${ok} out of ${qs.length} correct. ${passed?'Congratulations! 🎉':`You need ${passPct}% to pass. Please retry.`}</p>
       <div style="background:var(--pu-mist);border-radius:16px;padding:24px;margin-bottom:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;border:1px solid var(--border)">
         <div><div style="font-size:32px;font-weight:800;color:var(--ok);font-family:'Readex Pro'">${ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Correct</div></div>
         <div><div style="font-size:32px;font-weight:800;color:var(--err);font-family:'Readex Pro'">${qs.length-ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Incorrect</div></div>
@@ -2768,6 +2838,12 @@ function openLecModal(sid,id){
         ${[5,10,15,20].map(num=>`<option value="${num}" ${(l&&l.quiz_count||10)===num?'selected':''}>${num} questions per attempt</option>`).join('')}
       </select>
     </div>
+    <div id="quiz-pass-field" class="fg" style="${l&&l.has_quiz?'':'display:none'}">
+      <label>Passing score <span style="font-weight:400;color:var(--muted)">(% required to pass)</span></label>
+      <select id="lqp">
+        ${[60,70,75,80,85,90,95,100].map(p=>`<option value="${p}" ${((l&&l.quiz_pass_pct)||100)===p?'selected':''}>${p}% — ${p===100?'must answer all correctly':p>=90?'very strict':p>=80?'strict':p>=70?'standard':'lenient'}</option>`).join('')}
+      </select>
+    </div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px">
       <button class="btn bg2" onclick="cmo()">Cancel</button>
       <button class="btn bp" onclick="saveLec()">💾 Save</button>
@@ -2781,7 +2857,11 @@ function toggleLType(){
   document.getElementById('video-note').style.display=t==='video'?'':'none';
   const iNote=document.getElementById('interactive-note');if(iNote)iNote.style.display=t==='interactive'?'':'none';
 }
-function toggleQuizCount(){const hq=document.getElementById('lhq').checked;const f=document.getElementById('quiz-count-field');if(f)f.style.display=hq?'':'none';}
+function toggleQuizCount(){
+  const hq=document.getElementById('lhq').checked;
+  const f=document.getElementById('quiz-count-field');if(f)f.style.display=hq?'':'none';
+  const fp=document.getElementById('quiz-pass-field');if(fp)fp.style.display=hq?'':'none';
+}
 async function saveLec(){
   const t=document.getElementById('lt').value.trim();
   const type=document.getElementById('ltype').value;
@@ -2791,9 +2871,11 @@ async function saveLec(){
   const isPrereq=seqStep===1;
   const qcEl=document.getElementById('lqc');
   const qc=qcEl?parseInt(qcEl.value):10;
+  const qpEl=document.getElementById('lqp');
+  const qp=qpEl?parseInt(qpEl.value):100;
   if(!t){toast('Enter a title','er');return}
-  const fullData={title:t,type,url,has_quiz:hq,quiz_count:qc,is_prerequisite:isPrereq,sequence_step:seqStep};
-  const basicData={title:t,type,url,has_quiz:hq,quiz_count:qc};
+  const fullData={title:t,type,url,has_quiz:hq,quiz_count:qc,quiz_pass_pct:qp,is_prerequisite:isPrereq,sequence_step:seqStep};
+  const basicData={title:t,type,url,has_quiz:hq,quiz_count:qc,quiz_pass_pct:qp};
   try{
     const lecs=await db.lectures(_elsid);
     let savedId=_elid;
@@ -2805,7 +2887,7 @@ async function saveLec(){
       }
     }catch(e){
       const msg=e.message||'';
-      if(/is_prerequisite|sequence_step/i.test(msg)){
+      if(/is_prerequisite|sequence_step|quiz_pass_pct/i.test(msg)){
         toast('⚠ Saved locally. Run SQL migration for cloud sync','');
         if(_elid)await db.updLecture(_elid,basicData);
         else {
@@ -2816,7 +2898,7 @@ async function saveLec(){
     }
     if(savedId){
       setSeqOv(savedId,{is_prerequisite:isPrereq,sequence_step:seqStep});
-      ls2('lectures',ls('lectures').map(l=>l.id===savedId?{...l,is_prerequisite:isPrereq,sequence_step:seqStep}:l));
+      ls2('lectures',ls('lectures').map(l=>l.id===savedId?{...l,is_prerequisite:isPrereq,sequence_step:seqStep,quiz_pass_pct:qp}:l));
     }
     toast(_elid?'Updated! ✅':'Lecture added! ✅','ok');cmo();pageAdminLectures(_elsid);
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
@@ -3245,7 +3327,7 @@ async function pageAdminStaff(){
   const users=await db.users();
   const emps=users.filter(u=>u.role==='employee');
   const adms=users.filter(u=>u.role==='admin');
-  const renderRow=(u)=>`<tr>
+  const renderRow=(u)=>`<tr class="staff-row" data-search="${(u.name+' '+u.badge_id+' '+(u.iqama_number||'')+' '+(u.file_number||'')+' '+(u.email||'')).toLowerCase()}">
     <td><strong>${u.name}</strong></td>
     <td><span class="chip cd">#${u.badge_id}</span></td>
     <td style="font-size:12.5px;color:var(--muted)">${u.iqama_number}</td>
@@ -3264,13 +3346,20 @@ async function pageAdminStaff(){
     <div class="ph"><div><h2>Staff Management</h2><p>Manage employees and admins</p></div>
       <div style="display:flex;gap:10px"><button class="btn bp" onclick="openEmpModal()">+ Add Staff</button></div>
     </div>
+    <div style="background:var(--card);border-radius:14px;padding:14px 18px;margin-bottom:18px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;box-shadow:var(--sh)">
+      <span style="font-size:18px">🔍</span>
+      <input id="staff-search" placeholder="Search by name, employee #, or iqama..." 
+        style="flex:1;border:none;outline:none;background:transparent;font-size:14px;font-family:inherit;padding:6px 0" 
+        oninput="filterStaff(this.value)">
+      <span id="staff-count" style="font-size:12px;color:var(--muted);font-weight:600">${emps.length+adms.length}</span>
+    </div>
     <div class="card" style="margin-bottom:22px">
-      <h3 style="margin-bottom:14px;font-family:'Fraunces';font-weight:600;color:var(--ink);font-size:20px">👩‍⚕️ Employees (${emps.length})</h3>
+      <h3 style="margin-bottom:14px;font-family:'Fraunces';font-weight:600;color:var(--ink);font-size:20px">👩‍⚕️ Employees (<span id="emp-count">${emps.length}</span>)</h3>
       <div class="tw"><table><thead><tr><th>Name</th><th>Employee #</th><th>Iqama #</th><th>File #</th><th>Role</th><th>Actions</th></tr></thead>
       <tbody>${empRows||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No employees yet</td></tr>'}</tbody></table></div>
     </div>
     <div class="card">
-      <h3 style="margin-bottom:14px;font-family:'Fraunces';font-weight:600;color:var(--ink);font-size:20px">⚙ Admins (${adms.length})</h3>
+      <h3 style="margin-bottom:14px;font-family:'Fraunces';font-weight:600;color:var(--ink);font-size:20px">⚙ Admins (<span id="adm-count">${adms.length}</span>)</h3>
       <div class="tw"><table><thead><tr><th>Name</th><th>Employee #</th><th>Password</th><th>File #</th><th>Role</th><th>Actions</th></tr></thead>
       <tbody>${admRows||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No admins</td></tr>'}</tbody></table></div>
     </div>
@@ -3316,6 +3405,21 @@ async function saveEmp(){
   }catch(e){toast('❌ Error: '+e.message,'er');console.error(e);}
 }
 async function delEmp(id){if(confirm('Delete this user? This cannot be undone.')){await db.delUser(id);toast('Deleted','ok');pageAdminStaff()}}
+function filterStaff(query){
+  const q=(query||'').toLowerCase().trim();
+  const rows=document.querySelectorAll('.staff-row');
+  let visible=0,empVis=0,admVis=0;
+  rows.forEach(r=>{
+    const text=r.getAttribute('data-search')||'';
+    const isAdm=r.querySelector('.bdg');
+    const show=!q||text.includes(q);
+    r.style.display=show?'':'none';
+    if(show){visible++;if(isAdm)admVis++;else empVis++;}
+  });
+  const cnt=document.getElementById('staff-count');if(cnt)cnt.textContent=q?(visible+' match'+(visible===1?'':'es')):visible;
+  const ec=document.getElementById('emp-count');if(ec)ec.textContent=empVis;
+  const ac=document.getElementById('adm-count');if(ac)ac.textContent=admVis;
+}
 
 async function pageAdminStaff1(uid){
   const users=await db.users(),u=users.find(x=>x.id===uid);if(!u){go('astaff');return}
