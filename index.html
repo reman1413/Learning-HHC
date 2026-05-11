@@ -1308,7 +1308,7 @@ setInterval(async()=>{if(U&&SB){await syncAll();}},60000);
 function goBack(){if(BACK)go(BACK.page,BACK.par||{});else go('home')}
 
 async function render(){
-  if(!U&&PAGE!=='login'&&PAGE!=='setup'){pageLogin();return}
+  if(!U&&PAGE!=='login'&&PAGE!=='setup'&&PAGE!=='verify'){pageLogin();return}
   switch(PAGE){
     case 'login':pageLogin();break;
     case 'setup':pageSetup();break;
@@ -1317,6 +1317,7 @@ async function render(){
     case 'lecture':await pageLecture(PAR.id);break;
     case 'quiz':await pageQuiz(PAR.id);break;
     case 'cert':await pageCert(PAR.id);break;
+    case 'verify':pageVerify();break;
     case 'adash':await pageAdminDash();break;
     case 'asections':await pageAdminSections();break;
     case 'alectures':await pageAdminLectures(PAR.id);break;
@@ -1401,6 +1402,7 @@ function bar(){
         <button onclick="go('asections')">📚 Content</button>
         <button onclick="go('astaff')">👥 Staff</button>
         <button onclick="go('acerts')">🏆 Certificates</button>
+        <button onclick="go('verify')" title="Verify Certificate">🔍</button>
         <button onclick="go('abrand')" title="Brand & Logo">🎨</button>
         <button onclick="location.reload()" title="Refresh">↻</button>
       </div>`:''}
@@ -1483,6 +1485,11 @@ function pageLogin(){
         <input id="bpw" type="password" placeholder="Enter your iqama number" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div id="lerr" style="color:#9F1239;font-size:13px;margin-bottom:14px;display:none;font-weight:600;background:var(--err-l);padding:11px 15px;border-radius:10px;border:1px solid #FCA5A5"></div>
       <button class="btn bp blg" style="width:100%" onclick="doLogin()">Sign In →</button>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <button onclick="go('verify')" style="background:transparent;border:none;color:var(--pu-d);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;font-family:inherit;transition:.2s" onmouseover="this.style.background='var(--pu-soft)'" onmouseout="this.style.background='transparent'">
+          🔍 Verify a Certificate
+        </button>
+      </div>
     </div></div>
   </div>`
 }
@@ -1822,6 +1829,22 @@ function _certAnnouncedKey(secId){return 'mh_cert_announced_'+(U?.id||'')+'_'+se
 function _isCertAnnounced(secId){try{return localStorage.getItem(_certAnnouncedKey(secId))==='1'}catch{return false}}
 function _markCertAnnounced(secId){try{localStorage.setItem(_certAnnouncedKey(secId),'1')}catch(e){}}
 
+// Generate a unique reference number — checks against all existing certs
+async function generateUniqueRef(sec){
+  const code=sec.title.split(' ').map(w=>w[0]).filter(Boolean).join('').toUpperCase().slice(0,4)||'GEN';
+  const year=new Date().getFullYear();
+  // Load all certs once
+  const existingCerts=await db.allCerts();
+  const existingRefs=new Set(existingCerts.map(c=>c.ref_number));
+  // Try up to 100 times for a unique random 5-digit suffix
+  for(let i=0;i<100;i++){
+    const candidate='MH-'+year+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
+    if(!existingRefs.has(candidate))return candidate;
+  }
+  // Fallback: append timestamp tail for absolute uniqueness
+  return 'MH-'+year+'-'+code+'-'+String(Date.now()).slice(-7);
+}
+
 async function checkAndAutoIssueCert(sectionId){
   if(!sectionId||!U)return null;
   const certs=await db.certs(U.id);
@@ -1846,8 +1869,7 @@ async function checkAndAutoIssueCert(sectionId){
   const secs=await db.sections();
   const sec=secs.find(s=>s.id===sectionId);
   if(!sec)return null;
-  const code=sec.title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,4);
-  const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
+  const ref=await generateUniqueRef(sec);
   const cert={user_id:U.id,section_id:sectionId,ref_number:ref,issued_at:n()};
   const saved=await db.addCert(cert);
   // Only toast for sections never announced before (persists forever in localStorage)
@@ -2475,8 +2497,7 @@ async function pageAdminCerts(){
 async function issueAdminCert(userId,sid){
   const secs=await db.sections(),sec=secs.find(s=>s.id===sid);
   const users=await db.users(),u=users.find(x=>x.id===userId);
-  const code=sec.title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,4);
-  const ref='MH-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
+  const ref=await generateUniqueRef(sec);
   const cert={user_id:userId,section_id:sid,ref_number:ref,issued_at:n()};
   await db.addCert(cert);
   toast('🏆 Certificate issued for '+u.name,'ok');
@@ -3473,6 +3494,103 @@ async function pageAdminStaff1(uid){
 // ════════════════════════════════════════════════════════════════
 // UTILITIES
 // ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// CERTIFICATE VERIFICATION PAGE (public + admin)
+// Allows looking up a certificate by ref number to see if it's authentic
+// ════════════════════════════════════════════════════════════════
+async function pageVerify(){
+  const isPublic=!U;
+  const headerHtml=isPublic
+    ? `<div style="background:linear-gradient(135deg,#1E1147,#2D1A5C);color:#fff;padding:32px 24px;text-align:center;border-radius:0">
+        <div style="max-width:520px;margin:0 auto">
+          <div style="width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;border:1px solid rgba(255,255,255,.18)">🔍</div>
+          <h2 style="font-family:'Fraunces';font-weight:600;font-size:28px;margin-bottom:6px;letter-spacing:-.02em">Certificate Verification</h2>
+          <p style="opacity:.75;font-size:14px;line-height:1.6">Enter a certificate reference number to verify its authenticity at Meena Health Home Health Care.</p>
+        </div>
+      </div>`
+    : bar();
+  
+  const backBtn=isPublic
+    ? `<div style="max-width:540px;margin:0 auto;padding:14px 22px"><button class="btn bg2 bsm" onclick="go('login')">← Back to Login</button></div>`
+    : '';
+  
+  document.getElementById('app').innerHTML=headerHtml+backBtn+`
+    <div class="pg" style="max-width:540px;${isPublic?'margin-top:0':''}">
+      <div class="card" style="padding:30px">
+        <label style="font-size:13px;font-weight:700;color:var(--pu-d);margin-bottom:8px;display:block;font-family:'Readex Pro'">Certificate Reference Number</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input id="verify-ref" placeholder="e.g. MH-2026-DLY-12345" 
+            style="flex:1;min-width:200px;font-family:'Readex Pro';font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:15px"
+            onkeydown="if(event.key==='Enter')doVerify()" 
+            autocomplete="off">
+          <button class="btn bp" onclick="doVerify()" style="min-width:110px">🔍 Verify</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">
+          💡 Tip: The reference number is printed at the bottom of every Meena Health certificate.
+        </div>
+      </div>
+      <div id="verify-result" style="margin-top:18px"></div>
+    </div>`;
+}
+
+async function doVerify(){
+  const input=document.getElementById('verify-ref');
+  const refRaw=input.value.trim().toUpperCase();
+  const resultDiv=document.getElementById('verify-result');
+  if(!refRaw){
+    resultDiv.innerHTML=`<div class="al" style="background:var(--err-l);color:#9F1239;border-color:#FCA5A5">⚠ Please enter a reference number</div>`;
+    return;
+  }
+  resultDiv.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted)">🔄 Searching...</div>`;
+  try {
+    const allCerts=await db.allCerts();
+    const cert=allCerts.find(c=>(c.ref_number||'').toUpperCase()===refRaw);
+    if(!cert){
+      resultDiv.innerHTML=`<div class="card" style="padding:28px;text-align:center;border:2px solid var(--err);background:linear-gradient(135deg,#fff,#FFF5F7)">
+        <div style="font-size:54px;margin-bottom:12px">❌</div>
+        <h3 style="color:var(--err);font-family:'Fraunces';font-weight:600;font-size:22px;margin-bottom:6px">Not Verified</h3>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6">No certificate with reference <strong style="font-family:'Readex Pro';color:var(--ink)">${refRaw}</strong> was found in our records.</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">⚠ This may be a forged or invalid certificate. Please contact Meena Health administration to verify.</p>
+      </div>`;
+      return;
+    }
+    // Found — fetch user + section details
+    const users=await db.users();
+    const secs=await db.sections();
+    const u=users.find(x=>x.id===cert.user_id);
+    const sec=secs.find(s=>s.id===cert.section_id);
+    const issueDate=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    resultDiv.innerHTML=`<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--ok);background:linear-gradient(180deg,#fff,#F5FBF7)">
+      <div style="background:linear-gradient(135deg,var(--ok),#7BAE8E);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;border:1.5px solid rgba(255,255,255,.4)">✓</div>
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.85;font-weight:700;font-family:'Readex Pro'">Authentic</div>
+          <h3 style="font-family:'Fraunces';font-weight:600;font-size:22px;letter-spacing:-.01em">Certificate Verified</h3>
+        </div>
+      </div>
+      <div style="padding:24px 28px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:14px 20px;font-size:14px">
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Readex Pro';align-self:center">Issued To</div>
+          <div style="font-weight:700;color:var(--ink);font-size:17px;font-family:'Fraunces'">${u?u.name:'<em>Unknown</em>'}</div>
+          ${u?`<div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Readex Pro'">Employee #</div>
+          <div style="color:var(--ink);font-weight:600;font-family:'Readex Pro'">${u.badge_id}${u.file_number?' &nbsp;·&nbsp; File: '+u.file_number:''}</div>`:''}
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Readex Pro';align-self:center">Training</div>
+          <div style="font-weight:700;color:var(--pu-d);font-size:17px;font-family:'Fraunces'">${sec?sec.title:'<em>Unknown section</em>'}</div>
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Readex Pro'">Issued On</div>
+          <div style="color:var(--ink);font-weight:600">${issueDate}</div>
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;font-family:'Readex Pro'">Reference #</div>
+          <div style="color:var(--pu-d);font-weight:700;font-family:'Readex Pro';letter-spacing:.5px">${cert.ref_number}</div>
+        </div>
+        ${U?`<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);text-align:center">
+          <button class="btn bp" onclick="go('cert',{id:'${cert.id}'},{page:'verify',par:{},label:'Verification'})">📄 View Full Certificate</button>
+        </div>`:'<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted)">This certificate is genuine and was issued by Meena Health Home Health Care, Riyadh, KSA.</div>'}
+      </div>
+    </div>`;
+  } catch(e){
+    resultDiv.innerHTML=`<div class="al" style="background:var(--err-l);color:#9F1239;border-color:#FCA5A5">❌ Error: ${e.message}</div>`;
+  }
+}
+
 function cmo(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('md').innerHTML=''}
 function toast(msg,type){
   const cls=type==='ok'?'ok':type==='er'?'er':'';
