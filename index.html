@@ -1285,6 +1285,13 @@ async function signMemo(memoId){
   pageMemoCert(memoId, ref);
 }
 
+// View existing memo certificate (called from signed memo button)
+function viewMemoCert(memoId){
+  const sig=ackDb.getSignatures().find(s=>s.memo_id===memoId&&s.user_id===U.id);
+  if(!sig){ toast('No signature found for this memo','er'); return; }
+  pageMemoCert(memoId, sig.ref_number);
+}
+
 // ════════════════════════════════════════════════════════════════
 // MEMO ACKNOWLEDGEMENT CERTIFICATE PAGE
 // ════════════════════════════════════════════════════════════════
@@ -1583,33 +1590,41 @@ function openMemoModal(id){
       <input id="m-title" placeholder="e.g. Updated IV Medication Protocol" value="${memo?memo.title:''}"></div>
     <div class="fg">
       <label>Memo Body <span style="color:var(--err)">*</span></label>
-      <!-- Formatting toolbar -->
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:8px 12px;background:var(--pu-mist);border-radius:10px;border:1.5px solid var(--border)">
-        <span style="font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap">✏️ Style:</span>
-        <select onchange="applyMemoStyle('font',this.value)" style="padding:5px 9px;border-radius:7px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer;background:#fff">
-          <option value="'Readex Pro',sans-serif">Readex Pro</option>
-          <option value="Arial,sans-serif">Arial</option>
-          <option value="Georgia,serif">Georgia</option>
-          <option value="'Times New Roman',serif">Times New Roman</option>
+      <!-- Rich text toolbar — applies to selected text only -->
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;padding:7px 11px;background:var(--pu-mist);border-radius:10px;border:1.5px solid var(--border)">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap">✏️ Select text then:</span>
+        <button type="button" onclick="memoCmd('bold')"
+          style="font-weight:900;font-family:serif;padding:4px 11px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:14px;color:var(--ink)" title="Bold selected text">B</button>
+        <button type="button" onclick="memoCmd('italic')"
+          style="font-style:italic;font-family:serif;padding:4px 11px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:14px;color:var(--ink)" title="Italic selected text">I</button>
+        <button type="button" onclick="memoCmd('underline')"
+          style="text-decoration:underline;padding:4px 11px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:13px;color:var(--ink)" title="Underline selected text">U</button>
+        <select onchange="memoCmd('fontSize',this.value);this.selectedIndex=0" style="padding:4px 8px;border-radius:7px;font-size:12px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer">
+          <option value="">Size</option>
+          <option value="2">Small</option>
+          <option value="3">Normal</option>
+          <option value="4">Large</option>
+          <option value="5">Larger</option>
         </select>
-        <select onchange="applyMemoStyle('size',this.value)" style="padding:5px 9px;border-radius:7px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer;background:#fff">
-          <option value="12px">12px</option>
-          <option value="13px">13px</option>
-          <option value="14px" selected>14px</option>
-          <option value="15px">15px</option>
-          <option value="16px">16px</option>
-          <option value="18px">18px</option>
-        </select>
-        <button type="button" id="mb-bold" onclick="applyMemoStyle('bold')"
-          style="font-weight:900;font-family:serif;padding:5px 12px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:14px;color:var(--ink)" title="Bold">B</button>
-        <button type="button" onclick="insertMemoText('\n───────────────────────\n')"
-          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:12px;color:var(--muted);font-family:inherit" title="Divider">— Line</button>
-        <button type="button" onclick="insertMemoText('\n')"
-          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:12px;color:var(--muted);font-family:inherit" title="Blank line">↵ Space</button>
+        <button type="button" onclick="insertMemoLine()"
+          style="padding:4px 10px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:12px;color:var(--muted)" title="Insert divider line">— Line</button>
+        <span style="font-size:10px;color:var(--muted);margin-left:4px">💡 Highlight text first</span>
       </div>
-      <textarea id="m-body" rows="14"
-        style="font-family:'Readex Pro',sans-serif;font-size:14px;line-height:1.85;resize:vertical"
-        placeholder="Dear Team,&#10;&#10;This memo is to inform you that effective immediately...&#10;&#10;Please ensure all staff are aware of the following:&#10;&#10;1. ...&#10;2. ...&#10;&#10;Please acknowledge receipt of this communication.&#10;&#10;Regards,&#10;Meena Health HHC Management">${memo?memo.body:''}</textarea>
+      <!-- contenteditable editor instead of textarea -->
+      <div id="m-body-editor"
+        contenteditable="true"
+        style="min-height:220px;max-height:400px;overflow-y:auto;
+               border:1.5px solid var(--border-d);border-radius:11px;padding:14px 16px;
+               font-family:'Readex Pro',sans-serif;font-size:14px;line-height:1.85;
+               color:var(--ink);background:#fff;outline:none;
+               box-shadow:0 1px 2px rgba(0,0,0,.02);resize:vertical;
+               white-space:pre-wrap;word-break:break-word"
+        onfocus="this.style.borderColor='var(--pu)';this.style.boxShadow='0 0 0 4px rgba(124,92,230,.1)'"
+        onfocusout="this.style.borderColor='var(--border-d)';this.style.boxShadow='0 1px 2px rgba(0,0,0,.02)'"
+      >${memo?memo.body.replace(/\n/g,'<br>'):''}</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:5px">Type your memo above. Press Enter for new lines.</div>
+      <!-- Hidden textarea to hold value on save -->
+      <textarea id="m-body" style="display:none">${memo?memo.body:''}</textarea>
     </div>
     <div class="fg" style="background:var(--pu-mist);padding:14px;border-radius:11px;border:1px solid var(--border)">
       <label>📎 Attach PDF <span style="color:var(--muted);font-weight:400">(optional)</span></label>
@@ -1633,7 +1648,37 @@ function openMemoModal(id){
   </div></div>`;
 }
 
-// ── Memo textarea formatting ──
+// ── Rich editor helpers ──
+function memoCmd(cmd, val){
+  document.getElementById('m-body-editor')?.focus();
+  document.execCommand(cmd, false, val||null);
+}
+function insertMemoLine(){
+  document.getElementById('m-body-editor')?.focus();
+  document.execCommand('insertHTML', false, '<br>───────────────────────<br>');
+}
+function getMemoBodyText(){
+  const editor=document.getElementById('m-body-editor');
+  if(!editor) return document.getElementById('m-body')?.value||'';
+  // Convert HTML to plain text preserving line breaks
+  return editor.innerHTML
+    .replace(/<br\s*\/?>/gi,'\n')
+    .replace(/<\/p>/gi,'\n')
+    .replace(/<\/div>/gi,'\n')
+    .replace(/<b>(.*?)<\/b>/gi,'$1')
+    .replace(/<strong>(.*?)<\/strong>/gi,'$1')
+    .replace(/<i>(.*?)<\/i>/gi,'$1')
+    .replace(/<em>(.*?)<\/em>/gi,'$1')
+    .replace(/<u>(.*?)<\/u>/gi,'$1')
+    .replace(/<[^>]+>/g,'')
+    .replace(/&nbsp;/g,' ')
+    .replace(/&amp;/g,'&')
+    .replace(/&lt;/g,'<')
+    .replace(/&gt;/g,'>')
+    .trim();
+}
+
+// ── Memo textarea formatting (for cert page) ──
 function applyMemoStyle(type, value){
   const ta=document.getElementById('m-body');
   if(!ta) return;
@@ -1670,7 +1715,7 @@ function handleMemoFile(input){
 
 function saveMemo(id){
   const title=document.getElementById('m-title').value.trim();
-  const body=document.getElementById('m-body').value.trim();
+  const body=getMemoBodyText().trim();
   const num=document.getElementById('m-num').value.trim();
   const dept=document.getElementById('m-dept').value.trim();
   const active=document.getElementById('m-active').checked;
@@ -2733,7 +2778,8 @@ async function finishInteractive(){
   if(!hasQuiz) await checkAndAutoIssueCert(sec);
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
-}// ════════════════════════════════════════════════════════════════
+}
+// ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
 async function pageAdminBrand(){
@@ -3720,4 +3766,3 @@ window.render = async function(){
 
 </body>
 </html>
-
