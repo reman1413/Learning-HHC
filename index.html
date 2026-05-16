@@ -1300,51 +1300,52 @@ function pageMemoCert(memoId, ref){
   const signedTime=new Date(sig.signed_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   const memoDate=new Date(memo.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
+  // Escape memo body for safe HTML insertion
+  const memoBodyHtml=memo.body
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+
   document.getElementById('app').innerHTML=bar()+`
-  <!-- Print CSS -->
   <style>
     @media print {
-      body { margin:0; padding:0; background:#fff!important; }
-      .no-print, .bar, .back-bar, #site-footer { display:none!important; }
-      .pg { padding:0!important; margin:0!important; max-width:100%!important; }
+      body,html { margin:0!important; padding:0!important; background:#fff!important; }
+      .no-print,.bar,.back-bar,#site-footer { display:none!important; }
+      #cert-wrap { padding:0!important; margin:0!important; }
       #cert-a4 {
-        width:210mm!important;
-        min-height:297mm!important;
-        margin:0!important;
-        padding:0!important;
-        box-shadow:none!important;
-        border-radius:0!important;
-        overflow:visible!important;
+        width:210mm!important; min-height:297mm!important;
+        margin:0!important; padding:0!important;
+        box-shadow:none!important; border-radius:0!important;
+        overflow:visible!important; page-break-inside:avoid;
       }
-      .cert-body { padding:16mm 18mm!important; }
-      #memo-body-text { max-height:none!important; overflow:visible!important; white-space:pre-wrap!important; }
-      .cert-watermark { opacity:.04!important; -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+      .cert-body-inner { padding:14mm 18mm!important; }
+      .cert-header-print { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
       * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+      .cert-watermark { display:block!important; opacity:.05!important; }
     }
   </style>
 
-  <div class="pg no-print" style="max-width:900px;margin-bottom:0;padding-bottom:0">
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+  <!-- Toolbar (screen only) -->
+  <div class="no-print" style="max-width:820px;margin:0 auto;padding:20px 28px 0">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="display:flex;gap:10px">
         <button class="btn bp" onclick="window.print()">🖨 Print / Save PDF</button>
         <button class="btn bg2" onclick="pageAcknowledgements()">← Back</button>
       </div>
-      <div style="font-size:12.5px;color:var(--muted);font-weight:600">
-        🔍 Ref: <strong style="color:var(--pu-d);font-family:'Readex Pro'">${refNumber}</strong>
+      <div style="font-size:12px;color:var(--muted);font-weight:600">
+        Ref: <strong style="color:var(--pu-d);font-family:'Readex Pro'">${refNumber}</strong>
       </div>
     </div>
-
-    <!-- Text formatting toolbar -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:var(--sh)">
-      <span style="font-size:12px;color:var(--muted);font-weight:700;margin-right:4px">Memo Text:</span>
-      <select onchange="changeMemoFont(this.value)" style="padding:6px 10px;border-radius:8px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer">
+    <!-- Formatting toolbar -->
+    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:var(--sh)">
+      <span style="font-size:11.5px;color:var(--muted);font-weight:700">✏️ Format memo text:</span>
+      <select id="font-sel" onchange="changeMemoFont(this.value)" style="padding:6px 10px;border-radius:8px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer">
         <option value="'Readex Pro',sans-serif">Readex Pro</option>
-        <option value="'Fraunces',serif">Fraunces</option>
         <option value="Arial,sans-serif">Arial</option>
         <option value="Georgia,serif">Georgia</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
         <option value="'Courier New',monospace">Courier New</option>
       </select>
-      <select onchange="changeMemoSize(this.value)" style="padding:6px 10px;border-radius:8px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer">
+      <select id="size-sel" onchange="changeMemoSize(this.value)" style="padding:6px 10px;border-radius:8px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer">
         <option value="11px">11px</option>
         <option value="12px">12px</option>
         <option value="13px" selected>13px</option>
@@ -1352,112 +1353,116 @@ function pageMemoCert(memoId, ref){
         <option value="15px">15px</option>
         <option value="16px">16px</option>
       </select>
-      <button onclick="toggleMemoBold()" class="btn bg2 bsm" title="Bold" style="font-weight:800;min-width:34px">B</button>
-      <button onclick="addMemoDivider()" class="btn bg2 bsm" title="Add divider line">— Line</button>
-      <div style="height:24px;width:1px;background:var(--border);margin:0 4px"></div>
-      <span style="font-size:11px;color:var(--muted)">💡 Screen only — won't affect saved memo</span>
+      <button onclick="toggleMemoBold()" id="bold-btn" class="btn bg2 bsm" style="font-weight:800;min-width:34px;font-family:serif">B</button>
+      <button onclick="addMemoDivider()" class="btn bg2 bsm">— Divider</button>
+      <span style="font-size:10.5px;color:var(--muted);margin-left:4px">💡 Screen only</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;padding:8px 12px;background:var(--warn-l);border-radius:8px;border:1px solid #FDE68A">
+      💡 <strong>Print tip:</strong> In the print dialog → enable <strong>"Background graphics"</strong> for colors to show correctly.
     </div>
   </div>
 
   <!-- A4 CERTIFICATE -->
-  <div style="max-width:794px;margin:0 auto 30px">
-    <div id="cert-a4" style="width:100%;min-height:1123px;background:#fff;box-shadow:0 8px 40px rgba(49,28,93,.15);border-radius:12px;overflow:hidden;position:relative;display:flex;flex-direction:column">
+  <div id="cert-wrap" style="max-width:820px;margin:0 auto;padding:0 28px 40px">
+    <div id="cert-a4" style="width:100%;background:#fff;box-shadow:0 8px 40px rgba(49,28,93,.15);border-radius:12px;position:relative;overflow:visible">
 
-      <!-- Watermark logo -->
-      <div class="cert-watermark" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;height:420px;opacity:.04;pointer-events:none;z-index:0">
+      <!-- Watermark -->
+      <div class="cert-watermark" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px;opacity:.04;pointer-events:none;z-index:0">
         <img src="${DEFAULT_BRAND_LOGO}" style="width:100%;height:100%;object-fit:contain">
       </div>
 
       <!-- Header -->
-      <div style="background:linear-gradient(135deg,#1E1147 0%,#4A2785 50%,#6B3FB5 100%);padding:28px 36px;color:#fff;position:relative;overflow:hidden;flex-shrink:0">
-        <div style="position:absolute;top:0;right:0;width:280px;height:280px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.07) 1.5px, transparent 2px);background-size:18px 18px;opacity:.5"></div>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(196,181,253,.5),transparent)"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:relative">
+      <div class="cert-header-print" style="background:linear-gradient(135deg,#1E1147 0%,#4A2785 50%,#6B3FB5 100%);padding:26px 36px;color:#fff;position:relative;overflow:hidden;border-radius:12px 12px 0 0">
+        <div style="position:absolute;top:0;right:0;width:260px;height:260px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.07) 1.5px, transparent 2px);background-size:18px 18px;opacity:.5;pointer-events:none"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative">
           <div>
-            <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;font-weight:700;margin-bottom:5px;font-family:'Readex Pro'">MEENA HEALTH · HOME HEALTH CARE</div>
-            <div style="font-size:26px;font-weight:600;font-family:'Fraunces';letter-spacing:-.01em">Acknowledgement Certificate</div>
-            <div style="font-size:12px;opacity:.75;margin-top:3px">Memo Receipt &amp; Digital Signature Confirmation</div>
+            <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;font-weight:700;margin-bottom:4px;font-family:'Readex Pro'">MEENA HEALTH · HOME HEALTH CARE</div>
+            <div style="font-size:24px;font-weight:600;font-family:'Fraunces'">Acknowledgement Certificate</div>
+            <div style="font-size:11px;opacity:.72;margin-top:2px">Memo Receipt &amp; Digital Signature Confirmation</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:.55;margin-bottom:4px;font-family:'Readex Pro'">REFERENCE</div>
-            <div style="font-size:13px;font-weight:800;font-family:'Readex Pro';letter-spacing:.5px;background:rgba(255,255,255,.15);padding:7px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.2)">${refNumber}</div>
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:.5;margin-bottom:4px;font-family:'Readex Pro'">REFERENCE</div>
+            <div style="font-size:12px;font-weight:800;font-family:'Readex Pro';background:rgba(255,255,255,.15);padding:6px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.2);letter-spacing:.3px">${refNumber}</div>
           </div>
         </div>
       </div>
 
       <!-- Body -->
-      <div class="cert-body" style="padding:28px 36px;flex:1;position:relative;z-index:1">
+      <div class="cert-body-inner" style="padding:24px 36px;position:relative;z-index:1">
 
         <!-- Certified box -->
-        <div style="text-align:center;margin-bottom:22px;padding:20px 24px;background:linear-gradient(135deg,#F8F4FC,#FCFAFE);border-radius:14px;border:1.5px solid var(--pu-ll)">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase">This is to certify that</div>
-          <div style="font-size:28px;font-weight:700;color:var(--pu-dd);font-family:'Fraunces';letter-spacing:-.01em;margin-bottom:4px">${U.name}</div>
+        <div style="text-align:center;margin-bottom:18px;padding:18px 22px;background:linear-gradient(135deg,#F8F4FC,#FCFAFE);border-radius:13px;border:1.5px solid var(--pu-ll)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:7px;font-weight:700;letter-spacing:2px;text-transform:uppercase">This is to certify that</div>
+          <div style="font-size:26px;font-weight:700;color:var(--pu-dd);font-family:'Fraunces';margin-bottom:4px">${U.name}</div>
           <div style="font-size:12px;color:var(--muted);font-weight:600">Employee No. ${U.badge_id}${U.file_number?' · File: '+U.file_number:''}</div>
-          <div style="height:2px;background:linear-gradient(90deg,transparent,var(--pu-ll),transparent);margin:14px auto;max-width:260px"></div>
-          <div style="font-size:13.5px;color:var(--text);line-height:1.65">has read, understood, and digitally acknowledged the following memo issued by</div>
-          <div style="font-size:14px;font-weight:700;color:var(--pu-d);margin-top:5px">Meena Health Home Health Care — Riyadh, KSA</div>
+          <div style="height:2px;background:linear-gradient(90deg,transparent,var(--pu-ll),transparent);margin:12px auto;max-width:240px"></div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6">has read, understood, and digitally acknowledged the following memo issued by</div>
+          <div style="font-size:13.5px;font-weight:700;color:var(--pu-d);margin-top:4px">Meena Health Home Health Care — Riyadh, KSA</div>
         </div>
 
-        <!-- Memo details -->
-        <div style="background:var(--bg);border-radius:12px;border:1.5px solid var(--border);overflow:hidden;margin-bottom:20px">
-          <div style="background:linear-gradient(90deg,#1E1147,#4A2785);padding:12px 20px;color:#fff">
-            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:.65;margin-bottom:3px;font-family:'Readex Pro'">MEMO DETAILS</div>
-            <div style="font-size:16px;font-weight:700;font-family:'Readex Pro'">${memo.title}</div>
+        <!-- Memo content box — FULL TEXT NO SCROLL -->
+        <div style="background:var(--bg);border-radius:12px;border:1.5px solid var(--border);overflow:visible;margin-bottom:18px">
+          <div class="cert-header-print" style="background:linear-gradient(90deg,#1E1147,#4A2785);padding:11px 20px;color:#fff;border-radius:12px 12px 0 0">
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:.65;margin-bottom:2px;font-family:'Readex Pro'">MEMO DETAILS</div>
+            <div style="font-size:15px;font-weight:700;font-family:'Readex Pro'">${memo.title}</div>
             ${memo.memo_number?`<div style="font-size:11px;opacity:.7;margin-top:2px">Memo No. ${memo.memo_number}</div>`:''}
           </div>
           <div style="padding:16px 20px">
             ${memo.department?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700">📋 To: ${memo.department}</div>`:''}
-            <div id="memo-body-text" style="font-size:13px;color:var(--text);line-height:1.8;white-space:pre-wrap;font-family:'Readex Pro',sans-serif">${memo.body}</div>
-            <div style="margin-top:12px;font-size:11px;color:var(--muted);font-weight:600;padding-top:10px;border-top:1px solid var(--border)">📅 Memo issued: ${memoDate}</div>
+            <div id="memo-body-text"
+              style="font-size:13px;color:var(--text);line-height:1.85;font-family:'Readex Pro',sans-serif;font-weight:400;overflow:visible;white-space:normal;word-break:break-word">
+              ${memoBodyHtml}
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--muted);font-weight:600;padding-top:8px;border-top:1px solid var(--border)">📅 Memo issued: ${memoDate}</div>
           </div>
         </div>
 
-        <!-- Signature row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-          <div style="background:#ECFDF5;border-radius:11px;padding:14px 16px;border:1.5px solid #6EE7B7">
-            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#047857;font-weight:700;margin-bottom:5px">DATE SIGNED</div>
-            <div style="font-size:14px;font-weight:700;color:#065F46;font-family:'Readex Pro'">${signedDate}</div>
-            <div style="font-size:11px;color:#047857;margin-top:2px">${signedTime}</div>
+        <!-- Signature tiles -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+          <div class="cert-header-print" style="background:#ECFDF5;border-radius:10px;padding:12px 14px;border:1.5px solid #6EE7B7">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#047857;font-weight:700;margin-bottom:4px">DATE SIGNED</div>
+            <div style="font-size:13px;font-weight:700;color:#065F46;font-family:'Readex Pro'">${signedDate}</div>
+            <div style="font-size:10px;color:#047857;margin-top:2px">${signedTime}</div>
           </div>
-          <div style="background:#EFE9FA;border-radius:11px;padding:14px 16px;border:1.5px solid var(--pu-ll)">
-            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pu-d);font-weight:700;margin-bottom:5px">DIGITAL SIGNATURE</div>
-            <div style="font-size:13px;font-weight:700;color:var(--pu-dd);font-family:'Readex Pro'">✓ Identity Verified</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px">via Iqama Number</div>
+          <div class="cert-header-print" style="background:#EFE9FA;border-radius:10px;padding:12px 14px;border:1.5px solid var(--pu-ll)">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--pu-d);font-weight:700;margin-bottom:4px">DIGITAL SIGNATURE</div>
+            <div style="font-size:12px;font-weight:700;color:var(--pu-dd);font-family:'Readex Pro'">✓ Identity Verified</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">via Iqama Number</div>
           </div>
-          <div style="background:#FAF3E2;border-radius:11px;padding:14px 16px;border:1.5px solid #FDE68A">
-            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#92400E;font-weight:700;margin-bottom:5px">REFERENCE NO.</div>
-            <div style="font-size:13px;font-weight:800;color:#854D0E;font-family:'Readex Pro';word-break:break-all">${refNumber}</div>
+          <div class="cert-header-print" style="background:#FAF3E2;border-radius:10px;padding:12px 14px;border:1.5px solid #FDE68A">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#92400E;font-weight:700;margin-bottom:4px">REFERENCE NO.</div>
+            <div style="font-size:12px;font-weight:800;color:#854D0E;font-family:'Readex Pro';word-break:break-all">${refNumber}</div>
           </div>
         </div>
 
-        <!-- Footer signatures -->
-        <div style="border-top:2px solid var(--border);padding-top:18px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <!-- Footer -->
+        <div style="border-top:2px solid var(--border);padding-top:16px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
           <div>
-            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px">Issued by</div>
-            <div style="font-size:14px;font-weight:700;color:var(--ink);font-family:'Readex Pro'">Reman Badawood</div>
-            <div style="font-size:11px;color:var(--muted)">Head Nurse · Meena Health HHC</div>
-            <div style="height:1px;background:var(--border);margin:8px 0;width:160px"></div>
-            <div style="font-size:14px;font-weight:700;color:var(--ink);font-family:'Readex Pro'">Ahmed Shajrawi</div>
-            <div style="font-size:11px;color:var(--muted)">Service Manager · Meena Health HHC</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px">Issued by</div>
+            <div style="font-size:13px;font-weight:700;color:var(--ink);font-family:'Readex Pro'">Reman Badawood</div>
+            <div style="font-size:10px;color:var(--muted)">Head Nurse · Meena Health HHC</div>
+            <div style="height:1px;background:var(--border);margin:7px 0;width:150px"></div>
+            <div style="font-size:13px;font-weight:700;color:var(--ink);font-family:'Readex Pro'">Ahmed Shajrawi</div>
+            <div style="font-size:10px;color:var(--muted)">Service Manager · Meena Health HHC</div>
           </div>
           <div style="text-align:center;align-self:center">
-            <div style="width:62px;height:62px;border-radius:50%;border:2.5px solid var(--pu);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--pu);text-align:center;line-height:1.4;transform:rotate(-12deg);background:rgba(107,63,181,.04);font-family:'Readex Pro'">MEENA<br>HEALTH<br>✓</div>
+            <div style="width:58px;height:58px;border-radius:50%;border:2.5px solid var(--pu);display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:800;color:var(--pu);text-align:center;line-height:1.4;transform:rotate(-12deg);background:rgba(107,63,181,.04);font-family:'Readex Pro'">MEENA<br>HEALTH<br>✓</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px">Verified Signature</div>
-            <div style="font-size:17px;font-weight:700;color:var(--pu-d);font-family:'Fraunces';border-bottom:2px solid var(--pu-ll);padding-bottom:3px">${U.name}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px">Verified Signature</div>
+            <div style="font-size:16px;font-weight:700;color:var(--pu-d);font-family:'Fraunces';border-bottom:2px solid var(--pu-ll);padding-bottom:3px">${U.name}</div>
             <div style="font-size:10px;color:var(--muted);margin-top:3px">Employee #${U.badge_id}</div>
           </div>
         </div>
 
-        <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--muted);font-family:'Readex Pro';line-height:1.6">
+        <div style="text-align:center;margin-top:14px;font-size:9.5px;color:var(--muted);font-family:'Readex Pro';line-height:1.6;padding-top:12px;border-top:1px dashed var(--border)">
           This document serves as an official digital acknowledgement. Reference: ${refNumber}<br>
           Created by Reman Badawood · Meena Health © 2026
         </div>
       </div>
     </div>
 
-    <div class="no-print" style="text-align:center;margin-top:16px;margin-bottom:40px">
+    <div class="no-print" style="text-align:center;margin-top:18px;margin-bottom:40px">
       <button class="btn bp blg" onclick="window.print()">🖨 Print / Save as PDF</button>
       &nbsp;
       <button class="btn bg2 blg" onclick="pageAcknowledgements()">← Back to Memos</button>
@@ -1465,26 +1470,29 @@ function pageMemoCert(memoId, ref){
   </div>`;
 }
 
-// Text formatting helpers
-function changeMemoFont(font){
+// ── Formatting helpers ──
+function changeMemoFont(v){
   const el=document.getElementById('memo-body-text');
-  if(el) el.style.fontFamily=font;
+  if(el) el.style.fontFamily=v;
 }
-function changeMemoSize(size){
+function changeMemoSize(v){
   const el=document.getElementById('memo-body-text');
-  if(el) el.style.fontSize=size;
+  if(el) el.style.fontSize=v;
 }
+let _memoBold=false;
 function toggleMemoBold(){
   const el=document.getElementById('memo-body-text');
+  const btn=document.getElementById('bold-btn');
   if(!el) return;
-  el.style.fontWeight=el.style.fontWeight==='700'?'400':'700';
+  _memoBold=!_memoBold;
+  el.style.fontWeight=_memoBold?'700':'400';
+  if(btn){ btn.style.background=_memoBold?'var(--pu)':''; btn.style.color=_memoBold?'#fff':''; }
 }
 function addMemoDivider(){
   const el=document.getElementById('memo-body-text');
   if(!el) return;
-  // Add a visual divider line inside the memo body
   const hr=document.createElement('div');
-  hr.style.cssText='height:1px;background:linear-gradient(90deg,transparent,#C4B5FD,transparent);margin:10px 0';
+  hr.style.cssText='height:1px;background:linear-gradient(90deg,transparent,#C4B5FD,transparent);margin:10px 0;display:block';
   el.appendChild(hr);
 }
 
@@ -1767,7 +1775,8 @@ function pageAdminActivityLog(){
         </table></div>`
     }
   </div>`;
-}// ════════════════════════════════════════════════════════════════
+}
+// ════════════════════════════════════════════════════════════════
 // RENDER ROUTER
 // ════════════════════════════════════════════════════════════════
 async function render(){
@@ -2674,7 +2683,6 @@ async function finishInteractive(){
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
 }
-
 // ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
