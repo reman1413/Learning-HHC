@@ -2580,7 +2580,8 @@ async function finishInteractive(){
   if(!hasQuiz) await checkAndAutoIssueCert(sec);
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
-}// ════════════════════════════════════════════════════════════════
+}
+// ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
 async function pageAdminBrand(){
@@ -2777,7 +2778,10 @@ async function saveSec(){
     const secs=await db.sections();
     if(_esid) await db.updSection(_esid,{title:t,description:d});
     else{
-      await db.addSection({title:t,description:d,order_num:secs.length+1,created_at:n(),created_by:U?U.badge_id:OWNER_BADGE});
+      const newSec=await db.addSection({title:t,description:d,order_num:secs.length+1,created_at:n()});
+      // Store created_by locally only
+      const newId=newSec?.id||(ls('sections').slice(-1)[0]?.id);
+      if(newId) ls2('sections',ls('sections').map(s=>s.id===newId?{...s,created_by:U?U.badge_id:OWNER_BADGE}:s));
       logActivity('added_section','Section',t);
     }
     toast(_esid?'Updated! ✅':'Section added! ✅','ok'); cmo(); pageAdminSections();
@@ -2989,24 +2993,34 @@ async function saveLec(){
   const qc=parseInt(document.getElementById('lqc')?.value||'10');
   const qp=parseInt(document.getElementById('lqp')?.value||'100');
   if(!t){ toast('Enter a title','er'); return; }
-  const fullData={title:t,type,url,has_quiz:hq,quiz_count:qc,quiz_pass_pct:qp,is_prerequisite:isPrereq,sequence_step:seqStep,created_by:U?U.badge_id:OWNER_BADGE};
+  const fullData={title:t,type,url,has_quiz:hq,quiz_count:qc,quiz_pass_pct:qp,is_prerequisite:isPrereq,sequence_step:seqStep};
+  const fullDataWithOwner={...fullData,created_by:U?U.badge_id:OWNER_BADGE};
   try{
     const lecs=await db.lectures(_elsid);
     let savedId=_elid;
     try{
+      // Send fullData (without created_by) to Supabase to avoid schema errors
       if(_elid) await db.updLecture(_elid,fullData);
-      else{ const newLec=await db.addLecture({section_id:_elsid,...fullData,order_num:lecs.length+1,created_at:n()}); savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id); logActivity('added_lecture','Lecture',t); }
+      else{
+        const newLec=await db.addLecture({section_id:_elsid,...fullData,order_num:lecs.length+1,created_at:n()});
+        savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id);
+        logActivity('added_lecture','Lecture',t);
+      }
     } catch(e){
       const msg=e.message||'';
-      if(/is_prerequisite|sequence_step|quiz_pass_pct/i.test(msg)){
+      if(/is_prerequisite|sequence_step|quiz_pass_pct|created_by/i.test(msg)){
         const basicData={title:t,type,url,has_quiz:hq,quiz_count:qc};
         if(_elid) await db.updLecture(_elid,basicData);
-        else{ const newLec=await db.addLecture({section_id:_elsid,...basicData,order_num:lecs.length+1,created_at:n()}); savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id); }
+        else{
+          const newLec=await db.addLecture({section_id:_elsid,...basicData,order_num:lecs.length+1,created_at:n()});
+          savedId=newLec?.id||(ls('lectures').slice(-1)[0]?.id);
+        }
       } else { throw e; }
     }
     if(savedId){
       setSeqOv(savedId,{is_prerequisite:isPrereq,sequence_step:seqStep});
-      ls2('lectures',ls('lectures').map(l=>l.id===savedId?{...l,is_prerequisite:isPrereq,sequence_step:seqStep,quiz_pass_pct:qp,created_by:U?U.badge_id:OWNER_BADGE}:l));
+      // Store created_by only in localStorage (not in Supabase)
+      ls2('lectures',ls('lectures').map(l=>l.id===savedId?{...l,...fullDataWithOwner,is_prerequisite:isPrereq,sequence_step:seqStep,quiz_pass_pct:qp}:l));
     }
     toast(_elid?'Updated! ✅':'Lecture added! ✅','ok'); cmo(); pageAdminLectures(_elsid);
   } catch(e){ toast('❌ Error: '+e.message,'er'); console.error(e); }
@@ -3434,7 +3448,9 @@ async function saveEmp(){
     if(_eeid) await db.updUser(_eeid,{name:n0,badge_id:b,iqama_number:iq,file_number:fn,email:em,role:rl});
     else{
       const exists=await db.userByBadge(b); if(exists){ toast('Employee number already used','er'); return; }
-      await db.addUser({name:n0,badge_id:b,iqama_number:iq,file_number:fn,email:em,role:rl,created_at:n(),created_by:U?U.badge_id:OWNER_BADGE});
+      await db.addUser({name:n0,badge_id:b,iqama_number:iq,file_number:fn,email:em,role:rl,created_at:n()});
+      // Store created_by locally only
+      ls2('users',ls('users').map(u=>u.badge_id===b?{...u,created_by:U?U.badge_id:OWNER_BADGE}:u));
       logActivity('added_staff','Staff',n0);
     }
     toast(_eeid?'Updated! ✅':'Staff added! ✅','ok'); cmo(); pageAdminStaff();
@@ -3552,4 +3568,3 @@ window.render = async function(){
 
 </body>
 </html>
-
