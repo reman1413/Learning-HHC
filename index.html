@@ -1583,8 +1583,33 @@ function openMemoModal(id){
       <input id="m-title" placeholder="e.g. Updated IV Medication Protocol" value="${memo?memo.title:''}"></div>
     <div class="fg">
       <label>Memo Body <span style="color:var(--err)">*</span></label>
-      <div style="font-size:11.5px;color:var(--muted);margin-bottom:7px;line-height:1.6">Write your memo here. Use blank lines between paragraphs. It will be displayed in a clean professional format.</div>
-      <textarea id="m-body" rows="13" style="font-family:'Readex Pro',ui-monospace,monospace;font-size:13.5px;line-height:1.75" placeholder="Dear Team,&#10;&#10;This memo is to inform you that effective immediately...&#10;&#10;Please ensure all staff are aware of the following:&#10;&#10;1. ...&#10;2. ...&#10;&#10;Please acknowledge receipt of this communication.&#10;&#10;Regards,&#10;Reman Badawood&#10;Head Nurse, Meena Health HHC">${memo?memo.body:''}</textarea>
+      <!-- Formatting toolbar -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:8px 12px;background:var(--pu-mist);border-radius:10px;border:1.5px solid var(--border)">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap">✏️ Style:</span>
+        <select onchange="applyMemoStyle('font',this.value)" style="padding:5px 9px;border-radius:7px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer;background:#fff">
+          <option value="'Readex Pro',sans-serif">Readex Pro</option>
+          <option value="Arial,sans-serif">Arial</option>
+          <option value="Georgia,serif">Georgia</option>
+          <option value="'Times New Roman',serif">Times New Roman</option>
+        </select>
+        <select onchange="applyMemoStyle('size',this.value)" style="padding:5px 9px;border-radius:7px;font-size:12px;border:1.5px solid var(--border-d);font-family:inherit;cursor:pointer;background:#fff">
+          <option value="12px">12px</option>
+          <option value="13px">13px</option>
+          <option value="14px" selected>14px</option>
+          <option value="15px">15px</option>
+          <option value="16px">16px</option>
+          <option value="18px">18px</option>
+        </select>
+        <button type="button" id="mb-bold" onclick="applyMemoStyle('bold')"
+          style="font-weight:900;font-family:serif;padding:5px 12px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:14px;color:var(--ink)" title="Bold">B</button>
+        <button type="button" onclick="insertMemoText('\n───────────────────────\n')"
+          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:12px;color:var(--muted);font-family:inherit" title="Divider">— Line</button>
+        <button type="button" onclick="insertMemoText('\n')"
+          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border-d);background:#fff;cursor:pointer;font-size:12px;color:var(--muted);font-family:inherit" title="Blank line">↵ Space</button>
+      </div>
+      <textarea id="m-body" rows="14"
+        style="font-family:'Readex Pro',sans-serif;font-size:14px;line-height:1.85;resize:vertical"
+        placeholder="Dear Team,&#10;&#10;This memo is to inform you that effective immediately...&#10;&#10;Please ensure all staff are aware of the following:&#10;&#10;1. ...&#10;2. ...&#10;&#10;Please acknowledge receipt of this communication.&#10;&#10;Regards,&#10;Meena Health HHC Management">${memo?memo.body:''}</textarea>
     </div>
     <div class="fg" style="background:var(--pu-mist);padding:14px;border-radius:11px;border:1px solid var(--border)">
       <label>📎 Attach PDF <span style="color:var(--muted);font-weight:400">(optional)</span></label>
@@ -1606,6 +1631,32 @@ function openMemoModal(id){
       <button class="btn bp" onclick="saveMemo('${id||''}')">💾 Save Memo</button>
     </div>
   </div></div>`;
+}
+
+// ── Memo textarea formatting ──
+function applyMemoStyle(type, value){
+  const ta=document.getElementById('m-body');
+  if(!ta) return;
+  if(type==='font'){ ta.style.fontFamily=value; }
+  if(type==='size'){ ta.style.fontSize=value; }
+  if(type==='bold'){
+    const btn=document.getElementById('mb-bold');
+    const isBold=ta.style.fontWeight==='700'||ta.style.fontWeight==='bold';
+    ta.style.fontWeight=isBold?'400':'700';
+    if(btn){
+      btn.style.background=isBold?'#fff':'var(--pu)';
+      btn.style.color=isBold?'var(--ink)':'#fff';
+      btn.style.borderColor=isBold?'var(--border-d)':'var(--pu)';
+    }
+  }
+}
+function insertMemoText(text){
+  const ta=document.getElementById('m-body');
+  if(!ta) return;
+  const start=ta.selectionStart, end=ta.selectionEnd;
+  ta.value=ta.value.slice(0,start)+text+ta.value.slice(end);
+  ta.selectionStart=ta.selectionEnd=start+text.length;
+  ta.focus();
 }
 
 function handleMemoFile(input){
@@ -2682,8 +2733,7 @@ async function finishInteractive(){
   if(!hasQuiz) await checkAndAutoIssueCert(sec);
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
-}
-// ════════════════════════════════════════════════════════════════
+}// ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
 async function pageAdminBrand(){
@@ -3670,3 +3720,4 @@ window.render = async function(){
 
 </body>
 </html>
+
