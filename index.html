@@ -2580,8 +2580,7 @@ async function finishInteractive(){
   if(!hasQuiz) await checkAndAutoIssueCert(sec);
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
-}
-// ════════════════════════════════════════════════════════════════
+}// ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
 async function pageAdminBrand(){
@@ -3532,5 +3531,25 @@ window.addEventListener('load',async()=>{
   render();
 });
 </script>
+
+<!-- Copyright Footer — shows only after login -->
+<div id="site-footer" style="display:none;text-align:center;padding:16px;font-size:11px;color:var(--muted);font-family:'Readex Pro';letter-spacing:.5px;border-top:1px solid var(--border);background:var(--bg-deep);position:relative;z-index:1" class="no-print">
+  Created by <strong style="color:var(--pu-d)">Reman Badawood</strong> · Meena Health Home Health Care © 2026
+</div>
+
+<script>
+// Show footer only when logged in
+const _origRender = window.render;
+window.render = async function(){
+  await _origRender();
+  const footer = document.getElementById('site-footer');
+  if(footer){
+    const showFooter = U && PAGE !== 'login' && PAGE !== 'setup' && PAGE !== 'verify';
+    footer.style.display = showFooter ? 'block' : 'none';
+  }
+};
+</script>
+
 </body>
 </html>
+
