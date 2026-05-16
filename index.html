@@ -604,7 +604,8 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
 <body>
 <div id="app"></div>
 <div id="toast"></div>
-<script>// ════════════════════════════════════════════════════════════════
+<script>
+// ════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG
 // ════════════════════════════════════════════════════════════════
 const SB_URL = localStorage.getItem('sb_url') || 'https://rwnbniuccbxqxdjszayl.supabase.co';
@@ -1766,9 +1767,6 @@ function pageLogin(){
         <p>Empowering nurses through continuous education and professional excellence</p>
       </div>
       <div class="ll-footer">RIYADH · KSA</div>
-      <div style="position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:10px;color:rgba(196,181,253,.35);letter-spacing:1.5px;font-weight:600;font-family:'Readex Pro'">
-        Created by Reman Badawood · Meena Health © 2026
-      </div>
     </div>
     <div class="lr"><div class="lb">
       <div class="lb-greet">Welcome Back</div>
@@ -1781,18 +1779,43 @@ function pageLogin(){
       <div class="fg"><label>Employee Number <span style="color:var(--muted);font-weight:500">(رقم الموظف)</span></label>
         <input id="bid" placeholder="Enter your employee number" autocomplete="off"></div>
       <div class="fg"><label id="pw-label">Iqama Number <span style="color:var(--muted);font-weight:500">(رقم الإقامة)</span></label>
-        <input id="bpw" type="password" placeholder="Enter your iqama number" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div style="position:relative">
+          <input id="bpw" type="password" placeholder="Enter your iqama number"
+            onkeydown="if(event.key==='Enter')doLogin()"
+            style="padding-right:46px">
+          <button onclick="togglePw()" type="button"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                   background:none;border:none;cursor:pointer;padding:4px;
+                   color:var(--muted);font-size:18px;line-height:1;transition:.2s"
+            title="Show/hide password" id="pw-eye">👁</button>
+        </div>
+      </div>
       <div id="lerr" style="color:#9F1239;font-size:13px;margin-bottom:14px;display:none;font-weight:600;background:var(--err-l);padding:11px 15px;border-radius:10px;border:1px solid #FCA5A5"></div>
       <button class="btn bp blg" style="width:100%" onclick="doLogin()">Sign In →</button>
-      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
         <button onclick="go('verify')" style="background:transparent;border:none;color:var(--pu-d);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;font-family:inherit;transition:.2s" onmouseover="this.style.background='var(--pu-soft)'" onmouseout="this.style.background='transparent'">
           🔍 Verify a Certificate
         </button>
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:10.5px;color:var(--muted);letter-spacing:1px;font-weight:600;font-family:'Readex Pro'">
+        Created by Reman Badawood · Meena Health © 2026
       </div>
     </div></div>
   </div>`;
 }
 let _role='employee';
+function togglePw(){
+  const inp=document.getElementById('bpw');
+  const eye=document.getElementById('pw-eye');
+  if(!inp) return;
+  if(inp.type==='password'){
+    inp.type='text';
+    if(eye) eye.textContent='🙈';
+  } else {
+    inp.type='password';
+    if(eye) eye.textContent='👁';
+  }
+}
 function setRole(r){
   _role=r;
   document.getElementById('r-e').classList.toggle('on',r==='employee');
@@ -2558,7 +2581,6 @@ async function finishInteractive(){
   if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
   else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
 }
-
 // ════════════════════════════════════════════════════════════════
 // ADMIN: BRAND / LOGO
 // ════════════════════════════════════════════════════════════════
