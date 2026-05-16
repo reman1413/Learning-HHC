@@ -1172,7 +1172,7 @@ async function pageAcknowledgements(){
         </div>
       </div>
       <div class="ack-body">
-        <div class="ack-content">${memo.body}</div>
+        <div class="ack-content" style="font-size:14px;line-height:1.85;color:var(--text)">${memo.isHtml?memo.body:(memo.isHtml?memo.body:memo.body.replace(/\n/g,'<br>'))}</div>
         ${memo.file_url?`
         <div style="background:var(--gold-soft);border:1.5px solid #FDE68A;border-radius:11px;padding:13px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
           <span style="font-size:22px">📎</span>
@@ -1307,10 +1307,10 @@ function pageMemoCert(memoId, ref){
   const signedTime=new Date(sig.signed_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   const memoDate=new Date(memo.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
-  // Escape memo body for safe HTML insertion
-  const memoBodyHtml=memo.body
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>');
+  // Body is stored as HTML (supports formatting) or plain text with newlines
+  const memoBodyHtml = memo.isHtml
+    ? memo.body
+    : memo.body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 
   document.getElementById('app').innerHTML=bar()+`
   <style>
@@ -1643,6 +1643,7 @@ function openMemoModal(id){
     </div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
       <button class="btn bg2" onclick="cmo()">Cancel</button>
+      <button class="btn bo" onclick="previewMemo()">👁 Preview</button>
       <button class="btn bp" onclick="saveMemo('${id||''}')">💾 Save Memo</button>
     </div>
   </div></div>`;
@@ -1658,24 +1659,10 @@ function insertMemoLine(){
   document.execCommand('insertHTML', false, '<br>───────────────────────<br>');
 }
 function getMemoBodyText(){
+  // Save HTML directly to preserve all formatting
   const editor=document.getElementById('m-body-editor');
   if(!editor) return document.getElementById('m-body')?.value||'';
-  // Convert HTML to plain text preserving line breaks
-  return editor.innerHTML
-    .replace(/<br\s*\/?>/gi,'\n')
-    .replace(/<\/p>/gi,'\n')
-    .replace(/<\/div>/gi,'\n')
-    .replace(/<b>(.*?)<\/b>/gi,'$1')
-    .replace(/<strong>(.*?)<\/strong>/gi,'$1')
-    .replace(/<i>(.*?)<\/i>/gi,'$1')
-    .replace(/<em>(.*?)<\/em>/gi,'$1')
-    .replace(/<u>(.*?)<\/u>/gi,'$1')
-    .replace(/<[^>]+>/g,'')
-    .replace(/&nbsp;/g,' ')
-    .replace(/&amp;/g,'&')
-    .replace(/&lt;/g,'<')
-    .replace(/&gt;/g,'>')
-    .trim();
+  return editor.innerHTML.trim();
 }
 
 // ── Memo textarea formatting (for cert page) ──
@@ -1713,6 +1700,39 @@ function handleMemoFile(input){
   reader.readAsDataURL(file);
 }
 
+function previewMemo(){
+  const title=document.getElementById('m-title')?.value.trim()||'Untitled';
+  const body=getMemoBodyText().trim();
+  const dept=document.getElementById('m-dept')?.value.trim()||'';
+  const num=document.getElementById('m-num')?.value.trim()||'';
+  if(!body){ toast('Write something first','er'); return; }
+  // Show preview popup
+  const preview=document.createElement('div');
+  preview.style.cssText='position:fixed;inset:0;background:rgba(30,27,58,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)';
+  preview.innerHTML=`<div style="background:#fff;border-radius:20px;max-width:700px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)">
+    <div style="background:linear-gradient(135deg,#1E1147,#6B3FB5);padding:18px 24px;border-radius:20px 20px 0 0;color:#fff;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10px;letter-spacing:3px;opacity:.65;font-family:'Readex Pro'">PREVIEW — How staff will see this</div>
+        <div style="font-size:18px;font-weight:700;font-family:'Readex Pro';margin-top:3px">${title}</div>
+        ${num?'<div style="font-size:11px;opacity:.7;margin-top:2px">Memo No. '+num+'</div>':''}
+      </div>
+      <button onclick="this.closest('div[style]').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:22px 26px">
+      ${dept?'<div style="font-size:12px;color:#6B3FB5;font-weight:700;margin-bottom:12px">📋 To: '+dept+'</div>':''}
+      <div style="font-size:14px;line-height:1.85;color:#3A2D5C;border:1.5px solid #EDE7DC;border-radius:12px;padding:18px 20px;background:#FCFAFE">'+body+'</div>
+      <div style="margin-top:18px;padding:14px;background:#EFE9FA;border-radius:11px;border:1.5px solid #C4B5FD;font-size:13px;color:#4A2785">
+        <strong>✍️ Staff will see a signature box below this content</strong><br>
+        <span style="font-size:12px;opacity:.8">They enter their iqama number and confirm reading before signing.</span>
+      </div>
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="this.closest('div[style]').remove()" style="background:linear-gradient(135deg,#4A2785,#6B3FB5);color:#fff;border:none;padding:11px 28px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Readex Pro'">Close Preview</button>
+      </div>
+    </div>
+  </div>\`;
+  document.body.appendChild(preview);
+}
+
 function saveMemo(id){
   const title=document.getElementById('m-title').value.trim();
   const body=getMemoBodyText().trim();
@@ -1720,7 +1740,7 @@ function saveMemo(id){
   const dept=document.getElementById('m-dept').value.trim();
   const active=document.getElementById('m-active').checked;
   if(!title||!body){ toast('Title and body are required','er'); return; }
-  const memoData={title,body,memo_number:num,department:dept,active};
+  const memoData={title,body,isHtml:true,memo_number:num,department:dept,active};
   if(_pendingMemoFile){ memoData.file_url=_pendingMemoFile.data; memoData.file_name=_pendingMemoFile.name; _pendingMemoFile=null; }
   if(id){ ackDb.updateMemo(id,memoData); toast('Memo updated! ✅','ok'); }
   else{ ackDb.addMemo(memoData); logActivity('added_memo','Memo',title); toast('Memo created! ✅','ok'); }
