@@ -836,7 +836,13 @@ const ackDb = {
         created_by_name:memo.created_by_name,
         created_at:memo.created_at
       }).select().single();
-      if(!error&&data){ memo={...memo,...data}; }
+      if(error){
+        console.error('❌ addMemo Supabase error:',error);
+        toast('⚠ Saved locally only — Supabase error: '+error.message,'er');
+      } else if(data){
+        memo={...memo,...data};
+        console.log('✅ Memo saved to Supabase:',data.id);
+      }
     }
     const arr=this.getMemosCached();
     arr.unshift(memo);
@@ -886,12 +892,18 @@ const ackDb = {
       signed_at:new Date().toISOString()
     };
     if(SB){
-      await SB.from('lms_ack_sigs').insert({
+      const{error}=await SB.from('lms_ack_sigs').insert({
         id:sig.id, memo_id:sig.memo_id,
         user_id:sig.user_id, user_name:sig.user_name,
         badge_id:sig.badge_id, ref_number:sig.ref_number,
         signed_at:sig.signed_at
       });
+      if(error){
+        console.error('❌ sign Supabase error:',error);
+        toast('⚠ Signature saved locally — Supabase error: '+error.message,'er');
+      } else {
+        console.log('✅ Signature saved to Supabase for',sig.user_name);
+      }
     }
     sigs.push(sig);
     this.saveSignatures(sigs);
@@ -1844,7 +1856,7 @@ function previewMemo(){
   },0);
 }
 
-function saveMemo(id){
+async function saveMemo(id){
   const title=document.getElementById('m-title').value.trim();
   const body=getMemoBodyText().trim();
   const num=document.getElementById('m-num').value.trim();
@@ -1853,14 +1865,18 @@ function saveMemo(id){
   if(!title||!body){ toast('Title and body are required','er'); return; }
   const memoData={title,body,isHtml:true,memo_number:num,department:dept,active};
   if(_pendingMemoFile){ memoData.file_url=_pendingMemoFile.data; memoData.file_name=_pendingMemoFile.name; _pendingMemoFile=null; }
-  if(id){ ackDb.updateMemo(id,memoData); toast('Memo updated! ✅','ok'); }
-  else{ ackDb.addMemo(memoData); logActivity('added_memo','Memo',title); toast('Memo created! ✅','ok'); }
-  cmo(); pageAdminMemos();
+  const btn=document.querySelector('[onclick*="saveMemo"]');
+  if(btn){ btn.disabled=true; btn.textContent='Saving...'; }
+  try{
+    if(id){ await ackDb.updateMemo(id,memoData); toast('Memo updated! ✅','ok'); }
+    else{ await ackDb.addMemo(memoData); logActivity('added_memo','Memo',title); toast('Memo created! ✅','ok'); }
+    cmo(); pageAdminMemos();
+  } catch(e){ toast('❌ Error: '+e.message,'er'); if(btn){ btn.disabled=false; btn.textContent='💾 Save Memo'; } }
 }
 
-function deleteMemo(id){
+async function deleteMemo(id){
   if(!confirm('Delete this memo? All signatures will also be deleted.')) return;
-  ackDb.deleteMemo(id); toast('Memo deleted','ok'); pageAdminMemos();
+  await ackDb.deleteMemo(id); toast('Memo deleted','ok'); pageAdminMemos();
 }
 
 // ════════════════════════════════════════════════════════════════
