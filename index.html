@@ -1270,7 +1270,7 @@ async function pageAcknowledgements(){
               <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#34D399);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✅</div>
               <div style="flex:1;min-width:160px">
                 <div style="font-weight:700;color:#065F46;font-family:'Readex Pro'">Acknowledged &amp; Signed</div>
-                <div style="font-size:12.5px;color:#047857;margin-top:3px">Ref: <strong style="font-family:'Readex Pro'">${ackDb.getSignatures().find(s=>s.memo_id===memo.id&&s.user_id===U.id)?.ref_number||'—'}</strong></div>
+                <div style="font-size:12.5px;color:#047857;margin-top:3px">Ref: <strong style="font-family:'Readex Pro'">${ackDb.getSignaturesCached().find(s=>s.memo_id===memo.id&&s.user_id===U.id)?.ref_number||'—'}</strong></div>
               </div>
               <button class="btn bp bsm" onclick="viewMemoCert('${memo.id}')">🏆 View &amp; Print Certificate</button>
             </div>`
@@ -2158,8 +2158,8 @@ async function pageHome(){
   const totalLecs=cardData.reduce((s,c)=>s+c.total,0);
   const completedLecs=cardData.reduce((s,c)=>s+c.doneCount,0);
 
-  // Pending memos badge
-  const memos=ackDb.getMemos().filter(m=>m.active);
+  // Pending memos badge - use cached (already loaded)
+  const memos=ackDb.getMemosCached().filter(m=>m.active);
   const pendingMemos=memos.filter(m=>!ackDb.hasSigned(m.id,U.id)).length;
 
   const cardsHtml=filtered.map(({sec,lecs,total,doneCount,pct,hasCert,status})=>{
@@ -2919,7 +2919,7 @@ async function pageAdminDash(){
   const emps=users.filter(u=>u.role==='employee');
   let tl=0; secs.forEach(s=>tl+=ls('lectures').filter(l=>l.section_id===s.id).length);
   const pr=atts.length?Math.round(atts.filter(a=>a.passed).length/atts.length*100):0;
-  const memos=ackDb.getMemos().filter(m=>m.active);
+  const memos=ackDb.getMemosCached().filter(m=>m.active);
   const logCount=isOwner()?getUnseenLogCount():0;
 
   const rows=emps.slice(0,8).map(emp=>{
@@ -3826,7 +3826,7 @@ function closeMobileMenu(){
 
 async function syncAll(){
   if(!SB) return;
-  try{ await Promise.all([db.users(),db.sections(),db.allCompletions(),db.allAttempts(),db.allCerts()]); } catch(e){ console.warn('sync fail',e); }
+  try{ await Promise.all([db.users(),db.sections(),db.allCompletions(),db.allAttempts(),db.allCerts(),ackDb.getMemos()]); } catch(e){ console.warn('sync fail',e); }
 }
 async function syncThenRefresh(){ if(SB){ toast('Syncing...',''); await syncAll(); toast('Updated','ok'); render(); } else { render(); } }
 
@@ -3839,6 +3839,8 @@ window.addEventListener('load',async()=>{
   } else {
     PAGE=U?'home':'login';
   }
+  // Preload memos into cache
+  try{ await ackDb.getMemos(); } catch(e){}
   if(SB) await syncAll();
   render();
 });
