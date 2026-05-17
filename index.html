@@ -559,13 +559,8 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
   .lb h2{font-size:26px}
   .lb p{font-size:13.5px;margin-bottom:24px}
   .stats{grid-template-columns:repeat(2,1fr)}
-  /* Hide desktop nav on mobile — show hamburger instead */
-  .bar-nav{display:none!important}
-  .mobile-only{display:flex!important}
-  #mobile-menu{display:none}
-  #mobile-menu.open{display:flex!important}
+  .bar-nav{display:none}
   .bar-logo-text .sub{display:none}
-  .bar-user .badge{display:inline}
   .cert-in{padding:24px}
   .c-ttl{font-size:24px}.c-name{font-size:22px}
   .pdf-frame{height:500px}
@@ -590,9 +585,6 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
   .sec-grid{grid-template-columns:1fr}
   .ack-body{padding:16px 18px}
   .ack-content{font-size:13.5px;padding:16px 18px}
-  /* Memo cert on mobile */
-  #cert-a4{border-radius:0}
-  .cert-body-inner{padding:14px 16px!important}
 }
 @media(max-width:420px){
   .bar-logo-text .name{font-size:14px}
@@ -804,48 +796,107 @@ seed();
 // ACKNOWLEDGEMENTS DB LAYER
 // ════════════════════════════════════════════════════════════════
 const ackDb = {
-  getMemos(){
+  async getMemos(){
+    if(SB){
+      const{data,error}=await SB.from('lms_memos').select('*').order('created_at',{ascending:false});
+      if(!error&&data){
+        localStorage.setItem('lms_memos',JSON.stringify(data));
+        return data;
+      }
+    }
+    try{ return JSON.parse(localStorage.getItem('lms_memos')||'[]'); } catch{ return []; }
+  },
+  getMemosCached(){
     try{ return JSON.parse(localStorage.getItem('lms_memos')||'[]'); } catch{ return []; }
   },
   saveMemos(arr){ localStorage.setItem('lms_memos',JSON.stringify(arr)); },
-  addMemo(memo){
-    const arr=this.getMemos();
+  async addMemo(memo){
     memo.id='memo_'+Date.now();
     memo.created_at=new Date().toISOString();
     memo.created_by=U?U.badge_id:OWNER_BADGE;
     memo.created_by_name=U?U.name:'Admin';
+    if(SB){
+      const{data,error}=await SB.from('lms_memos').insert({
+        id:memo.id, title:memo.title, body:memo.body,
+        is_html:memo.isHtml||false,
+        memo_number:memo.memo_number||null,
+        department:memo.department||null,
+        active:memo.active!==false,
+        file_url:memo.file_url||null,
+        file_name:memo.file_name||null,
+        created_by:memo.created_by,
+        created_by_name:memo.created_by_name,
+        created_at:memo.created_at
+      }).select().single();
+      if(!error&&data){ memo={...memo,...data}; }
+    }
+    const arr=this.getMemosCached();
     arr.unshift(memo);
     this.saveMemos(arr);
     return memo;
   },
-  updateMemo(id,data){
-    this.saveMemos(this.getMemos().map(m=>m.id===id?{...m,...data}:m));
+  async updateMemo(id,data){
+    if(SB){
+      await SB.from('lms_memos').update({
+        title:data.title, body:data.body,
+        is_html:data.isHtml||false,
+        memo_number:data.memo_number||null,
+        department:data.department||null,
+        active:data.active!==false,
+        file_url:data.file_url||null,
+        file_name:data.file_name||null,
+      }).eq('id',id);
+    }
+    this.saveMemos(this.getMemosCached().map(m=>m.id===id?{...m,...data}:m));
   },
-  deleteMemo(id){
-    this.saveMemos(this.getMemos().filter(m=>m.id!==id));
-    this.saveSignatures(this.getSignatures().filter(s=>s.memo_id!==id));
+  async deleteMemo(id){
+    if(SB){ await SB.from('lms_memos').delete().eq('id',id); }
+    else{ this.saveSignatures(this.getSignaturesCached().filter(s=>s.memo_id!==id)); }
+    this.saveMemos(this.getMemosCached().filter(m=>m.id!==id));
   },
-  getSignatures(){
+  async getSignatures(){
+    if(SB){
+      const{data,error}=await SB.from('lms_ack_sigs').select('*');
+      if(!error&&data){ localStorage.setItem('lms_ack_sigs',JSON.stringify(data)); return data; }
+    }
+    return this.getSignaturesCached();
+  },
+  getSignaturesCached(){
     try{ return JSON.parse(localStorage.getItem('lms_ack_sigs')||'[]'); } catch{ return []; }
   },
   saveSignatures(arr){ localStorage.setItem('lms_ack_sigs',JSON.stringify(arr)); },
-  sign(memoId,userId,userName,badgeId,iqama){
-    const sigs=this.getSignatures();
+  async sign(memoId,userId,userName,badgeId,iqama){
+    const sigs=this.getSignaturesCached();
     if(sigs.find(s=>s.memo_id===memoId&&s.user_id===userId)) return false;
-    sigs.push({
+    const ref=this._genRef(memoId);
+    const sig={
       id:'sig_'+Date.now(),
-      memo_id:memoId,
-      user_id:userId,
-      user_name:userName,
-      badge_id:badgeId,
+      memo_id:memoId, user_id:userId,
+      user_name:userName, badge_id:badgeId,
       iqama_confirmed:iqama,
+      ref_number:ref,
       signed_at:new Date().toISOString()
-    });
+    };
+    if(SB){
+      await SB.from('lms_ack_sigs').insert({
+        id:sig.id, memo_id:sig.memo_id,
+        user_id:sig.user_id, user_name:sig.user_name,
+        badge_id:sig.badge_id, ref_number:sig.ref_number,
+        signed_at:sig.signed_at
+      });
+    }
+    sigs.push(sig);
     this.saveSignatures(sigs);
-    return true;
+    return sig;
   },
-  hasSigned(memoId,userId){ return this.getSignatures().some(s=>s.memo_id===memoId&&s.user_id===userId); },
-  getSignaturesForMemo(memoId){ return this.getSignatures().filter(s=>s.memo_id===memoId); }
+  _genRef(memoId){
+    const memo=this.getMemosCached().find(m=>m.id===memoId);
+    const code=((memo&&(memo.memo_number||memo.title))||'MEMO').replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,4);
+    return 'MA-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
+  },
+  hasSigned(memoId,userId){ return this.getSignaturesCached().some(s=>s.memo_id===memoId&&s.user_id===userId); },
+  getSignaturesForMemo(memoId){ return this.getSignaturesCached().filter(s=>s.memo_id===memoId); },
+  getSignatures(){ return this.getSignaturesCached(); }
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -1108,7 +1159,7 @@ function bar(){
   // Pending ack badge (employees)
   let pendingAck=0;
   if(!isA){
-    const memos=ackDb.getMemos().filter(m=>m.active);
+    const memos=ackDb.getMemosCached().filter(m=>m.active);
     pendingAck=memos.filter(m=>!ackDb.hasSigned(m.id,U.id)).length;
   }
   const ackBadge=pendingAck>0?`<span class="notif-badge">${pendingAck}</span>`:'';
@@ -1116,7 +1167,7 @@ function bar(){
   // Admin memo badge
   let adminMemoBadge='';
   if(isA){
-    const memos=ackDb.getMemos().filter(m=>m.active);
+    const memos=ackDb.getMemosCached().filter(m=>m.active);
     adminMemoBadge=memos.length>0?`<span class="notif-badge" style="background:var(--pu-l)">${memos.length}</span>`:'';
   }
 
@@ -1171,7 +1222,7 @@ function bar(){
 // EMPLOYEE: ACKNOWLEDGEMENTS PAGE
 // ════════════════════════════════════════════════════════════════
 async function pageAcknowledgements(){
-  const memos=ackDb.getMemos().filter(m=>m.active);
+  const memos=(await ackDb.getMemos()).filter(m=>m.active);
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
 
@@ -1284,7 +1335,7 @@ async function signMemo(memoId){
   if(!iq){ toast('Please enter your iqama number','er'); return; }
   if(iq!==U.iqama_number){ toast('❌ Incorrect iqama number — please try again','er'); return; }
 
-  const memo=ackDb.getMemos().find(m=>m.id===memoId);
+  const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   if(!memo){ toast('Memo not found','er'); return; }
 
   // Generate ref number and store in signature
@@ -1320,7 +1371,7 @@ function viewMemoCert(memoId){
 // MEMO ACKNOWLEDGEMENT CERTIFICATE PAGE
 // ════════════════════════════════════════════════════════════════
 function pageMemoCert(memoId, ref){
-  const memo=ackDb.getMemos().find(m=>m.id===memoId);
+  const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   if(!memo) return;
   const sigs=ackDb.getSignatures();
   const sig=sigs.find(s=>s.memo_id===memoId&&s.user_id===U.id);
@@ -1531,7 +1582,7 @@ function addMemoDivider(){
 // ADMIN: MEMOS PAGE
 // ════════════════════════════════════════════════════════════════
 async function pageAdminMemos(){
-  const memos=ackDb.getMemos();
+  const memos=await ackDb.getMemos();
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
   const logCount=isOwner()?getUnseenLogCount():0;
@@ -1775,7 +1826,7 @@ function deleteMemo(id){
 // ADMIN: MEMO SIGNATURE DETAIL + EXPORT
 // ════════════════════════════════════════════════════════════════
 async function openMemoDetail(memoId){
-  const memo=ackDb.getMemos().find(m=>m.id===memoId); if(!memo) return;
+  const memo=ackDb.getMemosCached().find(m=>m.id===memoId); if(!memo) return;
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
   const sigs=ackDb.getSignaturesForMemo(memoId);
@@ -1849,7 +1900,7 @@ function filterMemoSigs(query){
 }
 
 async function exportMemoSignatures(memoId){
-  const memo=ackDb.getMemos().find(m=>m.id===memoId);
+  const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
   const sigs=ackDb.getSignaturesForMemo(memoId);
