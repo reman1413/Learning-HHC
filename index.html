@@ -1985,6 +1985,9 @@ async function render(){
     case 'abrand':   await pageAdminBrand(); break;
     default:         await pageHome();
   }
+  // Show/hide footer
+  const footer=document.getElementById('site-footer');
+  if(footer){ footer.style.display=(U&&PAGE!=='login'&&PAGE!=='setup'&&PAGE!=='verify')?'block':'none'; }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3840,16 +3843,7 @@ window.addEventListener('load',async()=>{
   render();
 });
 
-// Show footer only when logged in
-const _origRender = window.render;
-window.render = async function(){
-  await _origRender();
-  const footer = document.getElementById('site-footer');
-  if(footer){
-    const showFooter = U && PAGE !== 'login' && PAGE !== 'setup' && PAGE !== 'verify';
-    footer.style.display = showFooter ? 'block' : 'none';
-  }
-};
+// Footer visibility is handled inline
 </script>
 
 <!-- Copyright Footer — shows only after login -->
