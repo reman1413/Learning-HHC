@@ -533,7 +533,7 @@ textarea{resize:vertical;min-height:84px;font-family:inherit}
 .ack-header{padding:22px 26px;color:#fff;position:relative;overflow:hidden}
 .ack-header::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.1) 1.5px, transparent 2px);background-size:18px 18px;opacity:.5}
 .ack-body{padding:24px 28px}
-.ack-content{background:var(--pu-mist);border-radius:14px;padding:22px 24px;border:1px solid var(--border);font-size:14.5px;line-height:1.85;color:var(--text);white-space:pre-wrap;font-family:'Readex Pro';margin-bottom:20px;max-height:400px;overflow-y:auto}
+.ack-content{background:var(--pu-mist);border-radius:14px;padding:22px 24px;border:1px solid var(--border);font-size:14.5px;line-height:1.85;color:var(--text);font-family:'Readex Pro';margin-bottom:20px;max-height:400px;overflow-y:auto;word-break:break-word}
 .ack-sign-box{background:linear-gradient(135deg,var(--pu-mist),var(--pu-tint));border:2px solid var(--pu-ll);border-radius:16px;padding:22px 24px}
 .ack-signed-banner{background:linear-gradient(90deg,var(--ok-l),#ECFDF5);border:1.5px solid #6EE7B7;border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:14px}
 
@@ -1255,7 +1255,7 @@ async function pageAcknowledgements(){
         </div>
       </div>
       <div class="ack-body">
-        <div class="ack-content" style="font-size:14px;line-height:1.85;color:var(--text)">${memo.isHtml?memo.body:(memo.isHtml?memo.body:memo.body.replace(/\n/g,'<br>'))}</div>
+        <div class="ack-content" style="font-size:14px;line-height:1.85;color:var(--text)">${renderMemoBody(memo)}</div>
         ${memo.file_url?`
         <div style="background:var(--gold-soft);border:1.5px solid #FDE68A;border-radius:11px;padding:13px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
           <span style="font-size:22px">📎</span>
@@ -1377,10 +1377,8 @@ function pageMemoCert(memoId, ref){
   const signedTime=new Date(sig.signed_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   const memoDate=new Date(memo.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
-  // Body is stored as HTML (supports formatting) or plain text with newlines
-  const memoBodyHtml = memo.isHtml
-    ? memo.body
-    : memo.body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  // Use renderMemoBody to handle all formats including pasted Claude HTML
+  const memoBodyHtml = renderMemoBody(memo);
 
   document.getElementById('app').innerHTML=bar()+`
   <style>
@@ -1728,6 +1726,42 @@ function insertMemoLine(){
   document.getElementById('m-body-editor')?.focus();
   document.execCommand('insertHTML', false, '<br>───────────────────────<br>');
 }
+// Render memo body safely — handles plain text, HTML from editor, and pasted HTML from Claude
+function renderMemoBody(memo){
+  if(!memo||!memo.body) return '';
+  let body = memo.body;
+
+  // Detect if body contains raw HTML being displayed as text (escaped or unescaped)
+  const hasClaudeClasses = body.includes('font-claude') || body.includes('class="font-');
+  const hasRawHtmlTags = /<(p|ol|ul|li|strong|em|br|div|span)\s/i.test(body) || body.includes('&lt;p') || body.includes('&lt;ol');
+
+  if(hasClaudeClasses || hasRawHtmlTags){
+    // Unescape if needed
+    if(body.includes('&lt;')) body = body.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    // Parse through DOM to get clean text
+    const tmp = document.createElement('div');
+    tmp.innerHTML = body;
+    // Preserve list structure
+    tmp.querySelectorAll('li').forEach(li=>{ li.textContent = '• ' + li.textContent + '\n'; });
+    body = (tmp.innerText || tmp.textContent || '').trim();
+    // Convert to clean HTML
+    return '<p style="margin:0 0 10px 0">' +
+      body.replace(/\n{2,}/g,'</p><p style="margin:0 0 10px 0">')
+          .replace(/\n/g,'<br>') +
+      '</p>';
+  }
+
+  // If stored as HTML from our editor
+  if(memo.isHtml || memo.is_html) return body;
+
+  // Plain text
+  return '<p style="margin:0">' +
+    body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\n\n/g,'</p><p style="margin:8px 0 0 0">')
+        .replace(/\n/g,'<br>') +
+    '</p>';
+}
+
 function getMemoBodyText(){
   // Save HTML directly to preserve all formatting
   const editor=document.getElementById('m-body-editor');
