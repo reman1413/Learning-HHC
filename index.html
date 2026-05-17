@@ -1,637 +1,910 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="pragma" content="no-cache">
-<meta http-equiv="expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Meena Health — Learning Hub</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<style>
-:root{
-  --bg:#FAF6EE;
-  --bg-deep:#F2EDE2;
-  --card:#FFFFFF;
-  --cream:#FFFDF8;
-  --ink:#1E1147;
-  --text:#3A2D5C;
-  --muted:#7A6F8E;
-  --soft:#B0A8C0;
-  --pu:#6B3FB5;
-  --pu-d:#4A2785;
-  --pu-dd:#311C5D;
-  --pu-l:#9863F1;
-  --pu-ll:#C4B5FD;
-  --pu-soft:#EFE9FA;
-  --pu-tint:#F8F4FC;
-  --pu-mist:#FCFAFE;
-  --sage:#8FA88E;
-  --sage-l:#B5CCB5;
-  --sage-soft:#E8EFE5;
-  --mint:#5C9C7E;
-  --mint-l:#A5C9B5;
-  --mint-soft:#E0EDE3;
-  --sky:#5B7DB3;
-  --rose:#C9536A;
-  --border:#EDE7DC;
-  --border-d:#D9D0C0;
-  --ok:#5C9C7E;
-  --ok-l:#DDEDE0;
-  --err:#C9536A;
-  --err-l:#F5DDE2;
-  --warn:#C99464;
-  --warn-l:#F4E6D0;
-  --gold:#B8985E;
-  --gold-l:#D9BB7E;
-  --gold-soft:#FAF3E2;
-  --r:16px;
-  --r-sm:12px;
-  --r-lg:22px;
-  --sh:0 2px 12px rgba(49,28,93,.05), 0 1px 2px rgba(49,28,93,.03);
-  --sh-md:0 8px 28px rgba(49,28,93,.08), 0 2px 4px rgba(49,28,93,.04);
-  --sh-lg:0 16px 40px rgba(49,28,93,.14), 0 4px 8px rgba(49,28,93,.06);
-  --sh-glow:0 0 0 4px rgba(107,63,181,.1);
-  --grad-pu:linear-gradient(135deg, #311C5D 0%, #4A2785 50%, #6B3FB5 100%);
-  --grad-pu-bright:linear-gradient(135deg, #4A2785 0%, #6B3FB5 50%, #9863F1 100%);
-  --grad-soft:linear-gradient(135deg, #FAF6EE 0%, #F2EDE2 100%);
-}
-
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  font-family:'Readex Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  letter-spacing:-.005em;
-}
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:
-    radial-gradient(circle at 15% 20%, rgba(107,63,181,.04) 0, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(143,168,142,.05) 0, transparent 40%);
-}
-#app{min-height:100vh;position:relative;z-index:1}
-.display, h1, h2{font-family:'Fraunces', 'Readex Pro', serif; letter-spacing:-.02em}
-.sans-display{font-family:'Readex Pro', sans-serif; letter-spacing:-.015em; font-weight:600}
-
-/* ═══ TOP BAR ═══ */
-.bar{
-  background:linear-gradient(115deg, #1E1147 0%, #2A1858 50%, #311C5D 100%);
-  padding:0 28px;height:74px;
-  display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 2px 16px rgba(30,17,71,.18);
-  position:sticky;top:0;z-index:100;
-  overflow:hidden;
-}
-.bar::before{
-  content:'';position:absolute;top:-60%;right:-5%;width:340px;height:340px;
-  background:radial-gradient(circle, rgba(152,99,241,.14) 0%, transparent 70%);
-  pointer-events:none;
-}
-.bar::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg, transparent, #9863F1 30%, #6B3FB5 70%, transparent);
-}
-.bar-logo{display:flex;align-items:center;gap:14px;cursor:pointer;position:relative;z-index:2;transition:transform .2s}
-.bar-logo:hover{transform:translateY(-1px)}
-.bar-logo .ico{
-  width:46px;height:46px;
-  background:rgba(255,255,255,.95);
-  border-radius:13px;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.4);
-  overflow:hidden;
-}
-.bar-logo .ico img{width:100%;height:100%;object-fit:contain;padding:6px}
-.bar-logo-text{display:flex;flex-direction:column;line-height:1.1}
-.bar-logo-text .name{color:#fff;font-size:16px;font-weight:800;font-family:'Readex Pro';letter-spacing:-.01em}
-.bar-logo-text .sub{color:rgba(255,255,255,.65);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
-.bar-r{display:flex;align-items:center;gap:10px;position:relative;z-index:2;flex-wrap:nowrap}
-.bar-nav{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.08);padding:4px;border-radius:11px;border:1px solid rgba(255,255,255,.1)}
-.bar-nav button{
-  background:transparent;color:rgba(255,255,255,.85);border:none;
-  padding:7px 13px;border-radius:8px;cursor:pointer;
-  font-size:12px;font-weight:600;font-family:inherit;transition:.2s;
-  position:relative;
-}
-.bar-nav button:hover{background:rgba(255,255,255,.18);color:#fff}
-.bar-user{
-  color:rgba(255,255,255,.92);font-size:13px;font-weight:600;
-  padding:7px 14px;background:rgba(255,255,255,.1);border-radius:9px;
-  border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:7px
-}
-.bar-user .badge{opacity:.65;font-size:11px;font-family:'Readex Pro';font-weight:700}
-.btn-out{
-  background:rgba(255,255,255,.14);color:#fff;
-  border:1px solid rgba(255,255,255,.25);
-  padding:8px 16px;border-radius:9px;cursor:pointer;
-  font-size:13px;font-weight:700;font-family:inherit;transition:.2s;
-  white-space:nowrap;
-}
-.btn-out:hover{background:rgba(255,255,255,.25);transform:translateY(-1px)}
-
-/* notification badge on buttons */
-.notif-badge{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--err);color:#fff;border-radius:99px;
-  padding:1px 6px;font-size:10px;font-weight:800;
-  margin-left:4px;vertical-align:middle;line-height:1.4;
-  min-width:18px;
-}
-
-.back-bar{
-  background:rgba(255,255,255,.6);
-  backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--border);
-  padding:12px 28px
-}
-.back-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:8px 16px;border-radius:10px;
-  background:#fff;color:var(--pu-d);
-  border:1.5px solid var(--border-d);
-  cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;
-  transition:.2s;box-shadow:0 1px 2px rgba(124,92,230,.04)
-}
-.back-btn:hover{background:var(--pu);color:#fff;border-color:var(--pu);transform:translateX(-2px)}
-
-/* ═══ LAYOUT ═══ */
-.pg{max-width:1180px;margin:0 auto;padding:32px 28px}
-.pg-sm{max-width:840px;margin:0 auto;padding:32px 28px}
-
-/* ═══ CARDS ═══ */
-.card{
-  background:var(--card);border-radius:var(--r);
-  box-shadow:var(--sh);padding:26px;
-  border:1px solid var(--border);
-  transition:.25s
-}
-
-/* ═══ PROGRESS BARS ═══ */
-.pbar{height:7px;background:var(--pu-soft);border-radius:99px;overflow:hidden}
-.pfill{height:100%;background:linear-gradient(90deg, var(--pu), var(--pu-l));border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
-
-/* ═══ CERT ROW ═══ */
-.my-cert-item{
-  display:flex;align-items:center;gap:16px;
-  padding:16px 20px;background:var(--card);border-radius:14px;
-  border:1.5px solid #FDE68A;margin-bottom:11px;
-  cursor:pointer;transition:.25s;box-shadow:var(--sh);
-  -webkit-tap-highlight-color:rgba(184,152,94,.15)
-}
-.my-cert-item:hover,.my-cert-item:active{background:var(--gold-soft);transform:translateX(4px)}
-@media(max-width:768px){
-  .my-cert-item:active{transform:scale(.98)}
-  .my-cert-item:hover{transform:none}
-}
-
-/* ═══ LECTURE ROW ═══ */
-.lec-item{
-  display:flex;align-items:center;gap:16px;
-  padding:18px 22px;background:var(--card);border-radius:14px;
-  border:1.5px solid var(--border);margin-bottom:12px;
-  cursor:pointer;transition:.25s;position:relative;overflow:hidden
-}
-.lec-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:.25s}
-.lec-item:hover{border-color:var(--pu-ll);background:linear-gradient(90deg, var(--pu-soft), var(--card) 80%);transform:translateX(4px);box-shadow:var(--sh)}
-.lec-item:hover::before{background:var(--pu)}
-.lec-item.done{border-left:none;background:linear-gradient(90deg, var(--ok-l), var(--card) 30%)}
-.lec-item.done::before{background:var(--ok)}
-.lec-ico{
-  width:48px;height:48px;border-radius:13px;
-  background:linear-gradient(135deg, #4A2785, #6B3FB5);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:19px;flex-shrink:0;
-  box-shadow:0 4px 12px rgba(74,39,133,.22)
-}
-.lec-info{flex:1;min-width:0}
-.lec-info h4{font-size:15px;font-weight:700;color:var(--ink);font-family:'Readex Pro';line-height:1.35}
-.lec-info span{font-size:12px;color:var(--muted);margin-top:3px;display:block;font-weight:500}
-
-/* ═══ BADGES ═══ */
-.bdg{padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.2px;display:inline-flex;align-items:center;gap:4px}
-.bdg-ok{background:var(--ok-l);color:#065F46;border:1px solid #6EE7B7}
-.bdg-q{background:var(--warn-l);color:#92400E;border:1px solid #FCD34D}
-.bdg-w{background:var(--pu-soft);color:var(--pu-d);border:1px solid var(--pu-ll)}
-.chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:99px;font-size:12px;font-weight:700}
-.cp{background:var(--pu-soft);color:var(--pu-d)}
-.cd{background:var(--mint-soft);color:#0F766E}
-
-/* ═══ VIDEO / FILE VIEWER ═══ */
-.vid-wrap{
-  position:relative;padding-bottom:56.25%;height:0;
-  border-radius:var(--r);overflow:hidden;
-  background:linear-gradient(135deg,#1a0f2e,#0f0720);
-  margin-bottom:20px;box-shadow:var(--sh-md);
-  border:1px solid var(--border)
-}
-.vid-wrap iframe,.vid-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;border:none}
-.file-viewer{
-  background:linear-gradient(160deg, #1E1147 0%, #2D1A5C 70%, #311C5D 100%);
-  border-radius:var(--r);margin-bottom:20px;
-  box-shadow:var(--sh-md);overflow:hidden;
-  border:1px solid rgba(196,181,253,.08)
-}
-.fv-header{
-  background:rgba(255,255,255,.06);
-  padding:15px 22px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)
-}
-.fv-header h4{color:#fff;font-size:15px;font-weight:700;font-family:'Readex Pro'}
-.pdf-frame{width:100%;height:640px;border:none;display:block;background:#fff}
-.no-file{padding:64px 30px;text-align:center}
-.no-file .nfi{font-size:60px;margin-bottom:16px;opacity:.7}
-.no-file h3{color:rgba(255,255,255,.8);font-size:18px;font-weight:700;margin-bottom:8px;font-family:'Readex Pro'}
-.no-file p{color:rgba(255,255,255,.45);font-size:13px;line-height:1.7}
-.fv-footer{
-  background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06);
-  padding:16px 22px;display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:12px
-}
-.upload-zone{
-  border:2px dashed var(--pu-ll);border-radius:14px;padding:38px 24px;
-  text-align:center;cursor:pointer;transition:.25s;
-  background:linear-gradient(135deg, var(--pu-tint), var(--pu-mist))
-}
-.upload-zone:hover{border-color:var(--pu);background:var(--pu-soft);transform:scale(1.005)}
-.upload-zone.has-file{border-color:var(--ok);background:var(--ok-l)}
-.upload-zone input{display:none}
-
-/* ═══ QUIZ ═══ */
-.q-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.timer{
-  background:linear-gradient(135deg, #311C5D, #6B3FB5);color:#fff;
-  padding:10px 22px;border-radius:11px;
-  font-size:20px;font-weight:800;
-  font-family:'Readex Pro',ui-monospace,monospace;letter-spacing:1px;
-  box-shadow:0 4px 14px rgba(49,28,93,.25)
-}
-.timer.red{background:linear-gradient(135deg,#A03044,#C9536A);box-shadow:0 4px 14px rgba(201,83,106,.35)}
-.q-card{
-  background:var(--card);border-radius:var(--r-lg);
-  padding:34px;box-shadow:var(--sh-md);
-  margin-bottom:20px;border:1px solid var(--border);
-  position:relative;overflow:hidden
-}
-.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad-pu)}
-.q-num{font-size:11px;font-weight:800;color:var(--pu-l);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:'Readex Pro'}
-.q-txt{font-size:18px;font-weight:700;color:var(--ink);margin-bottom:24px;line-height:1.55;font-family:'Readex Pro'}
-.opts{display:flex;flex-direction:column;gap:11px}
-.opt{
-  padding:15px 18px;border:2px solid var(--border);border-radius:12px;
-  cursor:pointer;transition:.2s;font-size:15px;
-  display:flex;align-items:center;gap:13px;font-weight:500;
-  background:var(--card)
-}
-.opt:hover{border-color:var(--pu-l);background:var(--pu-mist);transform:translateX(2px)}
-.opt.sel{border-color:var(--pu);background:linear-gradient(90deg,var(--pu-soft),var(--card));color:var(--pu-d);font-weight:700;box-shadow:var(--sh-glow)}
-.opt-l{
-  width:32px;height:32px;border-radius:50%;
-  background:var(--pu-soft);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:13px;flex-shrink:0;color:var(--pu);
-  font-family:'Readex Pro'
-}
-.opt.sel .opt-l{background:var(--pu);color:#fff}
-
-/* ═══ RESULT CIRCLES ═══ */
-.r-circle{
-  width:130px;height:130px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 22px;font-size:38px;font-weight:800;
-  font-family:'Readex Pro';
-  box-shadow:0 8px 32px rgba(0,0,0,.08)
-}
-.r-pass{background:var(--ok-l);color:#065F46;border:5px solid var(--ok)}
-.r-fail{background:var(--err-l);color:#9F1239;border:5px solid var(--err)}
-
-/* ═══ CERTIFICATE ═══ */
-.cert-pg{background:#fff;max-width:840px;margin:0 auto}
-.cert-out{padding:38px;background:#fff}
-.cert-in{border:3px solid var(--pu);padding:54px;position:relative;text-align:center;background:radial-gradient(ellipse at top, var(--pu-mist), #fff 60%)}
-.cert-in::before{content:'';position:absolute;inset:9px;border:1px solid var(--pu-ll);pointer-events:none}
-.cert-in::after{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--grad-pu);pointer-events:none}
-.c-org{font-size:32px;font-weight:800;color:var(--pu-d);letter-spacing:2px;font-family:'Fraunces'}
-.c-sub0{font-size:11px;color:var(--muted);letter-spacing:3.5px;text-transform:uppercase;margin-top:4px;font-weight:600}
-.c-div{height:3px;background:linear-gradient(90deg,transparent,var(--pu),var(--pu-ll),transparent);margin:22px auto;max-width:300px}
-.c-ttl{font-size:42px;font-weight:500;color:var(--pu);letter-spacing:4px;text-transform:uppercase;font-family:'Fraunces'}
-.c-sub2{font-size:13px;color:var(--muted);letter-spacing:1.5px;margin-bottom:28px;font-weight:600}
-.c-name{font-size:38px;font-weight:700;color:var(--pu-d);border-bottom:2px solid var(--pu-ll);display:inline-block;padding-bottom:7px;font-family:'Fraunces'}
-.c-bid{font-size:13px;color:var(--muted);margin:9px 0 22px;font-weight:600}
-.c-txt{font-size:16px;color:var(--text);margin-bottom:7px;line-height:1.6}
-.c-sec{font-size:26px;font-weight:700;color:var(--pu);margin-bottom:24px;font-family:'Fraunces'}
-.c-meta{display:flex;justify-content:space-around;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
-.c-mi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
-.c-mi .val{font-size:15px;font-weight:700;color:var(--pu-d);margin-top:5px;font-family:'Readex Pro'}
-.c-ref{margin-top:20px;font-size:12px;color:var(--muted);font-family:'Readex Pro'}
-.c-stamp{position:absolute;bottom:46px;right:46px;width:84px;height:84px;border-radius:50%;border:3px solid var(--pu);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--pu);text-align:center;line-height:1.4;transform:rotate(-15deg);background:rgba(124,92,230,.05);font-family:'Readex Pro'}
-.c-wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:88px;font-weight:800;color:rgba(124,92,230,.04);white-space:nowrap;pointer-events:none;letter-spacing:5px;font-family:'Fraunces'}
-
-/* ═══ STAT TILES ═══ */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
-.stat{background:var(--card);border-radius:var(--r);padding:24px;border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;position:relative;transition:.25s}
-.stat:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
-.stat-clickable{cursor:pointer}
-.stat-clickable:hover{border-color:var(--pu-ll);transform:translateY(-4px)}
-.stat-clickable:hover .stat-arrow{opacity:1;transform:translateX(0)}
-.stat-clickable:hover .sv{color:var(--pu)}
-.stat-arrow{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;background:var(--pu-soft);color:var(--pu-d);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:'Readex Pro';opacity:0;transform:translateX(-6px);transition:.25s;z-index:2}
-.stat::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--grad-pu)}
-.stat::after{content:'';position:absolute;bottom:-30px;right:-30px;width:110px;height:110px;background:radial-gradient(circle, var(--pu-tint), transparent 70%);border-radius:50%}
-.stat .sv{font-size:36px;font-weight:800;color:var(--ink);position:relative;z-index:1;font-family:'Readex Pro';line-height:1.1}
-.stat .sl{font-size:13px;color:var(--muted);margin-top:4px;font-weight:600;position:relative;z-index:1}
-.stat .si{font-size:22px;margin-bottom:10px;position:relative;z-index:1;display:inline-block;width:42px;height:42px;background:var(--sage-soft);border-radius:11px;text-align:center;line-height:42px;border:1px solid var(--border)}
-
-/* ═══ TABLES ═══ */
-.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);-webkit-overflow-scrolling:touch;box-shadow:var(--sh)}
-table{width:100%;border-collapse:collapse;background:var(--card)}
-th{background:linear-gradient(135deg, #311C5D, #4A2785);color:#fff;padding:14px 18px;text-align:left;font-size:12px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.6px;font-family:'Readex Pro'}
-td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--pu-mist)}
-
-/* ═══ BUTTONS ═══ */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 22px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;border:none;font-family:inherit;white-space:nowrap}
-.bp{background:linear-gradient(135deg, #4A2785, #6B3FB5);color:#fff;box-shadow:0 4px 14px rgba(74,39,133,.22)}
-.bp:hover{box-shadow:0 6px 20px rgba(74,39,133,.32);transform:translateY(-2px);background:linear-gradient(135deg, #311C5D, #6B3FB5)}
-.bn{background:var(--pu-dd);color:#fff}
-.bn:hover{background:var(--pu-d)}
-.bo{background:#fff;color:var(--pu-d);border:1.5px solid var(--pu-ll);box-shadow:0 1px 2px rgba(124,92,230,.06)}
-.bo:hover{background:var(--pu);color:#fff;border-color:var(--pu)}
-.bd{background:var(--err);color:#fff;box-shadow:0 4px 14px rgba(244,63,94,.25)}
-.bd:hover{background:#E11D48}
-.bg2{background:transparent;color:var(--muted);border:1.5px solid var(--border-d)}
-.bg2:hover{background:var(--pu-soft);color:var(--pu-d);border-color:var(--pu-ll)}
-.bmint{background:linear-gradient(135deg, #6FA288, #5C9C7E);color:#fff;box-shadow:0 4px 14px rgba(92,156,126,.22)}
-.bmint:hover{box-shadow:0 6px 20px rgba(92,156,126,.32);transform:translateY(-2px)}
-.blg{padding:14px 30px;font-size:15px;border-radius:13px}
-.bsm{padding:7px 13px;font-size:12px;border-radius:8px}
-.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
-
-/* ═══ FORMS ═══ */
-.fg{margin-bottom:18px}
-.fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-label{display:block;font-size:12.5px;font-weight:700;color:var(--pu-d);margin-bottom:7px;font-family:'Readex Pro';letter-spacing:.2px}
-input,select,textarea{width:100%;padding:12px 16px;border:1.5px solid var(--border-d);border-radius:11px;font-size:14px;color:var(--ink);outline:none;transition:.2s;font-family:inherit;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.02)}
-input:focus,select:focus,textarea:focus{border-color:var(--pu);box-shadow:0 0 0 4px rgba(124,92,230,.1)}
-textarea{resize:vertical;min-height:84px;font-family:inherit}
-
-/* ═══ MODAL ═══ */
-.mo{position:fixed;inset:0;background:rgba(30,27,58,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
-.modal{background:#fff;border-radius:20px;padding:32px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(30,27,58,.3);border:1px solid var(--border);animation:modalIn .25s cubic-bezier(.4,0,.2,1)}
-@keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.mh h3{font-size:19px;font-weight:800;color:var(--pu-d);font-family:'Readex Pro'}
-.mc{width:36px;height:36px;border-radius:50%;background:var(--pu-soft);border:none;cursor:pointer;font-size:16px;color:var(--pu-d);font-weight:700;transition:.2s}
-.mc:hover{background:var(--pu);color:#fff;transform:rotate(90deg)}
-
-/* ═══ TOAST ═══ */
-#toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px}
-.ti{background:var(--pu-d);color:#fff;padding:14px 24px;border-radius:13px;font-size:14px;animation:si .35s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 24px rgba(79,56,184,.3);font-weight:600;border:1px solid rgba(255,255,255,.1)}
-.ti.ok{background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(16,185,129,.3)}
-.ti.er{background:linear-gradient(135deg,#F43F5E,#E11D48);box-shadow:0 8px 24px rgba(244,63,94,.3)}
-@keyframes si{from{transform:translateX(120%) scale(.9);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}
-
-/* ═══ LOGIN PAGE ═══ */
-.lw{min-height:100vh;display:flex}
-.ll{
-  flex:1;
-  background:radial-gradient(ellipse at 28% 22%, rgba(152,99,241,.22) 0, transparent 55%),radial-gradient(ellipse at 75% 78%, rgba(143,168,142,.12) 0, transparent 55%),linear-gradient(160deg, #1E1147 0%, #2D1A5C 50%, #311C5D 100%);
-  background-size:200% 200%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:60px 40px;color:#fff;position:relative;overflow:hidden;
-  animation:bgDrift 18s ease-in-out infinite
-}
-@keyframes bgDrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.ll::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 50% 50%, rgba(255,255,255,.025) 1px, transparent 1.5px);background-size:32px 32px;pointer-events:none;opacity:.7;animation:dotShift 30s linear infinite}
-@keyframes dotShift{from{background-position:0 0}to{background-position:32px 32px}}
-.ll-particles{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
-.ll-particles span{position:absolute;display:block;width:5px;height:5px;border-radius:50%;background:rgba(196,181,253,.5);box-shadow:0 0 8px rgba(152,99,241,.4);animation:floatUp linear infinite;bottom:-20px}
-.ll-particles span:nth-child(1){left:8%;width:3px;height:3px;animation-duration:14s;animation-delay:0s}
-.ll-particles span:nth-child(2){left:18%;width:5px;height:5px;animation-duration:18s;animation-delay:3s}
-.ll-particles span:nth-child(3){left:28%;width:4px;height:4px;animation-duration:12s;animation-delay:7s}
-.ll-particles span:nth-child(4){left:42%;width:3px;height:3px;animation-duration:16s;animation-delay:1s}
-.ll-particles span:nth-child(5){left:55%;width:6px;height:6px;animation-duration:20s;animation-delay:5s}
-.ll-particles span:nth-child(6){left:68%;width:4px;height:4px;animation-duration:13s;animation-delay:9s}
-.ll-particles span:nth-child(7){left:78%;width:3px;height:3px;animation-duration:17s;animation-delay:2s}
-.ll-particles span:nth-child(8){left:88%;width:5px;height:5px;animation-duration:15s;animation-delay:6s}
-.ll-particles span:nth-child(9){left:35%;width:3px;height:3px;animation-duration:19s;animation-delay:11s}
-.ll-particles span:nth-child(10){left:62%;width:4px;height:4px;animation-duration:14s;animation-delay:4s}
-@keyframes floatUp{0%{transform:translateY(0) translateX(0) scale(.6);opacity:0}10%{opacity:.8}50%{transform:translateY(-50vh) translateX(20px) scale(1)}90%{opacity:.4}100%{transform:translateY(-110vh) translateX(-15px) scale(.4);opacity:0}}
-.ll-content{position:relative;z-index:2;text-align:center;max-width:420px}
-.ll-logo-wrap{position:relative;width:160px;height:160px;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;animation:logoEnter 1.2s .15s cubic-bezier(.16,1,.3,1) backwards}
-@keyframes logoEnter{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-.ll-logo-wrap::before,.ll-logo-wrap::after{content:'';position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(152,99,241,.4);pointer-events:none}
-.ll-logo-wrap::before{animation:ripple 3.5s ease-out infinite}
-.ll-logo-wrap::after{animation:ripple 3.5s ease-out 1.75s infinite}
-@keyframes ripple{0%{transform:scale(.85);opacity:.55}70%{opacity:.15}100%{transform:scale(1.55);opacity:0}}
-.ll-logo{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.1), rgba(255,255,255,.02));display:flex;align-items:center;justify-content:center;border:1px solid rgba(196,181,253,.3);padding:20px;position:relative;backdrop-filter:blur(10px);animation:logoFloat 5s ease-in-out infinite,logoGlow 3s ease-in-out infinite;z-index:2}
-@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-@keyframes logoGlow{0%,100%{box-shadow:0 0 0 0 rgba(152,99,241,0),0 8px 30px rgba(152,99,241,.15)}50%{box-shadow:0 0 0 8px rgba(152,99,241,.08),0 12px 40px rgba(152,99,241,.35)}}
-.ll-logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(152,99,241,.45));animation:logoBreath 3.5s ease-in-out infinite}
-@keyframes logoBreath{0%,100%{filter:drop-shadow(0 4px 14px rgba(152,99,241,.4)) brightness(1);transform:scale(1)}50%{filter:drop-shadow(0 6px 24px rgba(152,99,241,.65)) brightness(1.08);transform:scale(1.04)}}
-.ll-meena-text{display:block;margin:0 auto 12px;width:auto;height:auto;max-width:240px;max-height:120px;filter:drop-shadow(0 2px 14px rgba(152,99,241,.4));opacity:.96;animation:meenaFadeIn 1s .6s ease-out backwards}
-@keyframes meenaFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:.96;transform:translateY(0)}}
-.ll-divider{display:block;width:60px;height:1.5px;background:linear-gradient(90deg,transparent,#9863F1,transparent);margin:14px auto 18px;animation:dividerExpand 1s .9s cubic-bezier(.4,0,.2,1) backwards,dividerPulse 2.5s 1.9s ease-in-out infinite}
-@keyframes dividerExpand{from{width:0;opacity:0}to{width:60px;opacity:1}}
-@keyframes dividerPulse{0%,100%{opacity:.7;box-shadow:0 0 0 rgba(152,99,241,0)}50%{opacity:1;box-shadow:0 0 12px rgba(152,99,241,.5)}}
-.ll-sub{font-size:11.5px;letter-spacing:5px;text-transform:uppercase;color:rgba(196,181,253,.7);margin-bottom:16px;font-weight:700;font-family:'Readex Pro';animation:fadeInUp 1s 1.1s backwards}
-.ll p{font-size:14.5px;opacity:.78;line-height:1.7;font-weight:500;color:rgba(255,255,255,.88);margin-top:6px;animation:fadeInUp 1s 1.3s backwards}
-.ll-footer{position:absolute;bottom:32px;left:0;right:0;text-align:center;font-size:11px;color:rgba(196,181,253,.45);letter-spacing:3px;font-weight:600;font-family:'Readex Pro';animation:fadeInUp 1s 1.5s backwards}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-.lr{animation:slideInRight 1s cubic-bezier(.16,1,.3,1) backwards}
-@keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
-.lr{width:480px;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--cream);position:relative}
-.lr::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:linear-gradient(180deg,transparent,var(--border-d),transparent)}
-.lb{width:100%;max-width:380px}
-.lb-greet{font-size:11.5px;color:var(--pu);font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;font-family:'Readex Pro';animation:fadeInUp .8s .3s backwards}
-.lb h2{font-size:34px;font-weight:600;color:var(--ink);margin-bottom:8px;font-family:'Fraunces';letter-spacing:-.02em;animation:fadeInUp .8s .4s backwards}
-.lb p{font-size:14px;color:var(--muted);margin-bottom:30px;line-height:1.55;animation:fadeInUp .8s .5s backwards}
-.rt{display:flex;background:var(--bg);border-radius:13px;padding:5px;margin-bottom:26px;border:1px solid var(--border);animation:fadeInUp .8s .65s backwards}
-.rb{flex:1;padding:11px;text-align:center;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);transition:.25s;font-family:'Readex Pro'}
-.rb.on{background:#fff;color:var(--pu-dd);box-shadow:0 2px 10px rgba(49,28,93,.08)}
-
-/* ═══ BREADCRUMB ═══ */
-.bc{display:flex;align-items:center;gap:10px;margin-bottom:24px;font-size:14px;font-weight:500;flex-wrap:wrap}
-.bc a{color:var(--pu);cursor:pointer;font-weight:600;transition:.2s}
-.bc a:hover{color:var(--pu-d)}
-.bc span:not(.bdg){color:var(--muted);font-weight:600}
-
-/* ═══ PAGE HEADER ═══ */
-.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:30px;flex-wrap:wrap;gap:14px}
-.ph h2{font-size:30px;font-weight:600;color:var(--ink);font-family:'Fraunces';letter-spacing:-.02em;line-height:1.15}
-.ph p{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.5}
-
-/* ═══ ALERTS ═══ */
-.al{padding:15px 20px;border-radius:13px;font-size:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:500;border:1px solid}
-.al-i{background:linear-gradient(90deg, var(--pu-soft), var(--pu-mist));border-color:var(--pu-ll);color:var(--pu-d)}
-.al-ok{background:linear-gradient(90deg, var(--ok-l), #ECFDF5);border-color:#6EE7B7;color:#065F46}
-.al-w{background:linear-gradient(90deg, var(--warn-l), #FFFBEB);border-color:#FCD34D;color:#854D0E}
-.fb{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-
-/* ═══ HOME HERO ═══ */
-.hero-home{background:linear-gradient(135deg, #FFFDF8 0%, #FAF6EE 100%);border-radius:22px;padding:36px 38px;color:var(--ink);position:relative;overflow:hidden;margin-bottom:28px;box-shadow:0 4px 24px rgba(49,28,93,.06),0 1px 0 rgba(255,255,255,.5) inset;border:1px solid var(--border)}
-.hero-home::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg, #311C5D, #6B3FB5, #9863F1, #6B3FB5, #311C5D)}
-.hero-home::after{content:'';position:absolute;bottom:-80px;right:-80px;width:280px;height:280px;background:radial-gradient(circle, rgba(152,99,241,.08), transparent 70%);border-radius:50%;pointer-events:none}
-.hero-deco-m{position:absolute;top:14px;right:22px;width:88px;height:88px;opacity:.06;pointer-events:none}
-.hero-deco-m img{width:100%;height:100%;object-fit:contain}
-.hero-greet{font-size:11.5px;color:var(--pu);font-weight:700;margin-bottom:8px;position:relative;letter-spacing:3px;text-transform:uppercase;font-family:'Readex Pro'}
-.hero-name{font-size:36px;font-weight:600;margin-bottom:22px;position:relative;font-family:'Fraunces';letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
-.hero-kpis{display:flex;gap:14px;flex-wrap:wrap;position:relative}
-.hero-kpi{background:#fff;padding:16px 22px;border-radius:14px;border:1px solid var(--border);transition:.25s;position:relative;overflow:hidden}
-.hero-kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg, #9863F1, #6B3FB5)}
-.hero-kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--pu-ll)}
-.hero-kpi .v{font-size:28px;font-weight:800;font-family:'Readex Pro';line-height:1.1;color:var(--pu-dd)}
-.hero-kpi .l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-top:3px}
-
-/* ═══ FILTER CHIPS ═══ */
-.filter-row{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
-.fchip{padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border-d);background:#fff;color:var(--muted);transition:.25s;font-family:'Readex Pro'}
-.fchip:hover{border-color:var(--pu-l);color:var(--pu-d);transform:translateY(-1px)}
-.fchip.on{background:var(--grad-pu);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(79,56,184,.28)}
-.fchip .n{opacity:.7;margin-left:5px;font-size:11px}
-.fchip.on .n{opacity:1}
-
-/* ═══ SECTION CARDS ═══ */
-.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px}
-.sec-c{background:var(--card);border-radius:18px;border:1.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.3s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh);position:relative;display:flex;flex-direction:column}
-.sec-c:hover{transform:translateY(-6px);box-shadow:var(--sh-lg);border-color:var(--pu-ll)}
-.sec-c-head{padding:24px 24px 20px;position:relative;overflow:hidden;color:#fff;min-height:120px}
-.sec-c-head::before{content:'';position:absolute;top:0;right:0;width:140px;height:140px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.12) 1.5px, transparent 2.5px);background-size:18px 18px;opacity:.6}
-.sec-c-head::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:radial-gradient(circle, rgba(255,255,255,.15), transparent 70%);border-radius:50%}
-.sec-c-icon{width:50px;height:50px;border-radius:14px;background:rgba(255,255,255,.22);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;position:relative;border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.sec-c-title{font-size:19px;font-weight:700;line-height:1.3;position:relative;font-family:'Readex Pro'}
-.sec-c-chip{position:absolute;top:18px;right:18px;background:rgba(0,0,0,.25);backdrop-filter:blur(10px);padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;z-index:2;border:1px solid rgba(255,255,255,.15);font-family:'Readex Pro'}
-.sec-c-new{position:absolute;top:18px;left:18px;background:linear-gradient(135deg,#9863F1,#6B3FB5);padding:5px 12px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:1px;color:#fff;z-index:2;font-family:'Readex Pro';box-shadow:0 4px 12px rgba(152,99,241,.45);animation:newPulse 2s ease-in-out infinite}
-@keyframes newPulse{0%,100%{box-shadow:0 4px 12px rgba(152,99,241,.45)}50%{box-shadow:0 4px 20px rgba(152,99,241,.75)}}
-.sec-c-body{padding:18px 24px 22px;flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
-.sec-c-desc{font-size:13.5px;color:var(--muted);line-height:1.55}
-.sec-c-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-weight:700;font-family:'Readex Pro'}
-.sec-c-progress{margin-top:4px}
-.sec-c-cert{margin-top:10px;padding:11px 14px;background:linear-gradient(90deg, var(--gold-soft), #FEF7E0);border:1px solid #FDE68A;border-radius:11px;font-size:12px;color:#854D0E;font-weight:700;display:flex;align-items:center;gap:9px;cursor:pointer;transition:.2s}
-.sec-c-cert:hover{background:linear-gradient(90deg, #FEF3C7, #FFFBEB);transform:translateX(2px)}
-
-/* ═══ SETUP SCREEN ═══ */
-.setup-wrap{min-height:100vh;background:radial-gradient(ellipse at 25% 25%, rgba(152,99,241,.18) 0, transparent 55%),linear-gradient(160deg, #1E1147 0%, #2D1A5C 50%, #311C5D 100%);display:flex;align-items:center;justify-content:center;padding:24px}
-.setup-card{background:#fff;border-radius:22px;padding:42px;max-width:560px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1)}
-.setup-card h2{font-size:26px;font-weight:600;color:var(--ink);margin-bottom:6px;font-family:'Fraunces'}
-.db-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:99px;font-size:11.5px;font-weight:700;margin-bottom:0;letter-spacing:.3px;font-family:'Readex Pro'}
-.db-demo{background:var(--warn-l);color:#854D0E;border:1px solid #FDE68A}
-.db-live{background:var(--ok-l);color:#065F46;border:1px solid #6EE7B7}
-
-/* ═══ ACKNOWLEDGEMENTS ═══ */
-.ack-memo-card{background:var(--card);border-radius:18px;overflow:hidden;margin-bottom:24px;box-shadow:var(--sh-md);border:2px solid var(--border);transition:.25s}
-.ack-memo-card.signed{border-color:var(--ok)}
-.ack-memo-card.pending{border-color:#FCD34D}
-.ack-header{padding:22px 26px;color:#fff;position:relative;overflow:hidden}
-.ack-header::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.1) 1.5px, transparent 2px);background-size:18px 18px;opacity:.5}
-.ack-body{padding:24px 28px}
-.ack-content{background:var(--pu-mist);border-radius:14px;padding:22px 24px;border:1px solid var(--border);font-size:14.5px;line-height:1.85;color:var(--text);white-space:pre-wrap;font-family:'Readex Pro';margin-bottom:20px;max-height:400px;overflow-y:auto}
-.ack-sign-box{background:linear-gradient(135deg,var(--pu-mist),var(--pu-tint));border:2px solid var(--pu-ll);border-radius:16px;padding:22px 24px}
-.ack-signed-banner{background:linear-gradient(90deg,var(--ok-l),#ECFDF5);border:1.5px solid #6EE7B7;border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:14px}
-
-/* ═══ ACTIVITY LOG ═══ */
-.log-row-new{background:linear-gradient(90deg,#FFFBEB,var(--card) 40%)}
-.log-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--err);color:#fff;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:800;min-width:18px;line-height:1.4}
-
-/* ═══ RESPONSIVE ═══ */
-@media(max-width:768px){
-  .lw{flex-direction:column;min-height:100vh}
-  .ll{flex:none;width:100%;min-height:46vh;padding:36px 22px 26px}
-  .ll-content{max-width:100%}
-  .ll-logo-wrap{width:120px;height:120px;margin-bottom:18px}
-  .ll-logo{width:96px;height:96px;padding:14px}
-  .ll-meena-text{max-width:170px;max-height:90px;margin-bottom:8px}
-  .ll p{font-size:13px;line-height:1.6;padding:0 8px}
-  .ll-sub{font-size:10.5px;letter-spacing:4px;margin-bottom:12px}
-  .ll-divider{margin:10px auto 14px}
-  .ll-footer{position:static;margin-top:20px;padding:0;font-size:10px;letter-spacing:2px}
-  .lr{width:100%;padding:32px 22px;flex:1;background:var(--cream)}
-  .lr::before{display:none}
-  .lb{max-width:100%}
-  .lb h2{font-size:26px}
-  .lb p{font-size:13.5px;margin-bottom:24px}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .bar-nav{display:none}
-  .bar-logo-text .sub{display:none}
-  .cert-in{padding:24px}
-  .c-ttl{font-size:24px}.c-name{font-size:22px}
-  .pdf-frame{height:500px}
-  .pg{padding:20px 14px}
-  .pg-sm{padding:20px 14px}
-  .bar{padding:0 14px;height:62px}
-  .back-bar{padding:10px 14px}
-  .q-card{padding:22px}
-  .q-txt{font-size:16px}
-  .opt{padding:12px 14px;font-size:14px}
-  .modal{padding:22px;border-radius:16px}
-  .fg2{grid-template-columns:1fr}
-  .cert-out{padding:14px}
-  .tw{font-size:13px}
-  th,td{padding:11px 13px}
-  .btn.blg{padding:13px 22px;font-size:14px}
-  .c-meta{flex-direction:column;gap:18px;align-items:center}
-  .c-org{font-size:24px}.c-sec{font-size:20px}
-  .hero-home{padding:24px 22px;border-radius:18px}
-  .hero-name{font-size:26px}
-  .ph h2{font-size:24px}
-  .sec-grid{grid-template-columns:1fr}
-  .ack-body{padding:16px 18px}
-  .ack-content{font-size:13.5px;padding:16px 18px}
-}
-@media(max-width:420px){
-  .bar-logo-text .name{font-size:14px}
-  .bar-user span:not(.badge){display:none}
-  .c-stamp{display:none}
-  .ll{min-height:42vh;padding:30px 18px 22px}
-  .ll-logo-wrap{width:104px;height:104px}
-  .ll-logo{width:84px;height:84px;padding:12px}
-  .ll-meena-text{max-width:150px;max-height:78px}
-  .ll p{font-size:12.5px}
-  .lr{padding:28px 18px}
-  .lb h2{font-size:24px}
-}
-@media print{
-  .no-print{display:none!important}
-  body{background:#fff;margin:0;padding:0}
-  body::before{display:none}
-  #site-footer{display:none!important}
-  #app{min-height:unset}
-  /* A4 memo certificate print styles */
-  .memo-cert-wrap{
-    width:210mm;min-height:297mm;
-    margin:0 auto;padding:0;
-    page-break-after:always;
+// ════════════════════════════════════════════════════════════════
+// RENDER ROUTER
+// ════════════════════════════════════════════════════════════════
+async function render(){
+  if(!U&&PAGE!=='login'&&PAGE!=='setup'&&PAGE!=='verify'){ pageLogin(); return; }
+  switch(PAGE){
+    case 'login':    pageLogin(); break;
+    case 'setup':    pageSetup(); break;
+    case 'verify':   pageVerify(); break;
+    case 'ack':      await pageAcknowledgements(); break;
+    case 'amemos':   await pageAdminMemos(); break;
+    case 'alog':     pageAdminActivityLog(); break;
+    case 'home':     U.role==='admin'?await pageAdminDash():await pageHome(); break;
+    case 'section':  await pageSection(PAR.id); break;
+    case 'lecture':  await pageLecture(PAR.id); break;
+    case 'quiz':     await pageQuiz(PAR.id); break;
+    case 'cert':     await pageCert(PAR.id); break;
+    case 'adash':    await pageAdminDash(); break;
+    case 'asections':await pageAdminSections(); break;
+    case 'alectures':await pageAdminLectures(PAR.id); break;
+    case 'aquestions':await pageAdminQuestions(PAR.id); break;
+    case 'aslides':  await pageAdminSlides(PAR.id); break;
+    case 'astaff':   await pageAdminStaff(); break;
+    case 'astaff1':  await pageAdminStaff1(PAR.id); break;
+    case 'acerts':   await pageAdminCerts(); break;
+    case 'abrand':   await pageAdminBrand(); break;
+    default:         await pageHome();
   }
-  .memo-cert-page{
-    width:210mm;min-height:297mm;
-    padding:18mm 20mm;
-    box-sizing:border-box;
-    position:relative;
-    background:#fff;
-  }
-  .memo-cert-header{
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
-  }
-  /* Force colors in print */
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  /* Hide scrollbars */
-  .ack-content{max-height:none!important;overflow:visible!important}
 }
-</style>
-</head>
-<body>
-<div id="app"></div>
-<div id="toast"></div>
-<script>
+
+// ════════════════════════════════════════════════════════════════
+// SETUP PAGE
+// ════════════════════════════════════════════════════════════════
+function pageSetup(){
+  document.getElementById('app').innerHTML=`
+  <div class="setup-wrap">
+    <div class="setup-card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <div style="width:60px;height:60px;background:var(--pu-soft);border-radius:16px;display:flex;align-items:center;justify-content:center">${meenaLogo(48,'colored')}</div>
+        <div><h2>Connect Database</h2><p style="color:var(--muted);font-size:13px">Real-time sync across devices</p></div>
+      </div>
+      <div style="background:var(--pu-mist);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:22px;font-size:13px;color:var(--pu-d)">
+        📌 Get these from your Supabase project: <strong>Settings → API</strong>
+      </div>
+      <div class="fg"><label>Project URL</label><input id="sb-url" placeholder="https://xxxxxxxxxxx.supabase.co" value="${SB_URL}"></div>
+      <div class="fg"><label>Anon / Public Key</label><input id="sb-key" placeholder="eyJhbGci..." value="${SB_KEY}"></div>
+      <button class="btn bp blg" style="width:100%;margin-bottom:12px" onclick="saveSupabase()">🔗 Connect &amp; Save</button>
+      <button class="btn bg2" style="width:100%" onclick="go('login')">Continue in Demo Mode</button>
+    </div>
+  </div>`;
+}
+function saveSupabase(){
+  const url=document.getElementById('sb-url').value.trim();
+  const key=document.getElementById('sb-key').value.trim();
+  if(url) localStorage.setItem('sb_url',url);
+  if(key) localStorage.setItem('sb_key',key);
+  toast('Saved! Reloading...','ok');
+  setTimeout(()=>location.reload(),1000);
+}
+
+// ════════════════════════════════════════════════════════════════
+// LOGIN PAGE
+// ════════════════════════════════════════════════════════════════
+function pageLogin(){
+  document.getElementById('app').innerHTML=`
+  <div class="lw">
+    <div class="ll">
+      <div class="ll-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="ll-content">
+        <!-- Logo: M icon -->
+        <div class="ll-logo-wrap">
+          <div class="ll-logo" style="background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(196,181,253,.25)">
+            <img src="${DEFAULT_BRAND_LOGO}" alt="Meena Logo"
+              style="width:96px;height:96px;object-fit:contain;
+                     filter:drop-shadow(0 4px 20px rgba(152,99,241,.6));
+                     animation:logoBreath 3.5s ease-in-out infinite">
+          </div>
+        </div>
+        <!-- Meena text wordmark -->
+        <img src="${DEFAULT_MEENA_TEXT}" alt="meena"
+          style="display:block;margin:0 auto 14px;
+                 width:auto;max-width:320px;min-width:240px;height:auto;max-height:140px;
+                 object-fit:contain;
+                 filter:drop-shadow(0 2px 10px rgba(255,255,255,.3));
+                 animation:meenaFadeIn 1s .6s ease-out backwards">
+        <div class="ll-divider"></div>
+        <div class="ll-sub">Home Health Care</div>
+        <p>Empowering nurses through continuous education and professional excellence</p>
+      </div>
+      <div class="ll-footer">RIYADH · KSA</div>
+    </div>
+    <div class="lr"><div class="lb">
+      <div class="lb-greet">Welcome Back</div>
+      <h2>Sign in</h2>
+      <p>Access your training dashboard and continue your learning journey.</p>
+      <div class="rt">
+        <div class="rb on" id="r-e" onclick="setRole('employee')">👩‍⚕️ Employee</div>
+        <div class="rb" id="r-a" onclick="setRole('admin')">⚙ Admin</div>
+      </div>
+      <div class="fg"><label>Employee Number <span style="color:var(--muted);font-weight:500">(رقم الموظف)</span></label>
+        <input id="bid" placeholder="Enter your employee number" autocomplete="off"></div>
+      <div class="fg"><label id="pw-label">Iqama Number <span style="color:var(--muted);font-weight:500">(رقم الإقامة)</span></label>
+        <div style="position:relative">
+          <input id="bpw" type="password" placeholder="Enter your iqama number"
+            onkeydown="if(event.key==='Enter')doLogin()"
+            style="padding-right:46px">
+          <button onclick="togglePw()" type="button"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                   background:none;border:none;cursor:pointer;padding:4px;
+                   color:var(--muted);font-size:18px;line-height:1;transition:.2s"
+            title="Show/hide password" id="pw-eye">👁</button>
+        </div>
+      </div>
+      <div id="lerr" style="color:#9F1239;font-size:13px;margin-bottom:14px;display:none;font-weight:600;background:var(--err-l);padding:11px 15px;border-radius:10px;border:1px solid #FCA5A5"></div>
+      <button class="btn bp blg" style="width:100%" onclick="doLogin()">Sign In →</button>
+      <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <button onclick="go('verify')" style="background:transparent;border:none;color:var(--pu-d);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;font-family:inherit;transition:.2s" onmouseover="this.style.background='var(--pu-soft)'" onmouseout="this.style.background='transparent'">
+          🔍 Verify a Certificate
+        </button>
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:10.5px;color:var(--muted);letter-spacing:1px;font-weight:600;font-family:'Readex Pro'">
+        Created by Reman Badawood · Meena Health © 2026
+      </div>
+    </div></div>
+  </div>`;
+}
+let _role='employee';
+function togglePw(){
+  const inp=document.getElementById('bpw');
+  const eye=document.getElementById('pw-eye');
+  if(!inp) return;
+  if(inp.type==='password'){
+    inp.type='text';
+    if(eye) eye.textContent='🙈';
+  } else {
+    inp.type='password';
+    if(eye) eye.textContent='👁';
+  }
+}
+function setRole(r){
+  _role=r;
+  document.getElementById('r-e').classList.toggle('on',r==='employee');
+  document.getElementById('r-a').classList.toggle('on',r==='admin');
+  const lbl=document.getElementById('pw-label');
+  if(lbl) lbl.innerHTML=r==='admin'?'Password':'Iqama Number <span style="color:var(--muted);font-weight:500">(رقم الإقامة)</span>';
+}
+async function doLogin(){
+  const b=document.getElementById('bid').value.trim(), p=document.getElementById('bpw').value.trim();
+  const showErr=m=>{ const e=document.getElementById('lerr'); e.textContent=m; e.style.display='block'; };
+  if(!b||!p){ showErr('Please enter employee number and iqama number'); return; }
+  const u=await db.userByBadge(b);
+  if(!u){ showErr('Employee number not found'); return; }
+  if(u.iqama_number!==p){ showErr('Incorrect iqama number'); return; }
+  if(_role==='admin'&&u.role!=='admin'){ showErr('No admin access for this account'); return; }
+  setU(u); toast('Welcome, '+u.name+'! 👋','ok'); go('home');
+}
+
+// ════════════════════════════════════════════════════════════════
+// EMPLOYEE HOME
+// ════════════════════════════════════════════════════════════════
+async function pageHome(){
+  await ensureDefaultSections();
+  try{
+    const _allSecs=await db.sections();
+    for(const _s of _allSecs){ await checkAndAutoIssueCert(_s.id); }
+    if(localStorage.getItem(_seenSecsKey())===null){ _markSectionsAsSeen(_allSecs.map(s=>s.id)); }
+  } catch(e){ console.warn('Cert sweep:',e); }
+
+  const secs=await db.sections();
+  const comps=await db.completions(U.id);
+  const allAtts=await db.attempts(U.id);
+  const certs=await db.certs(U.id);
+
+  const cardData=await Promise.all(secs.map(async sec=>{
+    const lecs=await db.lectures(sec.id);
+    let doneCount=0;
+    for(const l of lecs){
+      const watched=comps.find(c=>c.lecture_id===l.id);
+      const passed=l.has_quiz?allAtts.some(a=>a.lecture_id===l.id&&a.passed):true;
+      if(watched&&passed) doneCount++;
+    }
+    const pct=lecs.length?Math.round(doneCount/lecs.length*100):0;
+    const hasCert=certs.find(c=>c.section_id===sec.id);
+    const status=lecs.length===0?'empty':pct===100?'completed':pct>0?'inprogress':'notstarted';
+    return{sec,lecs,total:lecs.length,doneCount,pct,hasCert,remaining:lecs.length-doneCount,status};
+  }));
+
+  const sortOrder={inprogress:1,notstarted:2,completed:3,empty:4};
+  cardData.sort((a,b)=>sortOrder[a.status]-sortOrder[b.status]);
+  const filtered=HOME_FILTER==='all'?cardData:cardData.filter(c=>c.status===HOME_FILTER);
+  const counts={all:cardData.length,inprogress:cardData.filter(c=>c.status==='inprogress').length,notstarted:cardData.filter(c=>c.status==='notstarted').length,completed:cardData.filter(c=>c.status==='completed').length};
+  const completedSecs=cardData.filter(c=>c.status==='completed').length;
+  const totalLecs=cardData.reduce((s,c)=>s+c.total,0);
+  const completedLecs=cardData.reduce((s,c)=>s+c.doneCount,0);
+
+  // Pending memos badge
+  const memos=ackDb.getMemos().filter(m=>m.active);
+  const pendingMemos=memos.filter(m=>!ackDb.hasSigned(m.id,U.id)).length;
+
+  const cardsHtml=filtered.map(({sec,lecs,total,doneCount,pct,hasCert,status})=>{
+    const theme=themeFor(sec.title);
+    const isNew=_isSectionNew(sec.id);
+    let statusChip='',statusBar='var(--border)',clickable=true;
+    if(status==='completed'){
+      statusChip=`<span class="sec-c-chip" style="background:rgba(16,185,129,.92);border-color:rgba(255,255,255,.3);color:#fff">✓ Complete</span>`;
+      statusBar='linear-gradient(90deg, var(--ok), #34D399)';
+    } else if(status==='inprogress'){
+      statusChip=`<span class="sec-c-chip">📖 ${doneCount}/${total}</span>`;
+      statusBar='linear-gradient(90deg, var(--pu), var(--pu-l))';
+    } else if(status==='empty'){
+      statusChip=`<span class="sec-c-chip" style="background:rgba(0,0,0,.4)">🔜 Soon</span>`;
+      clickable=false;
+    } else {
+      statusChip=`<span class="sec-c-chip">✨ New</span>`;
+    }
+    const clickAttr=clickable?`onclick="go('section',{id:'${sec.id}'},{page:'home',par:{},label:'Home'})"`:`onclick="toast('No lectures yet — check back soon!','')"`; 
+    const cursor=clickable?'pointer':'default';
+    const progressHtml=total>0?`
+      <div class="sec-c-progress">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-family:'Readex Pro'">Progress</span>
+          <span style="font-size:12px;font-weight:800;color:${status==='completed'?'var(--ok)':'var(--pu-d)'};font-family:'Readex Pro'">${pct}%</span>
+        </div>
+        <div style="height:7px;background:var(--pu-soft);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${statusBar};border-radius:99px;transition:width .6s"></div>
+        </div>
+      </div>`:`
+      <div style="padding:11px 14px;background:var(--pu-mist);border:1px dashed var(--border-d);border-radius:11px;text-align:center;font-size:12px;color:var(--muted);font-weight:600">
+        🔜 Lectures will be added soon
+      </div>`;
+    const certHtml=hasCert?`<div class="sec-c-cert" onclick="event.stopPropagation();go('cert',{id:'${hasCert.id}'},{page:'home',par:{},label:'Home'})">
+      🏆 Certificate · <span style="font-family:'Readex Pro';font-weight:800">${hasCert.ref_number}</span>
+    </div>`:'';
+    const lecTitles=lecs.map(l=>l.title).join(' ');
+    const searchData=(sec.title+' '+(sec.description||'')+' '+lecTitles).toLowerCase();
+    return`<div class="sec-c" ${clickAttr} data-search="${searchData.replace(/"/g,'&quot;')}" style="cursor:${cursor};${status==='empty'?'opacity:.85':''}">
+      <div class="sec-c-head" style="background:${theme.grad}">
+        ${isNew?`<span class="sec-c-new">✨ NEW</span>`:''}
+        ${statusChip}
+        <div class="sec-c-icon">${theme.icon}</div>
+        <div class="sec-c-title">${sec.title}</div>
+      </div>
+      <div class="sec-c-body">
+        <div>${sec.description?`<div class="sec-c-desc">${sec.description}</div>`:''}</div>
+        <div>
+          <div class="sec-c-meta" style="margin-bottom:8px">
+            <span>📖 ${total} ${total===1?'lecture':'lectures'}</span>
+            ${status==='completed'?'<span style="color:var(--ok)">✓ Done</span>':status==='inprogress'?`<span style="color:var(--pu-d)">${total-doneCount} left</span>`:''}
+          </div>
+          ${progressHtml}
+          ${certHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let certsHtml='';
+  if(certs.length){
+    const certItems=certs.map(cert=>{
+      const s=secs.find(x=>x.id===cert.section_id);
+      const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+      return`<div class="my-cert-item" role="button" tabindex="0" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">
+        <div style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(245,158,11,.25)">🏆</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--ink);font-family:'Readex Pro'">${s?s.title:'Certificate'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${date} · <span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d)">${cert.ref_number}</span></div>
+        </div>
+        <span style="color:var(--pu);font-size:13px;font-weight:700">View →</span>
+      </div>`;
+    }).join('');
+    certsHtml=`<div style="margin-top:40px"><h3 style="font-size:22px;font-weight:600;color:var(--ink);margin-bottom:18px;font-family:'Fraunces'">🏆 My Certificates</h3>${certItems}</div>`;
+  }
+
+  const filterChip=(k,label)=>`<div class="fchip ${HOME_FILTER===k?'on':''}" onclick="setHomeFilter('${k}')">${label} <span class="n">${counts[k]}</span></div>`;
+
+  document.getElementById('app').innerHTML=bar()+`<div class="pg">
+    ${pendingMemos>0?`<div class="al al-w" style="cursor:pointer" onclick="go('ack')">
+      📋 <strong>You have ${pendingMemos} pending memo${pendingMemos>1?'s':''}</strong> requiring your acknowledgement. 
+      <button class="btn bp bsm" onclick="event.stopPropagation();go('ack')">View &amp; Sign →</button>
+    </div>`:''}
+    <div class="hero-home">
+      <div class="hero-deco-m"><img src="${DEFAULT_BRAND_LOGO}" alt=""></div>
+      <div class="hero-greet">Welcome back 👋</div>
+      <div class="hero-name">${U.name}</div>
+      <div class="hero-kpis">
+        <div class="hero-kpi"><div class="v">${completedSecs}/${cardData.filter(c=>c.status!=='empty').length||cardData.length}</div><div class="l">Sections</div></div>
+        <div class="hero-kpi"><div class="v">${completedLecs}/${totalLecs}</div><div class="l">Lectures</div></div>
+        <div class="hero-kpi"><div class="v">${certs.length}</div><div class="l">Certificates</div></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <h3 style="font-size:22px;font-weight:600;color:var(--ink);font-family:'Fraunces'">Training Sections</h3>
+    </div>
+    <div style="background:var(--card);border-radius:14px;padding:12px 18px;margin-bottom:14px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;box-shadow:var(--sh)">
+      <span style="font-size:17px">🔍</span>
+      <input id="lec-search" placeholder="Search lectures or sections..." style="flex:1;border:none;outline:none;background:transparent;font-size:14px;font-family:inherit;padding:5px 0" oninput="filterHomeContent(this.value)">
+      <span id="lec-search-status" style="font-size:11.5px;color:var(--muted);font-weight:600"></span>
+    </div>
+    <div class="filter-row">
+      ${filterChip('all','All')}
+      ${filterChip('inprogress','📖 In Progress')}
+      ${filterChip('notstarted','🆕 Not Started')}
+      ${filterChip('completed','✅ Completed')}
+    </div>
+    <div class="sec-grid">
+      ${cardsHtml||`<div style="text-align:center;padding:60px;color:var(--muted);grid-column:1/-1;background:var(--card);border-radius:18px;border:1px dashed var(--border-d)">
+        <p style="font-size:48px">📭</p>
+        <p style="margin-top:12px;font-weight:600">No sections match this filter</p>
+        <button class="btn bg2" style="margin-top:14px" onclick="setHomeFilter('all')">Show all sections</button>
+      </div>`}
+    </div>
+    ${certsHtml}
+  </div>`;
+}
+function setHomeFilter(f){ HOME_FILTER=f; pageHome(); }
+function filterHomeContent(query){
+  const q=(query||'').toLowerCase().trim();
+  const cards=document.querySelectorAll('.sec-c');
+  let matched=0;
+  cards.forEach(c=>{ const text=c.getAttribute('data-search')||''; const show=!q||text.includes(q); c.style.display=show?'':'none'; if(show) matched++; });
+  const status=document.getElementById('lec-search-status');
+  if(status) status.textContent=q?(matched+' match'+(matched===1?'':'es')):'';
+  const fr=document.querySelector('.filter-row');
+  if(fr) fr.style.opacity=q?'.5':'1';
+}
+
+// ════════════════════════════════════════════════════════════════
+// SECTION PAGE
+// ════════════════════════════════════════════════════════════════
+async function pageSection(sid){
+  if(U) _markSectionsAsSeen([sid]);
+  const secs=await db.sections(), sec=secs.find(s=>s.id===sid);
+  if(!sec){ go('home'); return; }
+  const lecs=await db.lectures(sid), comps=await db.completions(U.id), certs=await db.certs(U.id);
+  const hasCert=certs.find(c=>c.section_id===sid);
+  const quizResults=await Promise.all(lecs.map(async l=>({
+    watched:!!comps.find(c=>c.lecture_id===l.id),
+    passed:l.has_quiz?await db.hasPassed(U.id,l.id):true
+  })));
+  const allDone=lecs.length>0&&quizResults.every(r=>r.watched&&r.passed);
+  const stepOf=l=>l.sequence_step||(l.is_prerequisite?1:0);
+  const sequentialLecs=lecs.filter(l=>stepOf(l)>0);
+  const stepsGrouped={};
+  sequentialLecs.forEach(l=>{ const s=stepOf(l); (stepsGrouped[s]=stepsGrouped[s]||[]).push(l); });
+  const sortedSteps=Object.keys(stepsGrouped).map(Number).sort((a,b)=>a-b);
+  const isDone=async l=>{ const w=!!comps.find(c=>c.lecture_id===l.id); const p=l.has_quiz?await db.hasPassed(U.id,l.id):true; return w&&p; };
+  const stepDone={};
+  for(const step of sortedSteps){ const results=await Promise.all(stepsGrouped[step].map(isDone)); stepDone[step]=results.every(Boolean); }
+  const allSeqDone=sortedSteps.every(s=>stepDone[s]);
+  const lockOf=l=>{ const step=stepOf(l); if(step===0) return sortedSteps.length>0&&!allSeqDone; const prevSteps=sortedSteps.filter(s=>s<step); return prevSteps.some(s=>!stepDone[s]); };
+  const pendingSteps=sortedSteps.filter(s=>!stepDone[s]);
+  const nextPendingStep=pendingSteps[0];
+  const nextPendingNames=nextPendingStep?stepsGrouped[nextPendingStep].map(l=>l.title):[];
+
+  const items=await Promise.all(lecs.map(async lec=>{
+    const watched=comps.find(c=>c.lecture_id===lec.id);
+    const quizPassed=lec.has_quiz?await db.hasPassed(U.id,lec.id):true;
+    const done=watched&&quizPassed;
+    const typeIcon=lec.type==='youtube'?'▶':lec.type==='video'?'🎬':lec.type==='interactive'?'🎓':'📄';
+    const typeLabel=lec.type==='youtube'?'Video lecture':lec.type==='video'?'Video file':lec.type==='interactive'?'Interactive slides':'Presentation / PDF';
+    const step=stepOf(lec);
+    const isLocked=lockOf(lec);
+    let badge='';
+    if(isLocked) badge=`<span class="bdg" style="background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB">🔒 Locked</span>`;
+    else if(lec.has_quiz){
+      if(done) badge=`<span class="bdg bdg-ok">✓ Done</span>`;
+      else if(watched) badge=`<span class="bdg" style="background:var(--err-l);color:#9F1239;border:1px solid #FCA5A5">↻ Retake Quiz</span>`;
+      else badge=`<span class="bdg bdg-q">📝 Quiz</span>`;
+    } else { badge=done?`<span class="bdg bdg-ok">✓ Done</span>`:`<span class="bdg bdg-w">${typeIcon} View</span>`; }
+    const stepBadge=step>0?`<span class="bdg" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;margin-right:6px">⭐ Step ${step}</span>`:'';
+    const interChip=lec.type==='interactive'?` <span style="font-size:11px;color:var(--pu-d);font-weight:600">${(getSlidesData(lec.id)||[]).length} slides</span>`:'';
+    const clickHandler=isLocked?`onclick="toast('🔒 Complete previous step first','')"`:`onclick="go('lecture',{id:'${lec.id}'},{page:'section',par:{id:'${sid}'},label:'Back to Section'})"`;
+    const rowStyle=isLocked?'opacity:.55;background:#FAFAFA;':step>0?'border-left:4px solid #F59E0B;background:linear-gradient(90deg,#FFFBEB,var(--card) 40%)':'';
+    return`<div class="lec-item ${done?'done':''}" style="${rowStyle}" ${clickHandler}>
+      <div class="lec-ico" style="${isLocked?'filter:grayscale(1);opacity:.7':''}">${isLocked?'🔒':typeIcon}</div>
+      <div class="lec-info"><h4>${lec.title}${interChip}</h4><span>${typeLabel}${lec.has_quiz?' · Includes quiz':''}</span></div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end">${stepBadge}${badge}</div>
+    </div>`;
+  }));
+
+  const prereqBanner=sortedSteps.length>0&&!allSeqDone?`<div class="al al-w"><span>⭐ <strong>Follow the sequence:</strong> Complete <strong>Step ${nextPendingStep}</strong> (${nextPendingNames.join(', ')}) to unlock the next step.</span></div>`:'';
+  let activeCert=hasCert;
+  if(allDone&&!activeCert) activeCert=await checkAndAutoIssueCert(sid);
+  const banner=activeCert?`<div class="al al-ok"><span>🏆 <strong>Certificate earned!</strong> You completed all lectures in this section.</span><button class="btn bp bsm" onclick="go('cert',{id:'${activeCert.id}'},{page:'section',par:{id:'${sid}'},label:'Back'})">🏆 View Certificate</button></div>`:prereqBanner;
+  const theme=themeFor(sec.title);
+
+  document.getElementById('app').innerHTML=bar()+`<div class="pg">
+    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><span>${sec.title}</span></div>
+    <div style="background:${theme.grad};border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:26px;position:relative;overflow:hidden;box-shadow:var(--sh-md)">
+      <div style="position:absolute;top:0;right:0;width:240px;height:240px;background-image:radial-gradient(circle at 30% 30%, rgba(255,255,255,.1) 1.5px, transparent 2.5px);background-size:22px 22px;opacity:.5;pointer-events:none"></div>
+      <div style="width:60px;height:60px;border-radius:16px;background:rgba(255,255,255,.22);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;position:relative;border:1px solid rgba(255,255,255,.25)">${theme.icon}</div>
+      <h2 style="font-size:28px;font-weight:600;position:relative;font-family:'Fraunces'">${sec.title}</h2>
+      ${sec.description?`<p style="margin-top:8px;opacity:.88;font-size:14.5px;position:relative;line-height:1.5;max-width:680px">${sec.description}</p>`:''}
+    </div>
+    ${banner}
+    <div>${items.join('')||`<div style="text-align:center;padding:60px 20px;background:var(--card);border-radius:var(--r);border:1px dashed var(--border-d);color:var(--muted)">
+      <div style="font-size:46px;margin-bottom:12px">🔜</div>
+      <p style="font-weight:700;color:var(--ink)">No lectures yet</p>
+      <p style="font-size:13px;margin-top:6px">Lectures will be added soon — check back later!</p>
+    </div>`}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// LECTURE PAGE
+// ════════════════════════════════════════════════════════════════
+let vidDone=false;
+async function pageLecture(lid){
+  const lec=await db.lecture(lid); if(!lec){ go('home'); return; }
+  const sectionLecs=await db.lectures(lec.section_id);
+  const stepOf=l=>l.sequence_step||(l.is_prerequisite?1:0);
+  const myStep=stepOf(lec);
+  const allStepLecs=sectionLecs.filter(l=>stepOf(l)>0);
+  if(allStepLecs.length){
+    const comps2=await db.completions(U.id);
+    const stepsGrouped={};
+    allStepLecs.forEach(l=>{ const s=stepOf(l); (stepsGrouped[s]=stepsGrouped[s]||[]).push(l); });
+    const sortedSteps=Object.keys(stepsGrouped).map(Number).sort((a,b)=>a-b);
+    const isDone=async l=>{ const w=!!comps2.find(c=>c.lecture_id===l.id); const p=l.has_quiz?await db.hasPassed(U.id,l.id):true; return w&&p; };
+    const stepDone={};
+    for(const s of sortedSteps){ const r=await Promise.all(stepsGrouped[s].map(isDone)); stepDone[s]=r.every(Boolean); }
+    let locked=false;
+    if(myStep===0) locked=!sortedSteps.every(s=>stepDone[s]);
+    else{ const prev=sortedSteps.filter(s=>s<myStep); locked=prev.some(s=>!stepDone[s]); }
+    if(locked){ toast('🔒 Complete the previous step first','er'); go('section',{id:lec.section_id}); return; }
+  }
+  if(lec.type==='interactive') return pageInteractive(lid);
+  const secs=await db.sections(), sec=secs.find(s=>s.id===lec.section_id);
+  vidDone=await db.isCompleted(U.id,lid);
+  const passed=lec.has_quiz?await db.hasPassed(U.id,lid):true;
+  let content='';
+  if(lec.type==='youtube') content=buildYT(lec.url,lid);
+  else if(lec.type==='video') content=buildVideo(lid,lec);
+  else content=buildFileViewer(lid,lec);
+
+  let actionBtns='';
+  if(vidDone&&lec.has_quiz&&passed){
+    actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✓ Quiz passed!</div>`;
+    actionBtns+=`<button class="btn bg2 blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">↻ Retake Quiz</button>`;
+  } else if(lec.has_quiz){
+    if(!vidDone) actionBtns=`<button class="btn bg2 blg" onclick="markWatchedManual('${lid}')">✓ I've finished — Unlock Quiz</button>`;
+    else actionBtns=`<button class="btn bp blg" onclick="go('quiz',{id:'${lid}'},{page:'lecture',par:{id:'${lid}'},label:'Back to Lecture'})">📝 Take Quiz</button>`;
+  } else {
+    if(vidDone) actionBtns=`<div class="al al-ok" style="margin:0;flex:1">✓ Marked as viewed</div>`;
+    else actionBtns=`<button class="btn bp blg" onclick="markDone('${lid}')">✓ Mark as complete</button>`;
+  }
+
+  // Next lecture button
+  const isCurrentDone=vidDone&&(lec.has_quiz?passed:true);
+  let nextBtn='';
+  if(isCurrentDone){
+    const sortedSecLecs=[...sectionLecs].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const curIdx=sortedSecLecs.findIndex(l=>l.id===lid);
+    const nextLec=curIdx>=0&&curIdx<sortedSecLecs.length-1?sortedSecLecs[curIdx+1]:null;
+    if(nextLec){
+      const nextTitle=nextLec.title.length>28?nextLec.title.slice(0,28)+'…':nextLec.title;
+      nextBtn=`<button class="btn bp blg" onclick="go('lecture',{id:'${nextLec.id}'},{page:'section',par:{id:'${lec.section_id}'},label:'Back to Section'})" title="${nextLec.title.replace(/"/g,'&quot;')}">${nextTitle} →</button>`;
+    } else {
+      nextBtn=`<button class="btn bmint blg" onclick="go('section',{id:'${lec.section_id}'})">🏁 Finish Section →</button>`;
+    }
+  }
+
+  document.getElementById('app').innerHTML=bar()+`<div class="pg pg-sm">
+    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec?sec.id:''}'},{page:'home',par:{},label:'Home'})">${sec?sec.title:''}</a><span>›</span><span>${lec.title}</span></div>
+    <div class="ph"><div><h2>${lec.title}</h2></div></div>
+    ${!vidDone?`<div class="al al-w" style="margin-bottom:16px">⚠ Watch / review all content to unlock the next step.</div>`:''}
+    ${content}
+    <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;align-items:center">
+      ${actionBtns}
+      ${nextBtn}
+    </div>
+  </div>`;
+  if(lec.type==='youtube') initYTListener(lid);
+}
+
+// ════════════════════════════════════════════════════════════════
+// YOUTUBE EMBED — fixed for both desktop and mobile
+// ════════════════════════════════════════════════════════════════
+function buildYT(videoId,lid){
+  if(!videoId) return`<div class="file-viewer"><div class="no-file"><div class="nfi">⚠️</div><h3>No YouTube ID set</h3><p>Admin needs to set a valid YouTube video ID.</p></div></div>`;
+  // Clean the video ID — remove any URL prefix if admin pasted full URL
+  let cleanId=videoId.trim();
+  if(cleanId.includes('youtube.com/watch')) cleanId=new URL(cleanId.includes('?')?cleanId:'https://x.com/?'+cleanId).searchParams.get('v')||cleanId;
+  if(cleanId.includes('youtu.be/')) cleanId=cleanId.split('youtu.be/')[1].split('?')[0];
+  if(cleanId.includes('embed/')) cleanId=cleanId.split('embed/')[1].split('?')[0];
+
+  return`<div class="vid-wrap">
+    <iframe id="yt-iframe"
+      src="https://www.youtube.com/embed/${cleanId}?rel=0&modestbranding=1&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      loading="lazy">
+    </iframe>
+  </div>
+  <div style="background:var(--pu-mist);border:1.5px solid var(--border);border-radius:11px;padding:11px 16px;font-size:12.5px;color:var(--pu-d);margin-bottom:10px;display:flex;align-items:center;gap:9px;font-weight:500">
+    💡 <span>Watch the full video. If it doesn't load, try opening in <a href="https://www.youtube.com/watch?v=${cleanId}" target="_blank" style="color:var(--pu);font-weight:700">YouTube directly</a>.</span>
+  </div>`;
+}
+
+function initYTListener(lid){
+  const iframe=document.getElementById('yt-iframe'); if(!iframe) return;
+  let playing=false;
+  const handler=function(e){
+    if(e.source!==iframe.contentWindow) return;
+    if(!e.data||typeof e.data!=='string') return;
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event==='onStateChange'){
+        if(d.info===1) playing=true;
+        if(d.info===0&&playing&&!vidDone){
+          (async()=>{
+            vidDone=true;
+            await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+            toast('✓ Video complete!','ok');
+            const lec=await db.lecture(lid);
+            if(lec) await checkAndAutoIssueCert(lec.section_id);
+            await pageLecture(lid);
+          })();
+        }
+      }
+    } catch(err){}
+  };
+  window.addEventListener('message',handler);
+  setTimeout(()=>{
+    try{
+      iframe.contentWindow.postMessage(JSON.stringify({event:'listening'}),'*');
+      iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'addEventListener',args:['onStateChange']}),'*');
+    } catch(e){}
+  },1500);
+}
+
+function buildVideo(lid,lec){
+  const fileUrl=lec.file_path||null;
+  const localFd=getFile(lid);
+  const src=fileUrl||(localFd?localFd.data:null);
+  const name=lec.file_name||localFd?.name||'Video';
+  if(!src) return`<div class="file-viewer"><div class="fv-header"><h4>🎬 ${lec.title}</h4></div><div class="no-file"><div class="nfi">⏳</div><h3>Video not uploaded yet</h3><p>The admin has not uploaded this video yet.<br>Please check back later.</p></div></div>`;
+  const sizeLabel=localFd&&localFd.size?(localFd.size>1048576?(localFd.size/1048576).toFixed(1)+' MB':Math.round(localFd.size/1024)+' KB'):'';
+  return`<div class="file-viewer">
+    <div class="fv-header"><h4>🎬 ${name} ${sizeLabel?`<span style="font-size:11px;opacity:.5;font-weight:500">${sizeLabel}</span>`:''}</h4></div>
+    <video id="vid-player" controls playsinline preload="metadata" style="width:100%;display:block;background:#000;aspect-ratio:16/9" onended="onVideoEnded('${lid}')">
+      <source src="${src}" type="${lec.file_type||'video/mp4'}">
+      Your browser doesn't support inline video.
+    </video>
+    <div class="fv-footer"><span style="color:rgba(255,255,255,.6);font-size:13px">📺 Watch the full video to complete this lecture</span></div>
+  </div>`;
+}
+
+async function onVideoEnded(lid){
+  if(vidDone) return;
+  vidDone=true;
+  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+  toast('✓ Video complete!','ok');
+  const lec=await db.lecture(lid);
+  if(lec) await checkAndAutoIssueCert(lec.section_id);
+  await pageLecture(lid);
+}
+
+function buildFileViewer(lid,lec){
+  const fileUrl=lec.file_path||null;
+  const localFd=getFile(lid);
+  const fd=fileUrl?{url:fileUrl,name:lec.file_name||'File',type:lec.file_type||'',size:0}:localFd;
+  if(!fd) return`<div class="file-viewer"><div class="fv-header"><h4>📄 ${lec.title}</h4></div><div class="no-file"><div class="nfi">⏳</div><h3>File not uploaded yet</h3><p>The admin has not uploaded this file yet.<br>Please check back later.</p></div></div>`;
+  const src=fd.url||fd.data;
+  const isPdf=fd.type==='application/pdf'||fd.name.endsWith('.pdf');
+  const sizeLabel=fd.size>0?(fd.size>1048576?(fd.size/1048576).toFixed(1)+' MB':Math.round(fd.size/1024)+' KB'):'';
+  const isPptx=fd.name.endsWith('.pptx')||fd.name.endsWith('.ppt');
+  let viewerHtml='';
+  if(isPdf){
+    const isLocalData=src.startsWith('data:');
+    if(isLocalData) viewerHtml=`<iframe class="pdf-frame" src="${src}#toolbar=0&navpanes=0"></iframe>`;
+    else viewerHtml=`<iframe class="pdf-frame" src="https://docs.google.com/viewer?url=${encodeURIComponent(src)}&embedded=true"></iframe>`;
+  } else if(isPptx&&fd.url){
+    viewerHtml=`<iframe class="pdf-frame" src="https://docs.google.com/gview?url=${encodeURIComponent(fd.url)}&embedded=true"></iframe>`;
+  } else {
+    viewerHtml=`<div style="padding:54px 30px;text-align:center"><div style="font-size:60px;margin-bottom:16px">📊</div><h3 style="color:#fff;font-size:18px;margin-bottom:8px;font-family:'Readex Pro'">${fd.name}</h3><p style="color:rgba(255,255,255,.5);font-size:14px;line-height:1.7;margin-bottom:20px">Upload as <strong style="color:var(--pu-l)">PDF format</strong> for best inline display.</p></div>`;
+  }
+  return`<div class="file-viewer" oncontextmenu="return false">
+    <div class="fv-header"><h4>📄 ${fd.name} ${sizeLabel?`<span style="font-size:11px;opacity:.5;font-weight:500">${sizeLabel}</span>`:''}</h4></div>
+    ${viewerHtml}
+    <div class="fv-footer"><span style="color:rgba(255,255,255,.6);font-size:13px">👁 View only — ${isPdf?'scroll through all pages':'review all slides'}</span></div>
+  </div>`;
+}
+
+async function markWatchedManual(lid){
+  try{
+    vidDone=true;
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    toast('✓ Marked as complete — quiz unlocked!','ok');
+    await pageLecture(lid);
+  } catch(e){ toast('❌ '+e.message,'er'); }
+}
+async function markDone(lid){
+  try{
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    toast('✓ Marked as viewed!','ok');
+    const lec=await db.lecture(lid);
+    if(lec) await checkAndAutoIssueCert(lec.section_id);
+    await pageLecture(lid);
+  } catch(e){ toast('❌ '+e.message,'er'); }
+}
+
+// ════════════════════════════════════════════════════════════════
+// QUIZ
+// ════════════════════════════════════════════════════════════════
+let QS={};
+async function pageQuiz(lid){
+  const lec=await db.lecture(lid); if(!lec){ go('home'); return; }
+  const all=await db.questions(lid);
+  if(!all.length){ toast('No questions available yet','er'); return; }
+  const quizCount=Math.min(lec.quiz_count||10,all.length);
+  const seed=Date.now();
+  const shuffleArr=arr=>[...arr].map(v=>({v,s:Math.sin(seed*Math.random())})).sort((a,b)=>a.s-b.s).map(x=>x.v);
+  const picked=shuffleArr(all).slice(0,quizCount);
+  const qs=picked.map(q=>{
+    const opts=shuffleArr([
+      {key:'a',text:q.option_a,correct:q.correct_answer==='a'},
+      {key:'b',text:q.option_b,correct:q.correct_answer==='b'},
+      {key:'c',text:q.option_c,correct:q.correct_answer==='c'},
+      {key:'d',text:q.option_d,correct:q.correct_answer==='d'}
+    ]);
+    return{...q,shuffled:opts};
+  });
+  QS={lid,qs,cur:0,ans:{},time:20*60,ti:null,done:false};
+  renderQ();
+  QS.ti=setInterval(()=>{
+    QS.time--;
+    const el=document.getElementById('qtimer');
+    if(el){ const m=String(Math.floor(QS.time/60)).padStart(2,'0'),s=String(QS.time%60).padStart(2,'0'); el.textContent='⏱ '+m+':'+s; if(QS.time<120) el.classList.add('red'); }
+    if(QS.time<=0){ clearInterval(QS.ti); submitQ(); }
+  },1000);
+}
+function renderQ(){
+  const q=QS.qs[QS.cur],tot=QS.qs.length,cur=QS.cur+1,sel=QS.ans[QS.cur];
+  const m=String(Math.floor(QS.time/60)).padStart(2,'0'),s=String(QS.time%60).padStart(2,'0');
+  const letters=['a','b','c','d'];
+  const opts=q.shuffled.map((opt,i)=>{
+    const k=letters[i];
+    return`<div class="opt ${sel===k?'sel':''}" onclick="selOpt('${k}')">
+      <div class="opt-l">${k.toUpperCase()}</div><span>${opt.text}</span></div>`;
+  }).join('');
+  document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:760px">
+    <div class="q-hdr">
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Question ${cur} of ${tot}</div>
+        <div class="pbar" style="width:240px;height:9px"><div class="pfill" style="width:${((cur/tot)*100).toFixed(0)}%"></div></div></div>
+      <div id="qtimer" class="timer ${QS.time<120?'red':''}">⏱ ${m}:${s}</div>
+    </div>
+    <div class="q-card"><div class="q-num">Question ${cur}</div><div class="q-txt">${q.question_text}</div><div class="opts">${opts}</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <button class="btn bg2" onclick="qnav(-1)" ${QS.cur===0?'disabled':''}>← Previous</button>
+      <span style="font-size:13px;color:var(--muted);font-weight:700">${Object.keys(QS.ans).length}/${tot} answered</span>
+      ${QS.cur<tot-1?`<button class="btn bp" onclick="qnav(1)">Next →</button>`:`<button class="btn bn blg" onclick="submitQ()">Submit ✓</button>`}
+    </div>
+  </div>`;
+}
+function selOpt(k){ QS.ans[QS.cur]=k; renderQ(); }
+function qnav(d){ QS.cur+=d; renderQ(); }
+async function submitQ(){
+  if(QS.done) return; QS.done=true; clearInterval(QS.ti);
+  const qs=QS.qs; let ok=0;
+  qs.forEach((q,i)=>{
+    const letters=['a','b','c','d'];
+    const selectedIdx=letters.indexOf(QS.ans[i]);
+    if(selectedIdx>=0&&q.shuffled[selectedIdx]?.correct) ok++;
+  });
+  const score=Math.round(ok/qs.length*100);
+  const lec0=await db.lecture(QS.lid);
+  const passPct=(lec0&&lec0.quiz_pass_pct)||100;
+  const passed=score>=passPct;
+  await db.addAttempt({user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
+  if(passed){ const lec=await db.lecture(QS.lid); if(lec) await checkAndAutoIssueCert(lec.section_id); }
+  document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:620px">
+    <div class="card" style="text-align:center;padding:54px 38px">
+      <div class="r-circle ${passed?'r-pass':'r-fail'}">${passed?'100%':score+'%'}</div>
+      <h2 style="font-size:32px;color:var(--ink);margin-bottom:10px;font-family:'Fraunces';font-weight:600">${passed?'🎉 Excellent!':'😔 Not Passed'}</h2>
+      <p style="color:var(--muted);margin-bottom:28px;font-size:15px;line-height:1.6">You got ${ok} out of ${qs.length} correct. ${passed?'Congratulations! 🎉':`You need ${passPct}% to pass. Please retry.`}</p>
+      <div style="background:var(--pu-mist);border-radius:16px;padding:24px;margin-bottom:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;border:1px solid var(--border)">
+        <div><div style="font-size:32px;font-weight:800;color:var(--ok);font-family:'Readex Pro'">${ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Correct</div></div>
+        <div><div style="font-size:32px;font-weight:800;color:var(--err);font-family:'Readex Pro'">${qs.length-ok}</div><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Incorrect</div></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        ${passed
+          ?`<button class="btn bp blg" onclick="goAfterQ()">View My Progress →</button>`
+          :`<button class="btn bp blg" onclick="go('lecture',{id:'${QS.lid}'},{page:'home',par:{},label:'Home'})">↻ Retake Quiz</button>`
+        }
+      </div>
+    </div>
+  </div>`;
+}
+async function goAfterQ(){ const lec=await db.lecture(QS.lid); go('section',{id:lec.section_id}); }
+
+// ════════════════════════════════════════════════════════════════
+// CERTIFICATE
+// ════════════════════════════════════════════════════════════════
+async function pageCert(id){
+  const cert=await db.certById(id); if(!cert){ go('home'); return; }
+  const secs=await db.sections(), sec=secs.find(s=>s.id===cert.section_id);
+  const users=await db.users(), u=users.find(x=>x.id===cert.user_id);
+  const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('app').innerHTML=bar()+`<div class="pg">
+    <div class="no-print" style="margin-bottom:22px;display:flex;gap:12px;justify-content:flex-end">
+      <button class="btn bp" onclick="window.print()">🖨 Print Certificate</button>
+      <button class="btn bg2" onclick="goBack()">← Back</button>
+    </div>
+    <div class="cert-pg"><div class="cert-out"><div class="cert-in">
+      <div class="c-wm">MEENA</div><div class="c-stamp">MEENA<br>HEALTH<br>✓</div>
+      <div class="c-org">MEENA HEALTH</div><div class="c-sub0">Home Health Care Division · Riyadh</div>
+      <div class="c-div"></div>
+      <div class="c-ttl">Certificate</div><div class="c-sub2">of Completion</div>
+      <p class="c-txt">This is to certify that</p>
+      <div class="c-name">${u?u.name:'Employee'}</div>
+      <div class="c-bid">Employee #${u?u.badge_id:''} &nbsp;·&nbsp; File: ${u?u.file_number||'—':''}</div>
+      <p class="c-txt">has successfully completed the training module</p>
+      <div class="c-sec">${sec?sec.title:''}</div>
+      <p class="c-txt">demonstrating the required competency standards of</p>
+      <p class="c-txt" style="font-weight:700">Home Health Care</p>
+      <div class="c-meta">
+        <div class="c-mi"><div class="lbl">Issue Date</div><div class="val">${date}</div></div>
+        <div class="c-mi">
+          <div class="lbl">Head Nurse</div><div class="val">Reman Badawood</div>
+          <div style="height:1px;background:var(--pu-ll);margin:8px 0"></div>
+          <div class="lbl">Service Manager</div><div class="val">Ahmed Shajrawi</div>
+        </div>
+        <div class="c-mi"><div class="lbl">Ref. Number</div><div class="val" style="font-family:'Readex Pro';font-size:13px">${cert.ref_number}</div></div>
+      </div>
+      <div class="c-ref">Reference: ${cert.ref_number}</div>
+    </div></div></div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// CERTIFICATE VERIFICATION (public)
+// ════════════════════════════════════════════════════════════════
+async function pageVerify(){
+  const isPublic=!U;
+  const headerHtml=isPublic
+    ?`<div style="background:linear-gradient(135deg,#1E1147,#2D1A5C);color:#fff;padding:32px 24px;text-align:center">
+        <div style="max-width:520px;margin:0 auto">
+          <div style="width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;border:1px solid rgba(255,255,255,.18)">🔍</div>
+          <h2 style="font-family:'Fraunces';font-weight:600;font-size:28px;margin-bottom:6px">Certificate Verification</h2>
+          <p style="opacity:.75;font-size:14px;line-height:1.6">Enter a certificate reference number to verify its authenticity.</p>
+        </div>
+      </div>`
+    :bar();
+  const backBtn=isPublic?`<div style="max-width:540px;margin:0 auto;padding:14px 22px"><button class="btn bg2 bsm" onclick="go('login')">← Back to Login</button></div>`:'';
+  document.getElementById('app').innerHTML=headerHtml+backBtn+`
+    <div class="pg" style="max-width:540px">
+      <div class="card" style="padding:30px">
+        <label style="font-size:13px;font-weight:700;color:var(--pu-d);margin-bottom:8px;display:block">Certificate Reference Number</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input id="verify-ref" placeholder="e.g. MH-2026-DLY-12345" style="flex:1;min-width:200px;font-family:'Readex Pro';font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:15px" onkeydown="if(event.key==='Enter')doVerify()" autocomplete="off">
+          <button class="btn bp" onclick="doVerify()" style="min-width:110px">🔍 Verify</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">💡 The reference number is printed at the bottom of every Meena Health certificate.</div>
+      </div>
+      <div id="verify-result" style="margin-top:18px"></div>
+    </div>`;
+}
+async function doVerify(){
+  const input=document.getElementById('verify-ref');
+  const refRaw=input.value.trim().toUpperCase();
+  const resultDiv=document.getElementById('verify-result');
+  if(!refRaw){ resultDiv.innerHTML=`<div class="al" style="background:var(--err-l);color:#9F1239;border-color:#FCA5A5">⚠ Please enter a reference number</div>`; return; }
+  resultDiv.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted)">🔄 Searching...</div>`;
+  try{
+    const allCerts=await db.allCerts();
+    const cert=allCerts.find(c=>(c.ref_number||'').toUpperCase()===refRaw);
+    if(!cert){
+      resultDiv.innerHTML=`<div class="card" style="padding:28px;text-align:center;border:2px solid var(--err);background:linear-gradient(135deg,#fff,#FFF5F7)">
+        <div style="font-size:54px;margin-bottom:12px">❌</div>
+        <h3 style="color:var(--err);font-family:'Fraunces';font-size:22px;margin-bottom:6px">Not Verified</h3>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6">No certificate found for <strong style="font-family:'Readex Pro';color:var(--ink)">${refRaw}</strong>.</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">⚠ This may be a forged or invalid certificate. Contact Meena Health administration to verify.</p>
+      </div>`; return;
+    }
+    const users=await db.users(), secs=await db.sections();
+    const u=users.find(x=>x.id===cert.user_id), sec=secs.find(s=>s.id===cert.section_id);
+    const issueDate=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    resultDiv.innerHTML=`<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--ok)">
+      <div style="background:linear-gradient(135deg,var(--ok),#7BAE8E);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;border:1.5px solid rgba(255,255,255,.4)">✓</div>
+        <div><div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.85;font-weight:700">Authentic</div><h3 style="font-family:'Fraunces';font-size:22px">Certificate Verified</h3></div>
+      </div>
+      <div style="padding:24px 28px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:14px 20px;font-size:14px">
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;align-self:center">Issued To</div>
+          <div style="font-weight:700;color:var(--ink);font-size:17px;font-family:'Fraunces'">${u?u.name:'Unknown'}</div>
+          ${u?`<div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Employee #</div>
+          <div style="font-weight:600;font-family:'Readex Pro'">${u.badge_id}${u.file_number?' · File: '+u.file_number:''}</div>`:''}
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;align-self:center">Training</div>
+          <div style="font-weight:700;color:var(--pu-d);font-size:17px;font-family:'Fraunces'">${sec?sec.title:'Unknown'}</div>
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Issued On</div>
+          <div style="font-weight:600">${issueDate}</div>
+          <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Reference #</div>
+          <div style="color:var(--pu-d);font-weight:700;font-family:'Readex Pro';letter-spacing:.5px">${cert.ref_number}</div>
+        </div>
+        ${U?`<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);text-align:center">
+          <button class="btn bp" onclick="go('cert',{id:'${cert.id}'},{page:'verify',par:{},label:'Verification'})">📄 View Full Certificate</button>
+        </div>`:'<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted)">This certificate is genuine — issued by Meena Health Home Health Care, Riyadh, KSA.</div>'}
+      </div>
+    </div>`;
+  } catch(e){ resultDiv.innerHTML=`<div class="al" style="background:var(--err-l);color:#9F1239;border-color:#FCA5A5">❌ Error: ${e.message}</div>`; }
+}
+
+// ════════════════════════════════════════════════════════════════
+// INTERACTIVE LECTURE PLAYER
+// ════════════════════════════════════════════════════════════════
+let INT_STATE={lid:null,slides:[],idx:0,answered:false,wrong:0};
+async function pageInteractive(lid){
+  const lec=await db.lecture(lid); if(!lec){ go('home'); return; }
+  const slides=getSlidesData(lid);
+  if(!slides.length){
+    document.getElementById('app').innerHTML=bar()+`<div class="pg">
+      <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><span>${lec.title}</span></div>
+      <div class="card" style="text-align:center;padding:54px 30px">
+        <div style="font-size:50px;margin-bottom:14px">📭</div>
+        <h2 style="font-family:'Fraunces';font-weight:600;color:var(--ink)">Lecture not ready</h2>
+        <p style="color:var(--muted);margin-top:8px">Slides have not been added yet. Please check back later.</p>
+        <button class="btn bg2" style="margin-top:20px" onclick="go('section',{id:'${lec.section_id}'})">← Back to Section</button>
+      </div>
+    </div>`; return;
+  }
+  const startIdx=getSlideProg(lid,U.id);
+  INT_STATE={lid,slides,idx:Math.min(startIdx,slides.length-1),answered:false,wrong:0,sec:lec.section_id,title:lec.title,hasQuiz:lec.has_quiz};
+  renderInteractive();
+}
+function renderInteractive(){
+  const{lid,slides,idx,sec,title,hasQuiz}=INT_STATE;
+  const slide=slides[idx],total=slides.length,pct=Math.round((idx+1)/total*100);
+  let mediaHtml='';
+  if(slide.media&&slide.media_type==='image') mediaHtml=`<div style="margin:18px 0;border-radius:14px;overflow:hidden;background:var(--pu-mist);text-align:center;border:1px solid var(--border)"><img src="${slide.media}" style="max-width:100%;max-height:340px;display:inline-block"></div>`;
+  else if(slide.media&&slide.media_type==='youtube'){
+    let cleanId=slide.media.trim();
+    mediaHtml=`<div class="vid-wrap" style="margin:18px 0"><iframe src="https://www.youtube.com/embed/${cleanId}?rel=0&modestbranding=1&playsinline=1" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+  }
+  let qHtml='';
+  if(slide.question){
+    const sel=INT_STATE.selected,showResult=INT_STATE.answered;
+    qHtml=`<div style="background:#FFFBEB;border-radius:14px;padding:20px;margin-top:18px;border:1.5px solid #FDE68A">
+      <div style="font-weight:700;color:#854D0E;margin-bottom:14px;font-size:14.5px;font-family:'Readex Pro'">❓ ${slide.question}</div>
+      <div class="opts">
+        ${slide.options.map((opt,i)=>{
+          let cls='opt'; if(showResult){ if(i===slide.correct)cls+=' sel'; if(i===sel&&i!==slide.correct)cls+=' sel'; } else if(sel===i)cls+=' sel';
+          let style='';
+          if(showResult&&i===slide.correct)style='border-color:var(--ok);background:var(--ok-l);color:#065F46';
+          if(showResult&&i===sel&&i!==slide.correct)style='border-color:var(--err);background:var(--err-l);color:#9F1239';
+          return`<div class="${cls}" style="${style}" onclick="${showResult?'':`selectIntOpt(${i})`}">
+            <div class="opt-l" style="${showResult&&i===slide.correct?'background:var(--ok);color:#fff':showResult&&i===sel&&i!==slide.correct?'background:var(--err);color:#fff':''}">${String.fromCharCode(65+i)}</div>
+            <span>${opt}</span>${showResult&&i===slide.correct?'<span style="margin-left:auto;font-weight:700">✓</span>':''}${showResult&&i===sel&&i!==slide.correct?'<span style="margin-left:auto;font-weight:700">✗</span>':''}
+          </div>`;
+        }).join('')}
+      </div>
+      ${showResult&&slide.explanation?`<div style="background:var(--card);border-radius:11px;padding:13px 16px;margin-top:14px;font-size:13.5px;color:var(--text);line-height:1.6;border-left:4px solid ${INT_STATE.selected===slide.correct?'var(--ok)':'var(--err)'}">
+        <strong style="color:${INT_STATE.selected===slide.correct?'var(--ok)':'var(--err)'}">${INT_STATE.selected===slide.correct?'✓ Correct! ':'💡 Explanation: '}</strong>${slide.explanation}
+      </div>`:''}
+    </div>`;
+  }
+  let actions='';
+  if(slide.question){
+    if(!INT_STATE.answered) actions=`<button class="btn bp blg" onclick="submitSlideAnswer()" ${INT_STATE.selected===undefined?'disabled':''}>Check Answer</button>`;
+    else if(INT_STATE.selected===slide.correct) actions=idx<total-1?`<button class="btn bp blg" onclick="nextSlide()">Next Slide →</button>`:`<button class="btn bn blg" onclick="finishInteractive()">${hasQuiz?'Continue to Quiz →':'Finish Lecture ✓'}</button>`;
+    else actions=`<button class="btn bo blg" onclick="retrySlide()">↻ Try Again</button>`;
+  } else {
+    actions=idx<total-1?`<button class="btn bp blg" onclick="nextSlide()">Next Slide →</button>`:`<button class="btn bn blg" onclick="finishInteractive()">${hasQuiz?'Continue to Quiz →':'Finish Lecture ✓'}</button>`;
+  }
+  document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:760px">
+    <div class="bc"><a onclick="go('home')">🏠 Home</a><span>›</span><a onclick="go('section',{id:'${sec}'})">Section</a><span>›</span><span>${title}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <h2 style="font-size:24px;color:var(--ink);font-family:'Fraunces';font-weight:600">${title}</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:13px;color:var(--muted);font-weight:700">Slide ${idx+1} of ${total}</span>
+        <div class="pbar" style="width:140px"><div class="pfill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:32px">
+      ${slide.heading?`<div style="font-size:11.5px;color:var(--pu-l);font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Step ${idx+1}</div>
+        <h3 style="font-size:24px;font-weight:600;color:var(--ink);margin-bottom:14px;font-family:'Fraunces';line-height:1.2">${slide.heading}</h3>`:''}
+      ${slide.content?`<div style="font-size:15px;color:var(--text);line-height:1.75;white-space:pre-wrap">${slide.content}</div>`:''}
+      ${mediaHtml}
+      ${qHtml}
+      <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;align-items:center">
+        ${idx>0?`<button class="btn bg2" onclick="prevSlide()">← Previous</button>`:''}
+        <div style="flex:1"></div>
+        ${actions}
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);font-weight:600">
+      💡 ${slide.question?'Answer the checkpoint question to advance':'Read carefully and continue when ready'}
+    </div>
+  </div>`;
+}
+function selectIntOpt(i){ if(INT_STATE.answered) return; INT_STATE.selected=i; renderInteractive(); }
+function submitSlideAnswer(){ INT_STATE.answered=true; if(INT_STATE.selected!==INT_STATE.slides[INT_STATE.idx].correct) INT_STATE.wrong++; renderInteractive(); }
+function retrySlide(){ INT_STATE.answered=false; INT_STATE.selected=undefined; renderInteractive(); }
+function nextSlide(){ INT_STATE.idx++; INT_STATE.answered=false; INT_STATE.selected=undefined; setSlideProg(INT_STATE.lid,U.id,INT_STATE.idx); renderInteractive(); }
+function prevSlide(){ INT_STATE.idx=Math.max(0,INT_STATE.idx-1); INT_STATE.answered=false; INT_STATE.selected=undefined; renderInteractive(); }
+async function finishInteractive(){
+  const{lid,hasQuiz,sec}=INT_STATE;
+  await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+  setSlideProg(lid,U.id,0);
+  if(!hasQuiz) await checkAndAutoIssueCert(sec);
+  if(hasQuiz){ toast('🎉 Lecture complete! Now the quiz...','ok'); setTimeout(()=>go('quiz',{id:lid}),700); }
+  else{ toast('🎉 Lecture complete!','ok'); setTimeout(()=>go('section',{id:sec}),700); }
+}
 // ════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG
 // ════════════════════════════════════════════════════════════════
@@ -1338,31 +1611,18 @@ async function signMemo(memoId){
   const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   if(!memo){ toast('Memo not found','er'); return; }
 
-  // Generate ref number and store in signature
-  const ref=generateMemoRef(memo);
-  const sigs=ackDb.getSignatures();
-  if(sigs.find(s=>s.memo_id===memoId&&s.user_id===U.id)){
-    toast('You have already signed this memo',''); return;
+  if(ackDb.hasSigned(memoId,U.id)){ toast('You have already signed this memo',''); return; }
+
+  const sig=await ackDb.sign(memoId,U.id,U.name,U.badge_id,iq);
+  if(sig){
+    toast('✅ Memo acknowledged and signed!','ok');
+    pageMemoCert(memoId, sig.ref_number);
   }
-  sigs.push({
-    id:'sig_'+Date.now(),
-    memo_id:memoId,
-    user_id:U.id,
-    user_name:U.name,
-    badge_id:U.badge_id,
-    iqama_confirmed:iq,
-    signed_at:new Date().toISOString(),
-    ref_number:ref
-  });
-  ackDb.saveSignatures(sigs);
-  toast('✅ Memo acknowledged and signed!','ok');
-  // Show the acknowledgement certificate
-  pageMemoCert(memoId, ref);
 }
 
-// View existing memo certificate (called from signed memo button)
+// View existing memo certificate
 function viewMemoCert(memoId){
-  const sig=ackDb.getSignatures().find(s=>s.memo_id===memoId&&s.user_id===U.id);
+  const sig=ackDb.getSignaturesCached().find(s=>s.memo_id===memoId&&s.user_id===U.id);
   if(!sig){ toast('No signature found for this memo','er'); return; }
   pageMemoCert(memoId, sig.ref_number);
 }
@@ -1373,7 +1633,7 @@ function viewMemoCert(memoId){
 function pageMemoCert(memoId, ref){
   const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   if(!memo) return;
-  const sigs=ackDb.getSignatures();
+  const sigs=ackDb.getSignaturesCached();
   const sig=sigs.find(s=>s.memo_id===memoId&&s.user_id===U.id);
   if(!sig) return;
 
@@ -1652,7 +1912,7 @@ async function pageAdminMemos(){
 
 let _pendingMemoFile=null;
 function openMemoModal(id){
-  const memo=id?ackDb.getMemos().find(m=>m.id===id):null;
+  const memo=id?ackDb.getMemosCached().find(m=>m.id===id):null;
   document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal" style="max-width:760px">
     <div class="mh"><h3>${id?'Edit':'New'} Memo</h3><button class="mc" onclick="cmo()">✕</button></div>
     <div class="fg2">
