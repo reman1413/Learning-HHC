@@ -3888,8 +3888,38 @@ window.addEventListener('load',async()=>{
   // Preload memos into cache
   try{ await ackDb.getMemos(); } catch(e){}
   if(SB) await syncAll();
+  // Auto-sync any localStorage signatures to Supabase
+  if(SB && U) await syncLocalSigsToSupabase();
   render();
 });
+
+// Sync signatures saved in localStorage to Supabase
+async function syncLocalSigsToSupabase(){
+  try{
+    const localSigs = JSON.parse(localStorage.getItem('lms_ack_sigs')||'[]');
+    if(!localSigs.length) return;
+    // Get existing sigs from Supabase
+    const{data:existing}=await SB.from('lms_ack_sigs').select('id,memo_id,user_id');
+    const existingKeys=new Set((existing||[]).map(s=>s.memo_id+'_'+s.user_id));
+    // Find sigs not yet in Supabase
+    const toUpload=localSigs.filter(s=>!existingKeys.has(s.memo_id+'_'+s.user_id));
+    if(!toUpload.length) return;
+    for(const sig of toUpload){
+      try{
+        await SB.from('lms_ack_sigs').insert({
+          id: sig.id||('sig_'+Date.now()+'_'+Math.random().toString(36).slice(2)),
+          memo_id: sig.memo_id,
+          user_id: sig.user_id,
+          user_name: sig.user_name||'',
+          badge_id: sig.badge_id||'',
+          ref_number: sig.ref_number||'',
+          signed_at: sig.signed_at||new Date().toISOString()
+        });
+      } catch(e){ console.warn('sig sync skip',e.message); }
+    }
+    console.log('Synced '+toUpload.length+' signatures to Supabase');
+  } catch(e){ console.warn('syncLocalSigs error',e); }
+}
 
 // Footer visibility is handled inline
 </script>
