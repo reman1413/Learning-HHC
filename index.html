@@ -1095,6 +1095,7 @@ async function ensureDefaultSections(){
 // ════════════════════════════════════════════════════════════════
 let U=JSON.parse(sessionStorage.getItem('lms_u')||'null');
 let PAGE='login', PAR={}, BACK=null;
+let PENDING_DEEP_LINK=null; // stores hash before login
 let HOME_FILTER='all';
 function setU(u){ U=u; u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u'); }
 function logout(){ setU(null); go('login'); }
@@ -2149,7 +2150,18 @@ async function doLogin(){
   if(!u){ showErr('Employee number not found'); return; }
   if(u.iqama_number!==p){ showErr('Incorrect iqama number'); return; }
   if(_role==='admin'&&u.role!=='admin'){ showErr('No admin access for this account'); return; }
-  setU(u); toast('Welcome, '+u.name+'! 👋','ok'); go('home');
+  setU(u); toast('Welcome, '+u.name+'! 👋','ok');
+  // After login, check if a deep link was saved
+  if(PENDING_DEEP_LINK){
+    const dl=PENDING_DEEP_LINK; PENDING_DEEP_LINK=null;
+    if(dl.startsWith('#section=')){
+      const sid=dl.slice(9).split('&')[0];
+      if(sid){ go('section',{id:sid},{page:'home',par:{},label:'Home'}); return; }
+    } else if(dl==='#memos'){
+      go('ack'); return;
+    }
+  }
+  go('home');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3893,19 +3905,27 @@ window.addEventListener('load',async()=>{
   if(SB) await syncAll();
   // Auto-sync any localStorage signatures to Supabase
   if(SB && U) await syncLocalSigsToSupabase();
+  // Capture deep link hash before render clears it
+  const _initialHash = location.hash;
+  if(_initialHash && !U){
+    // Not logged in — save hash, will redirect after login
+    PENDING_DEEP_LINK = _initialHash;
+  }
   await render();
-  // Deep link: handle #section=ID or #memo after login
-  handleDeepLink();
+  // If already logged in, redirect now
+  if(_initialHash && U){
+    handleDeepLink(_initialHash);
+  }
 });
 
-function handleDeepLink(){
-  const hash=location.hash;
+function handleDeepLink(hash){
+  hash = hash || location.hash;
   if(!hash||!U) return;
+  location.hash='';
   if(hash.startsWith('#section=')){
     const sid=hash.slice(9).split('&')[0];
-    if(sid){ location.hash=''; go('section',{id:sid},{page:'home',par:{},label:'Home'}); }
+    if(sid){ go('section',{id:sid},{page:'home',par:{},label:'Home'}); }
   } else if(hash==='#memos'){
-    location.hash='';
     go('ack');
   }
 }
