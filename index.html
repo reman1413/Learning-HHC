@@ -1070,20 +1070,51 @@ const db = {
     return false;
   },
   async certs(uid){
-    if(SB){ const{data}=await SB.from('lms_certs').select('*').eq('user_id',uid); return data||[]; }
-    return ls('certs').filter(c=>c.user_id===uid);
+    const local=ls('certs').filter(c=>c.user_id===uid);
+    if(SB){
+      const{data}=await SB.from('lms_certs').select('*').eq('user_id',uid);
+      if(data&&data.length){
+        // Merge: Supabase is source of truth but keep local ones not yet synced
+        const sbIds=new Set(data.map(c=>c.id));
+        const localOnly=local.filter(c=>!sbIds.has(c.id));
+        const merged=[...data,...localOnly];
+        ls2('certs',ls('certs').filter(c=>c.user_id!==uid).concat(merged));
+        return merged;
+      }
+    }
+    return local;
   },
   async allCerts(){
     if(SB){ const{data}=await SB.from('lms_certs').select('*'); return data||[]; }
     return ls('certs');
   },
   async certById(id){
-    if(SB){ const{data}=await SB.from('lms_certs').select('*').eq('id',id).single(); return data||null; }
-    return ls('certs').find(c=>c.id===id)||null;
+    // Check localStorage first
+    const local=ls('certs').find(c=>c.id===id);
+    if(local) return local;
+    // Then Supabase
+    if(SB){
+      const{data}=await SB.from('lms_certs').select('*').eq('id',id).maybeSingle();
+      if(data) return data;
+    }
+    return null;
   },
   async addCert(c){
-    if(SB){ const{data,error}=await SB.from('lms_certs').insert(c).select().single(); if(!error&&data){ let a=ls('certs'); a.push(data); ls2('certs',a); return data; } }
-    c.id=uid(); let a=ls('certs'); a.push(c); ls2('certs',a); return c;
+    // Save locally first
+    if(!c.id) c.id=uid();
+    let a=ls('certs');
+    if(!a.find(x=>x.id===c.id)){ a.push(c); ls2('certs',a); }
+    // Then Supabase
+    if(SB){
+      const{data,error}=await SB.from('lms_certs').insert(c).select().maybeSingle();
+      if(error) console.warn('addCert SB error:',error.message);
+      else if(data){
+        // Update local with Supabase version
+        ls2('certs',ls('certs').map(x=>x.id===c.id?data:x));
+        return data;
+      }
+    }
+    return c;
   },
   async uploadFile(lid,file){
     if(SB){
@@ -1162,11 +1193,10 @@ async function checkAndAutoIssueCert(sectionId){
   const existing=certs.find(c=>c.section_id===sectionId);
   if(existing){ _markCertAnnounced(sectionId); return existing; }
   const lecs=await db.lectures(sectionId);
-  if(!lecs.length) return null;
-  // Get all completions + attempts from localStorage (fastest + most reliable)
+  if(!lecs.length){ console.log('❌ CERT: no lectures in section',sectionId); return null; }
+  // Get all completions + attempts from localStorage
   const comps=ls('completions');
   const atts=ls('attempts');
-  // Also try to pull from Supabase if connected
   let sbComps=[], sbAtts=[];
   if(SB){
     try{
@@ -1180,20 +1210,27 @@ async function checkAndAutoIssueCert(sectionId){
   }
   const allComps=[...comps,...sbComps];
   const allAtts=[...atts,...sbAtts];
-  // Check every lecture is watched AND (if has quiz) passed
+  // Check every lecture
   for(const lec of lecs){
     const watched=allComps.some(c=>c.user_id===U.id&&c.lecture_id===lec.id);
-    if(!watched) return null;
+    if(!watched){
+      console.log('❌ CERT BLOCKED: not watched →',lec.title,'(id:'+lec.id+')');
+      return null;
+    }
     if(lec.has_quiz){
       const passed=allAtts.some(a=>a.user_id===U.id&&a.lecture_id===lec.id&&a.passed===true);
-      if(!passed) return null;
+      if(!passed){
+        console.log('❌ CERT BLOCKED: quiz not passed →',lec.title,'(id:'+lec.id+')');
+        return null;
+      }
     }
   }
   const secs=await db.sections();
   const sec=secs.find(s=>s.id===sectionId);
-  if(!sec) return null;
+  if(!sec){ console.log('❌ CERT: section not found',sectionId); return null; }
   const ref=await generateUniqueRef(sec);
   const cert={user_id:U.id,section_id:sectionId,ref_number:ref,issued_at:n()};
+  console.log('✅ CERT ISSUED:',sec.title,ref);
   const saved=await db.addCert(cert);
   if(!_isCertAnnounced(sectionId)){ toast('🏆 Certificate earned: '+sec.title+'!','ok'); _markCertAnnounced(sectionId); }
   return saved||cert;
