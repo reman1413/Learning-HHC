@@ -3814,6 +3814,7 @@ ${lines.join('\n')}
 }
 
 
+async function deleteCert(id){
   if(!isOwner()){ toast('⚠ Only the owner can delete certificates','er'); return; }
   if(!confirm('Delete this certificate? Cannot be undone.')) return;
   if(SB){ const{error}=await SB.from('lms_certs').delete().eq('id',id); if(error){ toast('❌ '+error.message,'er'); return; } }
