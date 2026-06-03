@@ -868,15 +868,22 @@ const ackDb = {
     else{ this.saveSignatures(this.getSignaturesCached().filter(s=>s.memo_id!==id)); }
     this.saveMemos(this.getMemosCached().filter(m=>m.id!==id));
   },
-  async getSignatures(){
+  async getSignaturesAsync(){
     if(SB){
       const{data,error}=await SB.from('lms_ack_sigs').select('*');
-      if(!error&&data){
-        localStorage.setItem('lms_ack_sigs',JSON.stringify(data));
-        return data;
+      if(!error&&data&&data.length){
+        // Merge with localStorage — keep local sigs not yet in Supabase
+        const sbIds=new Set(data.map(s=>s.id));
+        const local=this.getSignaturesCached().filter(s=>!sbIds.has(s.id));
+        const merged=[...data,...local];
+        localStorage.setItem('lms_ack_sigs',JSON.stringify(merged));
+        return merged;
       }
     }
     return this.getSignaturesCached();
+  },
+  async getSignatures(){
+    return this.getSignaturesAsync();
   },
   getSignaturesCached(){
     try{ return JSON.parse(localStorage.getItem('lms_ack_sigs')||'[]'); } catch{ return []; }
@@ -922,8 +929,7 @@ const ackDb = {
     return 'MA-'+new Date().getFullYear()+'-'+code+'-'+Math.floor(10000+Math.random()*90000);
   },
   hasSigned(memoId,userId){ return this.getSignaturesCached().some(s=>s.memo_id===memoId&&s.user_id===userId); },
-  getSignaturesForMemo(memoId){ return this.getSignaturesCached().filter(s=>s.memo_id===memoId); },
-  getSignatures(){ return this.getSignaturesCached(); }
+  getSignaturesForMemo(memoId){ return this.getSignaturesCached().filter(s=>s.memo_id===memoId); }
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -1359,6 +1365,8 @@ async function pageAcknowledgements(){
   const memos=(await ackDb.getMemos()).filter(m=>m.active);
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
+  // Fetch fresh signatures from Supabase + localStorage
+  await ackDb.getSignaturesAsync();
 
   const cards=memos.map(memo=>{
     const signed=ackDb.hasSigned(memo.id,U.id);
@@ -1702,7 +1710,7 @@ function addMemoDivider(){
 // ════════════════════════════════════════════════════════════════
 async function pageAdminMemos(){
   const memos=await ackDb.getMemos();
-  const allSigs=await ackDb.getSignatures(); // fetch from Supabase
+  const allSigs=await ackDb.getSignaturesAsync(); // fetch fresh from Supabase
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
   const logCount=isOwner()?getUnseenLogCount():0;
@@ -2001,7 +2009,7 @@ async function openMemoDetail(memoId){
   const memo=ackDb.getMemosCached().find(m=>m.id===memoId); if(!memo) return;
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
-  const sigs=await ackDb.getSignatures(); // always from Supabase
+  const sigs=await ackDb.getSignaturesAsync(); // always fresh from Supabase + localStorage
   const memoSigs=sigs.filter(s=>s.memo_id===memoId);
   const sigMap={}; memoSigs.forEach(s=>{ sigMap[s.user_id]=s; });
   const signed=employees.filter(e=>sigMap[e.id]);
@@ -2402,13 +2410,14 @@ async function pageHome(){
     const certItems=certs.map(cert=>{
       const s=secs.find(x=>x.id===cert.section_id);
       const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-      return`<div class="my-cert-item" role="button" tabindex="0" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">
-        <div style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(245,158,11,.25)">🏆</div>
-        <div style="flex:1">
+      return`<div class="my-cert-item">
+        <div style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(245,158,11,.25);flex-shrink:0">🏆</div>
+        <div style="flex:1;cursor:pointer" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">
           <div style="font-weight:700;color:var(--ink);font-family:'Readex Pro'">${s?s.title:'Certificate'}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:3px">${date} · <span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d)">${cert.ref_number}</span></div>
         </div>
-        <span style="color:var(--pu);font-size:13px;font-weight:700">View →</span>
+        <button onclick="event.stopPropagation();deleteCert('${cert.id}','home')" style="background:transparent;border:1.5px solid var(--border-d);border-radius:8px;color:var(--muted);cursor:pointer;padding:6px 10px;font-size:13px;transition:.2s;flex-shrink:0" title="Delete certificate" onmouseover="this.style.background='var(--err)';this.style.color='#fff';this.style.borderColor='var(--err)'" onmouseout="this.style.background='transparent';this.style.color='var(--muted)';this.style.borderColor='var(--border-d)'">🗑</button>
+        <span style="color:var(--pu);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">View →</span>
       </div>`;
     }).join('');
     certsHtml=`<div style="margin-top:40px"><h3 style="font-size:22px;font-weight:600;color:var(--ink);margin-bottom:18px;font-family:'Fraunces'">🏆 My Certificates</h3>${certItems}</div>`;
@@ -3814,12 +3823,16 @@ ${lines.join('\n')}
 }
 
 
-async function deleteCert(id){
-  if(!isOwner()){ toast('⚠ Only the owner can delete certificates','er'); return; }
+async function deleteCert(id, returnPage){
   if(!confirm('Delete this certificate? Cannot be undone.')) return;
-  if(SB){ const{error}=await SB.from('lms_certs').delete().eq('id',id); if(error){ toast('❌ '+error.message,'er'); return; } }
+  if(SB){
+    const{error}=await SB.from('lms_certs').delete().eq('id',id);
+    if(error){ toast('❌ '+error.message,'er'); return; }
+  }
   ls2('certs',ls('certs').filter(c=>c.id!==id));
-  toast('Certificate deleted','ok'); await pageAdminCerts();
+  toast('Certificate deleted','ok');
+  if(returnPage==='home') await pageHome();
+  else await pageAdminCerts();
 }
 async function exportExcel(){
   const users=await db.users(), secs=await db.sections();
@@ -3890,7 +3903,7 @@ async function pageAdminCerts(){
         <td>${scoreCell}</td>
         <td><div style="display:flex;gap:6px">
           <button class="btn bo bsm" onclick="go('cert',{id:'${cert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>
-          ${isOwner()?`<button class="btn bd bsm" onclick="deleteCert('${cert.id}')">🗑</button>`:''}
+          ${isAdmin()?`<button class="btn bd bsm" onclick="deleteCert('${cert.id}','admin')">🗑</button>`:''}
         </div></td></tr>`;
     }).join('');
     secBlocks+=`<div class="card" style="margin-bottom:22px;overflow:hidden;padding:0">
