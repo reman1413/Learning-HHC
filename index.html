@@ -1085,8 +1085,20 @@ const db = {
     return local;
   },
   async allCerts(){
-    if(SB){ const{data}=await SB.from('lms_certs').select('*'); return data||[]; }
-    return ls('certs');
+    const local=ls('certs');
+    if(SB){
+      const{data}=await SB.from('lms_certs').select('*');
+      if(data){
+        // Merge: keep local certs not yet in Supabase
+        const sbIds=new Set(data.map(c=>c.id));
+        const localOnly=local.filter(c=>!sbIds.has(c.id));
+        const merged=[...data,...localOnly];
+        // Update localStorage with full merged list
+        ls2('certs',merged);
+        return merged;
+      }
+    }
+    return local;
   },
   async certById(id){
     // Check localStorage first
@@ -1175,7 +1187,21 @@ function _isCertAnnounced(secId){ try{ return localStorage.getItem(_certAnnounce
 function _markCertAnnounced(secId){ try{ localStorage.setItem(_certAnnouncedKey(secId),'1'); } catch(e){} }
 
 async function generateUniqueRef(sec){
-  const code=sec.title.split(' ').map(w=>w[0]).filter(Boolean).join('').toUpperCase().slice(0,4)||'GEN';
+  // Extract code from title — Latin letters only, fallback to section index
+  const title=sec.title||'';
+  // Try to get initials from English words first
+  let code=title.split(/\s+/)
+    .map(w=>w.replace(/[^A-Za-z]/g,''))
+    .filter(w=>w.length>0)
+    .map(w=>w[0].toUpperCase())
+    .join('')
+    .slice(0,4);
+  // If no Latin letters found, use first 3 Latin chars from title
+  if(!code){
+    code=title.replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,4);
+  }
+  // Final fallback
+  if(!code) code='SEC';
   const year=new Date().getFullYear();
   const existingCerts=await db.allCerts();
   const existingRefs=new Set(existingCerts.map(c=>c.ref_number));
@@ -3736,7 +3762,58 @@ function moveSlide(lid,idx,dir){ const slides=getSlidesData(lid); const ti=idx+d
 // ════════════════════════════════════════════════════════════════
 // ADMIN: CERTIFICATES
 // ════════════════════════════════════════════════════════════════
-async function deleteCert(id){
+async function debugCerts(){
+  const panel=document.getElementById('debug-panel');
+  if(!panel) return;
+  panel.innerHTML='<div style="padding:14px;background:#1E1147;color:#C4B5FD;border-radius:12px;font-family:monospace;font-size:12px;margin-bottom:18px">🔄 Loading debug info...</div>';
+
+  const localCerts=ls('certs');
+  const users=ls('users');
+  const secs=ls('sections');
+  let sbCerts=[];
+
+  if(SB){
+    try{
+      const{data,error}=await SB.from('lms_certs').select('*');
+      if(error) sbCerts=['ERROR: '+error.message];
+      else sbCerts=data||[];
+    } catch(e){ sbCerts=['EXCEPTION: '+e.message]; }
+  }
+
+  const lines=[];
+  lines.push('=== LOCAL STORAGE ===');
+  lines.push('lms_certs: '+localCerts.length+' records');
+  localCerts.forEach((c,i)=>{
+    const u=users.find(x=>x.id===c.user_id);
+    const s=secs.find(x=>x.id===c.section_id);
+    lines.push('  ['+i+'] id='+c.id);
+    lines.push('       user='+(u?u.name:'❌ NOT FOUND ('+c.user_id+')')  );
+    lines.push('       section='+(s?s.title:'❌ NOT FOUND ('+c.section_id+')'));
+    lines.push('       ref='+c.ref_number);
+  });
+  lines.push('');
+  lines.push('=== SUPABASE ===');
+  if(!SB){ lines.push('Not connected (Demo mode)'); }
+  else if(typeof sbCerts[0]==='string'){ lines.push(sbCerts[0]); }
+  else{
+    lines.push('lms_certs: '+sbCerts.length+' records');
+    sbCerts.forEach((c,i)=>{
+      const u=users.find(x=>x.id===c.user_id);
+      const s=secs.find(x=>x.id===c.section_id);
+      lines.push('  ['+i+'] id='+c.id);
+      lines.push('       user='+(u?u.name:'❌ NOT FOUND ('+c.user_id+')')  );
+      lines.push('       section='+(s?s.title:'❌ NOT FOUND ('+c.section_id+')'));
+      lines.push('       ref='+c.ref_number);
+    });
+  }
+
+  panel.innerHTML=`<div style="padding:16px 20px;background:#1E1147;color:#C4B5FD;border-radius:12px;font-family:monospace;font-size:12px;margin-bottom:18px;white-space:pre;overflow-x:auto;line-height:1.8;border:1px solid rgba(196,181,253,.2)">
+<span style="color:#9863F1;font-weight:700">CERT DEBUG REPORT</span>
+${lines.join('\n')}
+</div>`;
+}
+
+
   if(!isOwner()){ toast('⚠ Only the owner can delete certificates','er'); return; }
   if(!confirm('Delete this certificate? Cannot be undone.')) return;
   if(SB){ const{error}=await SB.from('lms_certs').delete().eq('id',id); if(error){ toast('❌ '+error.message,'er'); return; } }
@@ -3772,17 +3849,32 @@ async function pageAdminCerts(){
   const allCerts=await db.allCerts(), allAtts=await db.allAttempts();
   const empMap={}, secMap={};
   users.forEach(u=>{ empMap[u.id]=u; }); secs.forEach(s=>{ secMap[s.id]=s; });
+
+  // Debug: log any certs with missing refs
+  allCerts.forEach(cert=>{
+    if(!secMap[cert.section_id]) console.warn('⚠ Cert has unknown section_id:',cert.section_id,'cert:',cert.id);
+    if(!empMap[cert.user_id]) console.warn('⚠ Cert has unknown user_id:',cert.user_id,'cert:',cert.id);
+  });
+
   const bySection={};
-  allCerts.forEach(cert=>{ const sec=secMap[cert.section_id]; const emp=empMap[cert.user_id]; if(!sec||!emp) return; (bySection[sec.id]=bySection[sec.id]||{sec,certs:[]}).certs.push({cert,emp}); });
+  allCerts.forEach(cert=>{
+    const sec=secMap[cert.section_id];
+    const emp=empMap[cert.user_id];
+    // Show even if section/user not found — use fallbacks
+    const secKey=cert.section_id;
+    if(!bySection[secKey]) bySection[secKey]={sec:sec||{id:secKey,title:'Unknown Section',order_num:999},certs:[]};
+    bySection[secKey].certs.push({cert,emp:emp||{id:cert.user_id,name:'Unknown',badge_id:'?',file_number:''}});
+  });
+
   const totalCerts=allCerts.length, uniqueNurses=new Set(allCerts.map(c=>c.user_id)).size;
   let secBlocks='';
-  const sortedSecIds=Object.keys(bySection).sort((a,b)=>(secMap[a].order_num||0)-(secMap[b].order_num||0));
+  const sortedSecIds=Object.keys(bySection).sort((a,b)=>(bySection[a].sec.order_num||0)-(bySection[b].sec.order_num||0));
   for(const sid of sortedSecIds){
     const{sec,certs:secCerts}=bySection[sid];
     secCerts.sort((a,b)=>new Date(b.cert.issued_at)-new Date(a.cert.issued_at));
     const theme=themeFor(sec.title);
     const rows=secCerts.map(({cert,emp})=>{
-      const date=new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+      const date=cert.issued_at?new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'—';
       const lecs=ls('lectures').filter(l=>l.section_id===sid);
       const quizLecs=lecs.filter(l=>l.has_quiz);
       let scoreCell='—';
@@ -3793,7 +3885,7 @@ async function pageAdminCerts(){
       }
       return`<tr><td><strong>${emp.name}</strong></td><td><span class="chip cd">#${emp.badge_id}</span></td><td style="font-size:12.5px;color:var(--muted)">${emp.file_number||'—'}</td>
         <td style="font-size:13px;color:var(--muted)">${date}</td>
-        <td><span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d);font-size:12.5px">${cert.ref_number}</span></td>
+        <td><span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d);font-size:12.5px">${cert.ref_number||'—'}</span></td>
         <td>${scoreCell}</td>
         <td><div style="display:flex;gap:6px">
           <button class="btn bo bsm" onclick="go('cert',{id:'${cert.id}'},{page:'acerts',par:{},label:'Certificates'})">🏆 View</button>
@@ -3814,12 +3906,17 @@ async function pageAdminCerts(){
   }
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="ph"><div><h2>🏆 Certificates Issued</h2><p>Nurses who completed all section requirements.</p></div>
-      <button class="btn bmint" onclick="exportExcel()">📊 Download Excel</button></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn bg2 bsm" onclick="debugCerts()">🔍 Debug</button>
+        <button class="btn bmint" onclick="exportExcel()">📊 Download Excel</button>
+      </div>
+    </div>
     ${totalCerts?`<div class="stats" style="margin-bottom:24px">
       <div class="stat"><div class="si">🏆</div><div class="sv">${totalCerts}</div><div class="sl">Total Certificates</div></div>
       <div class="stat"><div class="si">👩‍⚕️</div><div class="sv">${uniqueNurses}</div><div class="sl">Certified Nurses</div></div>
       <div class="stat"><div class="si">📚</div><div class="sv">${sortedSecIds.length}</div><div class="sl">Sections w/ Certs</div></div>
     </div>`:''}
+    <div id="debug-panel"></div>
     ${secBlocks||`<div style="text-align:center;padding:80px 30px;color:var(--muted);background:var(--card);border-radius:18px;border:1px dashed var(--border-d)">
       <div style="font-size:60px;margin-bottom:16px;opacity:.4">🏆</div>
       <p style="font-weight:700;color:var(--ink);font-size:17px;margin-bottom:6px">No certificates yet</p>
