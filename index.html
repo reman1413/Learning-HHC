@@ -871,7 +871,10 @@ const ackDb = {
   async getSignatures(){
     if(SB){
       const{data,error}=await SB.from('lms_ack_sigs').select('*');
-      if(!error&&data){ localStorage.setItem('lms_ack_sigs',JSON.stringify(data)); return data; }
+      if(!error&&data){
+        localStorage.setItem('lms_ack_sigs',JSON.stringify(data));
+        return data;
+      }
     }
     return this.getSignaturesCached();
   },
@@ -879,6 +882,10 @@ const ackDb = {
     try{ return JSON.parse(localStorage.getItem('lms_ack_sigs')||'[]'); } catch{ return []; }
   },
   saveSignatures(arr){ localStorage.setItem('lms_ack_sigs',JSON.stringify(arr)); },
+  async getSignaturesForMemoAsync(memoId){
+    const sigs = await this.getSignatures();
+    return sigs.filter(s=>s.memo_id===memoId);
+  },
   async sign(memoId,userId,userName,badgeId,iqama){
     const sigs=this.getSignaturesCached();
     if(sigs.find(s=>s.memo_id===memoId&&s.user_id===userId)) return false;
@@ -887,7 +894,7 @@ const ackDb = {
       id:'sig_'+Date.now(),
       memo_id:memoId, user_id:userId,
       user_name:userName, badge_id:badgeId,
-      // iqama not stored,
+      iqama_confirmed:iqama,
       ref_number:ref,
       signed_at:new Date().toISOString()
     };
@@ -1015,9 +1022,13 @@ const db = {
     return ls('completions');
   },
   async addCompletion(c){
-    if(SB){ await SB.from('lms_completions').upsert({user_id:c.user_id,lecture_id:c.lecture_id,completed_at:c.completed_at},{onConflict:'user_id,lecture_id'}); }
+    // Save locally first
     let a=ls('completions');
-    if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){ c.id=c.id||uid(); a.push(c); ls2('completions',a); }
+    if(!a.find(x=>x.user_id===c.user_id&&x.lecture_id===c.lecture_id)){
+      c.id=c.id||uid(); a.push(c); ls2('completions',a);
+    }
+    // Then sync to Supabase
+    if(SB){ await SB.from('lms_completions').upsert({user_id:c.user_id,lecture_id:c.lecture_id,completed_at:c.completed_at},{onConflict:'user_id,lecture_id'}); }
   },
   async isCompleted(uid,lid){
     if(SB){ const{data}=await SB.from('lms_completions').select('id').eq('user_id',uid).eq('lecture_id',lid).single(); return !!data; }
@@ -1032,12 +1043,31 @@ const db = {
     return ls('attempts');
   },
   async addAttempt(a){
-    if(SB){ const{error}=await SB.from('lms_attempts').insert({user_id:a.user_id,lecture_id:a.lecture_id,score:a.score,passed:a.passed,attempted_at:a.attempted_at}); if(error) console.warn('Attempt save error:',error.message); }
-    a.id=a.id||uid(); let arr=ls('attempts'); arr.push(a); ls2('attempts',arr);
+    // Always save to localStorage first for reliable cert checking
+    a.id=a.id||uid();
+    let arr=ls('attempts'); arr.push(a); ls2('attempts',arr);
+    // Then try Supabase
+    if(SB){
+      const{error}=await SB.from('lms_attempts').insert({
+        user_id:a.user_id,lecture_id:a.lecture_id,
+        score:a.score,passed:a.passed,attempted_at:a.attempted_at
+      });
+      if(error) console.warn('Attempt Supabase error:',error.message);
+    }
   },
   async hasPassed(uid,lid){
-    if(SB){ const{data}=await SB.from('lms_attempts').select('id').eq('user_id',uid).eq('lecture_id',lid).eq('passed',true).single(); return !!data; }
-    return ls('attempts').some(a=>a.user_id===uid&&a.lecture_id===lid&&a.passed);
+    // Check localStorage first (faster + avoids Supabase issues)
+    const local=ls('attempts');
+    if(local.some(a=>a.user_id===uid&&a.lecture_id===lid&&a.passed)) return true;
+    // Then check Supabase
+    if(SB){
+      const{data,error}=await SB.from('lms_attempts').select('id').eq('user_id',uid).eq('lecture_id',lid).eq('passed',true).limit(1);
+      if(!error&&data&&data.length>0){
+        // Cache this locally for future fast lookups
+        return true;
+      }
+    }
+    return false;
   },
   async certs(uid){
     if(SB){ const{data}=await SB.from('lms_certs').select('*').eq('user_id',uid); return data||[]; }
@@ -1095,7 +1125,6 @@ async function ensureDefaultSections(){
 // ════════════════════════════════════════════════════════════════
 let U=JSON.parse(sessionStorage.getItem('lms_u')||'null');
 let PAGE='login', PAR={}, BACK=null;
-let PENDING_DEEP_LINK=null; // stores hash before login
 let HOME_FILTER='all';
 function setU(u){ U=u; u?sessionStorage.setItem('lms_u',JSON.stringify(u)):sessionStorage.removeItem('lms_u'); }
 function logout(){ setU(null); go('login'); }
@@ -1128,16 +1157,37 @@ async function generateUniqueRef(sec){
 
 async function checkAndAutoIssueCert(sectionId){
   if(!sectionId||!U) return null;
+  // Check if cert already exists
   const certs=await db.certs(U.id);
   const existing=certs.find(c=>c.section_id===sectionId);
   if(existing){ _markCertAnnounced(sectionId); return existing; }
   const lecs=await db.lectures(sectionId);
   if(!lecs.length) return null;
-  const comps=await db.completions(U.id);
+  // Get all completions + attempts from localStorage (fastest + most reliable)
+  const comps=ls('completions');
+  const atts=ls('attempts');
+  // Also try to pull from Supabase if connected
+  let sbComps=[], sbAtts=[];
+  if(SB){
+    try{
+      const[c,a]=await Promise.all([
+        SB.from('lms_completions').select('lecture_id,user_id').eq('user_id',U.id),
+        SB.from('lms_attempts').select('lecture_id,user_id,passed').eq('user_id',U.id)
+      ]);
+      if(c.data) sbComps=c.data;
+      if(a.data) sbAtts=a.data;
+    } catch(e){ console.warn('cert check SB fetch:',e); }
+  }
+  const allComps=[...comps,...sbComps];
+  const allAtts=[...atts,...sbAtts];
+  // Check every lecture is watched AND (if has quiz) passed
   for(const lec of lecs){
-    const watched=!!comps.find(c=>c.lecture_id===lec.id);
+    const watched=allComps.some(c=>c.user_id===U.id&&c.lecture_id===lec.id);
     if(!watched) return null;
-    if(lec.has_quiz){ const passed=await db.hasPassed(U.id,lec.id); if(!passed) return null; }
+    if(lec.has_quiz){
+      const passed=allAtts.some(a=>a.user_id===U.id&&a.lecture_id===lec.id&&a.passed===true);
+      if(!passed) return null;
+    }
   }
   const secs=await db.sections();
   const sec=secs.find(s=>s.id===sectionId);
@@ -1282,20 +1332,36 @@ async function pageAcknowledgements(){
           ?`<div class="ack-signed-banner" style="flex-wrap:wrap;gap:14px">
               <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#34D399);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✅</div>
               <div style="flex:1;min-width:160px">
-                <div style="font-weight:700;color:#065F46;font-family:'Readex Pro'">Acknowledged</div>
-                <div style="font-size:12.5px;color:#047857;margin-top:3px">${(()=>{const s=ackDb.getSignaturesCached().find(s=>s.memo_id===memo.id&&s.user_id===U.id);return s?new Date(s.signed_at).toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';})()}</div>
+                <div style="font-weight:700;color:#065F46;font-family:'Readex Pro'">Acknowledged &amp; Signed</div>
+                <div style="font-size:12.5px;color:#047857;margin-top:3px">Ref: <strong style="font-family:'Readex Pro'">${ackDb.getSignaturesCached().find(s=>s.memo_id===memo.id&&s.user_id===U.id)?.ref_number||'—'}</strong></div>
               </div>
+              <button class="btn bp bsm" onclick="viewMemoCert('${memo.id}')">🏆 View &amp; Print Certificate</button>
             </div>`
           :`<div class="ack-sign-box">
-              <div style="font-size:13px;font-weight:700;color:var(--pu-d);margin-bottom:14px;font-family:'Readex Pro'">✍️ Acknowledgement Required</div>
+              <div style="font-size:13px;font-weight:700;color:var(--pu-d);margin-bottom:16px;font-family:'Readex Pro'">✍️ Digital Acknowledgement Required</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Full Name</label>
+                  <input value="${U.name}" readonly style="background:rgba(255,255,255,.7);color:var(--ink);font-weight:700;cursor:not-allowed">
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Employee #</label>
+                  <input value="${U.badge_id}" readonly style="background:rgba(255,255,255,.7);color:var(--ink);font-weight:700;cursor:not-allowed">
+                </div>
+              </div>
+              <div style="margin-bottom:14px">
+                <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Confirm Iqama Number <span style="color:var(--err)">*</span></label>
+                <input type="password" id="ack-iq-${memo.id}" placeholder="Enter your iqama number to confirm identity">
+                <div style="font-size:11px;color:var(--muted);margin-top:4px">🔐 Your iqama number serves as your digital signature and verifies your identity.</div>
+              </div>
               <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;padding:13px;background:rgba(255,255,255,.6);border-radius:10px;border:1px solid var(--border)">
-                <input type="checkbox" id="ack-cb-${memo.id}" style="width:20px;height:20px;accent-color:var(--pu);margin-top:2px;flex-shrink:0">
-                <label for="ack-cb-${memo.id}" style="font-size:13.5px;color:var(--text);cursor:pointer;line-height:1.6;font-weight:500;margin:0">
-                  I confirm that I have read and understood this memo in full.
+                <input type="checkbox" id="ack-cb-${memo.id}" style="width:18px;height:18px;accent-color:var(--pu);margin-top:2px;flex-shrink:0">
+                <label for="ack-cb-${memo.id}" style="font-size:13px;color:var(--text);cursor:pointer;line-height:1.6;font-weight:500;margin:0">
+                  I confirm that I have read and understood this memo in full. I acknowledge its contents and agree to comply with any instructions or policies stated herein.
                 </label>
               </div>
               <button class="btn bp" style="width:100%;padding:13px;font-size:15px" onclick="signMemo('${memo.id}')">
-                ✓ Acknowledge
+                ✍️ Sign &amp; Acknowledge
               </button>
             </div>`
         }
@@ -1333,19 +1399,31 @@ function generateMemoRef(memo){
 }
 
 async function signMemo(memoId){
+  const iqInput=document.getElementById('ack-iq-'+memoId);
   const cb=document.getElementById('ack-cb-'+memoId);
-  if(!cb||!cb.checked){ toast('Please check the box first','er'); return; }
+  const iq=iqInput?iqInput.value.trim():'';
+  if(!cb||!cb.checked){ toast('Please check the acknowledgement box','er'); return; }
+  if(!iq){ toast('Please enter your iqama number','er'); return; }
+  if(iq!==U.iqama_number){ toast('❌ Incorrect iqama number — please try again','er'); return; }
+
   const memo=ackDb.getMemosCached().find(m=>m.id===memoId);
   if(!memo){ toast('Memo not found','er'); return; }
-  if(ackDb.hasSigned(memoId,U.id)){ toast('Already acknowledged',''); return; }
-  const sig=await ackDb.sign(memoId,U.id,U.name,U.badge_id,'');
+
+  if(ackDb.hasSigned(memoId,U.id)){ toast('You have already signed this memo',''); return; }
+
+  const sig=await ackDb.sign(memoId,U.id,U.name,U.badge_id,iq);
   if(sig){
-    toast('✅ Memo acknowledged!','ok');
-    pageAcknowledgements();
+    toast('✅ Memo acknowledged and signed!','ok');
+    pageMemoCert(memoId, sig.ref_number);
   }
 }
 
-// viewMemoCert — disabled, cert page removed for employees
+// View existing memo certificate
+function viewMemoCert(memoId){
+  const sig=ackDb.getSignaturesCached().find(s=>s.memo_id===memoId&&s.user_id===U.id);
+  if(!sig){ toast('No signature found for this memo','er'); return; }
+  pageMemoCert(memoId, sig.ref_number);
+}
 
 // ════════════════════════════════════════════════════════════════
 // MEMO ACKNOWLEDGEMENT CERTIFICATE PAGE
@@ -1561,12 +1639,13 @@ function addMemoDivider(){
 // ════════════════════════════════════════════════════════════════
 async function pageAdminMemos(){
   const memos=await ackDb.getMemos();
+  const allSigs=await ackDb.getSignatures(); // fetch from Supabase
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
   const logCount=isOwner()?getUnseenLogCount():0;
 
   const rows=memos.map(memo=>{
-    const sigs=ackDb.getSignaturesForMemo(memo.id);
+    const sigs=allSigs.filter(s=>s.memo_id===memo.id);
     const pct=employees.length?Math.round(sigs.length/employees.length*100):0;
     const date=new Date(memo.created_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
     const canDel=canDelete(memo.created_by);
@@ -1859,8 +1938,9 @@ async function openMemoDetail(memoId){
   const memo=ackDb.getMemosCached().find(m=>m.id===memoId); if(!memo) return;
   const users=await db.users();
   const employees=users.filter(u=>u.role==='employee');
-  const sigs=ackDb.getSignaturesForMemo(memoId);
-  const sigMap={}; sigs.forEach(s=>{ sigMap[s.user_id]=s; });
+  const sigs=await ackDb.getSignatures(); // always from Supabase
+  const memoSigs=sigs.filter(s=>s.memo_id===memoId);
+  const sigMap={}; memoSigs.forEach(s=>{ sigMap[s.user_id]=s; });
   const signed=employees.filter(e=>sigMap[e.id]);
   const pending=employees.filter(e=>!sigMap[e.id]);
   const pct=employees.length?Math.round(signed.length/employees.length*100):0;
@@ -1873,6 +1953,7 @@ async function openMemoDetail(memoId){
       <td><span class="chip cd">#${e.badge_id}</span></td>
       <td style="font-size:12px;color:var(--muted)">${e.file_number||'—'}</td>
       <td><span class="bdg bdg-ok" style="font-size:10px">✓ ${dt}</span></td>
+      <td><span style="font-family:'Readex Pro';font-weight:700;color:var(--pu-d);font-size:11px">${sig.ref_number||'—'}</span></td>
     </tr>`;
   }).join('');
 
@@ -1881,6 +1962,7 @@ async function openMemoDetail(memoId){
     <td><span class="chip cd">#${e.badge_id}</span></td>
     <td style="font-size:12px;color:var(--muted)">${e.file_number||'—'}</td>
     <td><span class="bdg" style="background:var(--err-l);color:#9F1239;border:1px solid #FCA5A5">⏳ Pending</span></td>
+    <td>—</td>
   </tr>`).join('');
 
   document.getElementById('md').innerHTML=`<div class="mo" onclick="cmo(event)"><div class="modal" style="max-width:820px">
@@ -1912,11 +1994,11 @@ async function openMemoDetail(memoId){
     </div>
 
     ${signed.length?`<h4 style="font-size:15px;font-weight:700;color:var(--ok);margin-bottom:10px;font-family:'Readex Pro'">✅ Signed (${signed.length})</h4>
-    <div class="tw" style="margin-bottom:18px"><table><thead><tr><th>Name</th><th>Employee #</th><th>File #</th><th>Acknowledged At</th></tr></thead>
+    <div class="tw" style="margin-bottom:18px"><table><thead><tr><th>Name</th><th>Employee #</th><th>File #</th><th>Signed At</th><th>Ref Number</th></tr></thead>
     <tbody id="signed-tbody">${signedRows}</tbody></table></div>`:''}
 
     ${pending.length?`<h4 style="font-size:15px;font-weight:700;color:var(--err);margin-bottom:10px;font-family:'Readex Pro'">⏳ Pending (${pending.length})</h4>
-    <div class="tw"><table><thead><tr><th>Name</th><th>Employee #</th><th>File #</th><th>Status</th></tr></thead>
+    <div class="tw"><table><thead><tr><th>Name</th><th>Employee #</th><th>File #</th><th>Status</th><th>Ref Number</th></tr></thead>
     <tbody id="pending-tbody">${pendingRows}</tbody></table></div>`:''}
   </div></div>`;
 }
@@ -1933,10 +2015,10 @@ async function exportMemoSignatures(memoId){
   const employees=users.filter(u=>u.role==='employee');
   const sigs=ackDb.getSignaturesForMemo(memoId);
   const sigMap={}; sigs.forEach(s=>{ sigMap[s.user_id]=s; });
-  const rows=[['Memo Title','Memo Number','Employee Name','Employee #','File #','Status','Acknowledged At']];
+  const rows=[['Memo Title','Memo Number','Employee Name','Employee #','File #','Status','Signed At','Reference Number']];
   employees.forEach(e=>{
     const sig=sigMap[e.id];
-    rows.push([memo.title,memo.memo_number||'—',e.name,e.badge_id,e.file_number||'—',sig?'Acknowledged':'Pending',sig?new Date(sig.signed_at).toLocaleString():'—']);
+    rows.push([memo.title,memo.memo_number||'—',e.name,e.badge_id,e.file_number||'—',sig?'Signed':'Pending',sig?new Date(sig.signed_at).toLocaleString():'—',sig?sig.ref_number||'—':'—']);
   });
   const q=v=>'"'+String(v).split('"').join('""')+'"';
   const csv=rows.map(r=>r.map(q).join(',')).join('\r\n');
@@ -2150,18 +2232,7 @@ async function doLogin(){
   if(!u){ showErr('Employee number not found'); return; }
   if(u.iqama_number!==p){ showErr('Incorrect iqama number'); return; }
   if(_role==='admin'&&u.role!=='admin'){ showErr('No admin access for this account'); return; }
-  setU(u); toast('Welcome, '+u.name+'! 👋','ok');
-  // After login, check if a deep link was saved
-  if(PENDING_DEEP_LINK){
-    const dl=PENDING_DEEP_LINK; PENDING_DEEP_LINK=null;
-    if(dl.startsWith('#section=')){
-      const sid=dl.slice(9).split('&')[0];
-      if(sid){ go('section',{id:sid},{page:'home',par:{},label:'Home'}); return; }
-    } else if(dl==='#memos'){
-      go('ack'); return;
-    }
-  }
-  go('home');
+  setU(u); toast('Welcome, '+u.name+'! 👋','ok'); go('home');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2242,7 +2313,6 @@ async function pageHome(){
     </div>`:'';
     const lecTitles=lecs.map(l=>l.title).join(' ');
     const searchData=(sec.title+' '+(sec.description||'')+' '+lecTitles).toLowerCase();
-    const sectionLink=getSectionLink(sec.id);
     return`<div class="sec-c" ${clickAttr} data-search="${searchData.replace(/"/g,'&quot;')}" style="cursor:${cursor};${status==='empty'?'opacity:.85':''}">
       <div class="sec-c-head" style="background:${theme.grad}">
         ${isNew?`<span class="sec-c-new">✨ NEW</span>`:''}
@@ -2259,9 +2329,6 @@ async function pageHome(){
           </div>
           ${progressHtml}
           ${certHtml}
-          <div style="margin-top:8px;text-align:right">
-            <button onclick="event.stopPropagation();copyLink('${sectionLink}','${sec.title}')" style="background:transparent;border:none;color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;transition:.2s" onmouseover="this.style.background='var(--pu-soft)';this.style.color='var(--pu-d)'" onmouseout="this.style.background='transparent';this.style.color='var(--muted)'">🔗 Copy Link</button>
-          </div>
         </div>
       </div>
     </div>`;
@@ -3856,19 +3923,6 @@ async function pageAdminStaff1(uid){
 // UTILITIES
 // ════════════════════════════════════════════════════════════════
 function cmo(e){ if(e&&e.target!==e.currentTarget) return; document.getElementById('md').innerHTML=''; }
-function copyLink(url, title){
-  navigator.clipboard.writeText(url).then(()=>{
-    toast('🔗 Link copied: '+title,'ok');
-  }).catch(()=>{
-    // Fallback
-    const inp=document.createElement('input');
-    inp.value=url; document.body.appendChild(inp);
-    inp.select(); document.execCommand('copy');
-    document.body.removeChild(inp);
-    toast('🔗 Link copied!','ok');
-  });
-}
-
 function toast(msg,type){
   const cls=type==='ok'?'ok':type==='er'?'er':'';
   const div=document.createElement('div'); div.className='ti '+cls; div.textContent=msg;
@@ -3887,7 +3941,7 @@ function closeMobileMenu(){
 
 async function syncAll(){
   if(!SB) return;
-  try{ await Promise.all([db.users(),db.sections(),db.allCompletions(),db.allAttempts(),db.allCerts(),ackDb.getMemos()]); } catch(e){ console.warn('sync fail',e); }
+  try{ await Promise.all([db.users(),db.sections(),db.allCompletions(),db.allAttempts(),db.allCerts(),ackDb.getMemos(),ackDb.getSignatures()]); } catch(e){ console.warn('sync fail',e); }
 }
 async function syncThenRefresh(){ if(SB){ toast('Syncing...',''); await syncAll(); toast('Updated','ok'); render(); } else { render(); } }
 
@@ -3905,34 +3959,8 @@ window.addEventListener('load',async()=>{
   if(SB) await syncAll();
   // Auto-sync any localStorage signatures to Supabase
   if(SB && U) await syncLocalSigsToSupabase();
-  // Capture deep link hash before render clears it
-  const _initialHash = location.hash;
-  if(_initialHash && !U){
-    // Not logged in — save hash, will redirect after login
-    PENDING_DEEP_LINK = _initialHash;
-  }
-  await render();
-  // If already logged in, redirect now
-  if(_initialHash && U){
-    handleDeepLink(_initialHash);
-  }
+  render();
 });
-
-function handleDeepLink(hash){
-  hash = hash || location.hash;
-  if(!hash||!U) return;
-  location.hash='';
-  if(hash.startsWith('#section=')){
-    const sid=hash.slice(9).split('&')[0];
-    if(sid){ go('section',{id:sid},{page:'home',par:{},label:'Home'}); }
-  } else if(hash==='#memos'){
-    go('ack');
-  }
-}
-
-function getSectionLink(sid){
-  return location.origin+location.pathname+'#section='+sid;
-}
 
 // Sync signatures saved in localStorage to Supabase
 async function syncLocalSigsToSupabase(){
