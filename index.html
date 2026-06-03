@@ -1721,29 +1721,29 @@ async function pageAdminMemos(){
     const date=new Date(memo.created_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
     const canDel=canDelete(memo.created_by);
     return `<tr>
-      <td>
+      <td style="min-width:200px">
         <div>
           <strong style="color:var(--ink)">${memo.title}</strong>
           ${memo.memo_number?`<span class="chip cp" style="margin-left:6px;font-size:10px">${memo.memo_number}</span>`:''}
           <div style="font-size:11.5px;color:var(--muted);margin-top:3px">${date} · by ${memo.created_by_name||'Admin'}</div>
         </div>
       </td>
-      <td>
+      <td style="white-space:nowrap">
         <div style="display:flex;align-items:center;gap:8px">
           <div class="pbar" style="width:80px;height:7px"><div class="pfill" style="width:${pct}%"></div></div>
           <span style="font-size:13px;font-weight:700;font-family:'Readex Pro';color:${pct===100?'var(--ok)':'var(--ink)'}">${sigs.length}/${employees.length}</span>
         </div>
       </td>
-      <td>
+      <td style="white-space:nowrap">
         <span style="padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;background:${memo.active?'var(--ok-l)':'var(--bg-deep)'};color:${memo.active?'#065F46':'var(--muted)'};border:1px solid ${memo.active?'#6EE7B7':'var(--border-d)'}">
           ${memo.active?'● Active':'○ Archived'}
         </span>
       </td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <td style="white-space:nowrap">
+        <div style="display:flex;gap:6px;align-items:center">
           <button class="btn bo bsm" onclick="openMemoDetail('${memo.id}')">📊 Signatures</button>
-          <button class="btn bg2 bsm" onclick="openMemoModal('${memo.id}')">✏</button>
-          ${canDel?`<button class="btn bd bsm" onclick="deleteMemo('${memo.id}')">🗑</button>`:''}
+          <button class="btn bg2 bsm" onclick="openMemoModal('${memo.id}')">✏️ Edit</button>
+          ${canDel?`<button class="btn bd bsm" onclick="deleteMemo('${memo.id}')">🗑 Delete</button>`:''}
         </div>
       </td>
     </tr>`;
