@@ -2662,20 +2662,25 @@ function buildFileViewer(lid,lec){
   </div>`;
 }
 
+async function markDone(lid){
+  try{
+    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
+    const lec=await db.lecture(lid);
+    let certMsg='';
+    if(lec){
+      const cert=await checkAndAutoIssueCert(lec.section_id);
+      if(cert) certMsg=` 🏆 Certificate earned!`;
+    }
+    toast('✓ Marked as viewed!'+certMsg,'ok');
+    await pageLecture(lid);
+  } catch(e){ toast('❌ '+e.message,'er'); }
+}
+
 async function markWatchedManual(lid){
   try{
     vidDone=true;
     await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
     toast('✓ Marked as complete — quiz unlocked!','ok');
-    await pageLecture(lid);
-  } catch(e){ toast('❌ '+e.message,'er'); }
-}
-async function markDone(lid){
-  try{
-    await db.addCompletion({user_id:U.id,lecture_id:lid,completed_at:n()});
-    toast('✓ Marked as viewed!','ok');
-    const lec=await db.lecture(lid);
-    if(lec) await checkAndAutoIssueCert(lec.section_id);
     await pageLecture(lid);
   } catch(e){ toast('❌ '+e.message,'er'); }
 }
@@ -2748,10 +2753,21 @@ async function submitQ(){
   const passPct=(lec0&&lec0.quiz_pass_pct)||100;
   const passed=score>=passPct;
   await db.addAttempt({user_id:U.id,lecture_id:QS.lid,score,passed,attempted_at:n()});
-  if(passed){ const lec=await db.lecture(QS.lid); if(lec) await checkAndAutoIssueCert(lec.section_id); }
+
+  let certBtn='';
+  if(passed){
+    const lec=await db.lecture(QS.lid);
+    if(lec){
+      const cert=await checkAndAutoIssueCert(lec.section_id);
+      if(cert){
+        certBtn=`<button class="btn bmint blg" onclick="go('cert',{id:'${cert.id}'},{page:'home',par:{},label:'Home'})">🏆 View Certificate</button>`;
+      }
+    }
+  }
+
   document.getElementById('app').innerHTML=bar()+`<div class="pg" style="max-width:620px">
     <div class="card" style="text-align:center;padding:54px 38px">
-      <div class="r-circle ${passed?'r-pass':'r-fail'}">${passed?'100%':score+'%'}</div>
+      <div class="r-circle ${passed?'r-pass':'r-fail'}">${score}%</div>
       <h2 style="font-size:32px;color:var(--ink);margin-bottom:10px;font-family:'Fraunces';font-weight:600">${passed?'🎉 Excellent!':'😔 Not Passed'}</h2>
       <p style="color:var(--muted);margin-bottom:28px;font-size:15px;line-height:1.6">You got ${ok} out of ${qs.length} correct. ${passed?'Congratulations! 🎉':`You need ${passPct}% to pass. Please retry.`}</p>
       <div style="background:var(--pu-mist);border-radius:16px;padding:24px;margin-bottom:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;border:1px solid var(--border)">
@@ -2760,7 +2776,7 @@ async function submitQ(){
       </div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         ${passed
-          ?`<button class="btn bp blg" onclick="goAfterQ()">View My Progress →</button>`
+          ?`<button class="btn bp blg" onclick="goAfterQ()">View My Progress →</button>${certBtn}`
           :`<button class="btn bp blg" onclick="go('lecture',{id:'${QS.lid}'},{page:'home',par:{},label:'Home'})">↻ Retake Quiz</button>`
         }
       </div>
