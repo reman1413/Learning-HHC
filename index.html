@@ -2295,17 +2295,18 @@ function setRole(r){
   const lbl=document.getElementById('pw-label');
   if(lbl) lbl.innerHTML=r==='admin'?'Password':'Iqama Number <span style="color:var(--muted);font-weight:500">(رقم الإقامة)</span>';
 }
-async function doLogin(){
-  const b=document.getElementById('bid').value.trim(), p=document.getElementById('bpw').value.trim();
-  const showErr=m=>{ const e=document.getElementById('lerr'); e.textContent=m; e.style.display='block'; };
-  if(!b||!p){ showErr('Please enter employee number and iqama number'); return; }
-  const u=await db.userByBadge(b);
-  if(!u){ showErr('Employee number not found'); return; }
-  if(u.iqama_number!==p){ showErr('Incorrect iqama number'); return; }
-  if(_role==='admin'&&u.role!=='admin'){ showErr('No admin access for this account'); return; }
-  setU(u); toast('Welcome, '+u.name+'! 👋','ok'); go('home');
+setU(u); toast('Welcome, '+u.name+'! 👋','ok');
+  const pending=sessionStorage.getItem('lms_pending_deeplink');
+  if(pending){
+    sessionStorage.removeItem('lms_pending_deeplink');
+    try{
+      const d=JSON.parse(pending);
+      if(d.type==='lecture'){ go('lecture',{id:d.id},{page:'home',par:{},label:'Home'}); return; }
+      if(d.type==='section'){ go('section',{id:d.id},{page:'home',par:{},label:'Home'}); return; }
+    } catch(e){}
+  }
+  go('home');
 }
-
 // ════════════════════════════════════════════════════════════════
 // EMPLOYEE HOME
 // ════════════════════════════════════════════════════════════════
@@ -3235,9 +3236,10 @@ async function pageAdminSections(){
       <td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;font-family:'Readex Pro'">${st.started}</span><span style="font-size:11px;color:var(--muted)">/ ${totalEmps}</span>${st.started>0?`<div class="pbar" style="width:60px;height:6px"><div class="pfill" style="width:${startedPct}%;background:linear-gradient(90deg,var(--sky),#7BA3D9)"></div></div>`:''}</div></td>
       <td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;font-family:'Readex Pro';color:${st.completed>0?'var(--ok)':'var(--muted)'}">${st.completed}</span><span style="font-size:11px;color:var(--muted)">/ ${totalEmps}</span>${st.completed>0?`<div class="pbar" style="width:60px;height:6px"><div class="pfill" style="width:${completedPct}%"></div></div>`:''}</div></td>
       <td>${st.certs>0?`<span class="chip" style="background:var(--gold-soft);color:#854D0E;border:1px solid #FDE68A">🏆 ${st.certs}</span>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td>
-      <td><div style="display:flex;gap:8px;flex-wrap:wrap">
+<td><div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn bo bsm" onclick="go('alectures',{id:'${s.id}'},{page:'asections',par:{},label:'Sections'})">📖 Lectures</button>
         <button class="btn bg2 bsm" onclick="openSecModal('${s.id}')">✏</button>
+        <button class="btn bmint bsm" onclick="copyDeepLink('section','${s.id}')" title="Copy direct link to this section">🔗 Link</button>
         ${canDel?`<button class="btn bd bsm" onclick="delSec('${s.id}')">🗑</button>`:`<span style="font-size:11px;color:var(--muted);padding:7px 4px" title="Only owner can delete this section">🔒</span>`}
       </div></td></tr>`;
   }).join('');
@@ -3310,13 +3312,13 @@ async function pageAdminLectures(sid){
       <td>${typeChip}</td>
       <td style="font-size:12px;color:var(--muted)">${sourceCell}</td>
       <td>${l.has_quiz?`<button class="btn bo bsm" onclick="go('aquestions',{id:'${l.id}'},{page:'alectures',par:{id:'${sid}'},label:'Lectures'})">📝 ${ls('questions').filter(q=>q.lecture_id===l.id).length} Qs</button>`:'—'}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+<td><div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bg2 bsm" onclick="openLecModal('${sid}','${l.id}')">✏</button>
+        <button class="btn bmint bsm" onclick="copyDeepLink('lecture','${l.id}')" title="Copy direct link to this lecture">🔗 Link</button>
         ${l.type==='interactive'?`<button class="btn bp bsm" onclick="go('aslides',{id:'${l.id}'},{page:'alectures',par:{id:'${sid}'},label:'Lectures'})">🎓 Slides</button>`:''}
         ${(l.type==='pptx'||l.type==='video')?`<button class="btn bo bsm" onclick="openUploadModal('${l.id}')">📤 ${hasFile?'Replace':'Upload'}</button>`:''}
         ${canDel?`<button class="btn bd bsm" onclick="delLec('${l.id}','${sid}')">🗑</button>`:`<span style="font-size:11px;color:var(--muted);padding:7px 4px" title="Only owner can delete this lecture">🔒</span>`}
-      </div></td></tr>`;
-  }).join('');
+      </div></td></tr>`;  }).join('');
 
   document.getElementById('app').innerHTML=bar()+`<div class="pg">
     <div class="bc"><a onclick="go('adash')">Dashboard</a><span>›</span><a onclick="go('asections')">Sections</a><span>›</span><span>${sec?sec.title:''}</span></div>
@@ -4086,8 +4088,21 @@ async function pageAdminStaff1(uid){
 // ════════════════════════════════════════════════════════════════
 // UTILITIES
 // ════════════════════════════════════════════════════════════════
-function cmo(e){ if(e&&e.target!==e.currentTarget) return; document.getElementById('md').innerHTML=''; }
-function toast(msg,type){
+function copyDeepLink(type,id){
+  const url=location.origin+location.pathname+'?'+type+'='+id;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>toast('✅ Link copied!','ok')).catch(()=>fallbackCopyLink(url));
+  } else fallbackCopyLink(url);
+}
+function fallbackCopyLink(url){
+  const ta=document.createElement('textarea');
+  ta.value=url; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('✅ Link copied!','ok'); }
+  catch(e){ toast('Copy failed — link: '+url,'er'); }
+  document.body.removeChild(ta);
+}
+function cmo(e){ if(e&&e.target!==e.currentTarget) return; document.getElementById('md').innerHTML=''; }function toast(msg,type){
   const cls=type==='ok'?'ok':type==='er'?'er':'';
   const div=document.createElement('div'); div.className='ti '+cls; div.textContent=msg;
   document.getElementById('toast').appendChild(div);
@@ -4112,11 +4127,28 @@ async function syncThenRefresh(){ if(SB){ toast('Syncing...',''); await syncAll(
 // ════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ════════════════════════════════════════════════════════════════
+function getDeepLinkParam(){
+  const params=new URLSearchParams(window.location.search);
+  const lecture=params.get('lecture');
+  const section=params.get('section');
+  if(lecture) return{type:'lecture',id:lecture};
+  if(section) return{type:'section',id:section};
+  return null;
+}
+
 window.addEventListener('load',async()=>{
+  const deep=getDeepLinkParam();
+  // Clean the URL so refreshing later doesn't keep re-triggering the same deep link
+  if(deep) history.replaceState(null,'',window.location.pathname);
+
   if(!localStorage.getItem('lms_setup_seen')&&!SB_URL){
     localStorage.setItem('lms_setup_seen','1'); PAGE='setup';
+  } else if(U){
+    if(deep){ PAGE=deep.type; PAR={id:deep.id}; BACK={page:'home',par:{},label:'Home'}; }
+    else PAGE='home';
   } else {
-    PAGE=U?'home':'login';
+    PAGE='login';
+    if(deep) sessionStorage.setItem('lms_pending_deeplink',JSON.stringify(deep));
   }
   // Preload memos into cache
   try{ await ackDb.getMemos(); } catch(e){}
@@ -4125,7 +4157,6 @@ window.addEventListener('load',async()=>{
   if(SB && U) await syncLocalSigsToSupabase();
   render();
 });
-
 // Sync signatures saved in localStorage to Supabase
 async function syncLocalSigsToSupabase(){
   try{
